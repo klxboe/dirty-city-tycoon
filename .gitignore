@@ -1,0 +1,35 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Ausgaben
+dist/
+dist-ssr/
+build/
+
+# Umgebungsvariablen (Geheimnisse, nie ins Repo)
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Capacitor / native Plattformen (kommen erst in Phase 2 dazu,
+# werden dann bewusst einzeln entschieden ob sie ins Repo gehören)
+ios/App/Pods/
+ios/App/build/
+android/app/build/
+android/.gradle/
+
+# TypeScript build info
+*.tsbuildinfo
