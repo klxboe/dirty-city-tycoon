@@ -1,0 +1,62 @@
+.hud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.hud__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hud__row--sub {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.hud__money {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hud__money-value {
+  font-family: var(--font-numbers);
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.hud__rate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 600;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.hud__icon--money {
+  color: var(--color-money);
+}
+
+.hud__icon--star {
+  color: var(--color-money);
+}
+
+.hud__prestige {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}

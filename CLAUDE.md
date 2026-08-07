@@ -22,11 +22,31 @@ ursprünglichen Anforderung – wird nach und nach in diese Datei bzw. in Code-K
 - Speicherung: localStorage im Web, später Capacitor Preferences auf iOS
 - Kein Backend, keine Accounts, kein externes Game-Framework. Alles läuft lokal.
 
-## Architektur (wird laufend erweitert)
+## Architektur
 
-_Noch nichts gebaut – Phase 0 ist reines Projekt-Setup ohne Code._
-Sobald Phase 1 startet, wird hier die Ordnerstruktur und der Aufbau
-(z.B. Game-State, Tick-Loop, Komponenten) dokumentiert.
+```
+src/
+  game/
+    types.ts       Alle Datentypen (GameState, CityDef, OfflineReport)
+    constants.ts    Alle Balancing-Zahlen + Städte-Liste an einem Ort
+    engine.ts       Reine Spiellogik (kein React): tick(), Kauf-Funktionen,
+                     Prestige-Berechnung, Offline-Verdienst-Berechnung
+    storage.ts      localStorage laden/speichern (wird in Phase 2 auf
+                     Capacitor Preferences umgestellt)
+  hooks/
+    useGameEngine.ts  Verbindet engine.ts mit React: State, 100ms-Tick-Loop,
+                       Autosave (alle 5s + beim Verstecken/Schließen der Seite),
+                       Offline-Verdienst beim Start berechnen
+  components/
+    HUD, CleanlinessBar, CityStage, BufferBar, TapButton, ShopPanel,
+    OfflineModal, PrestigeModal – je eine .tsx + eigene .css Datei
+  styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
+  utils/format.ts   Zahlen-Kurzformat (1,5k / 2,3 Mio) und Prozent-Format
+```
+
+Prinzip: `game/` kennt React nicht (pure Funktionen, leicht nachvollziehbar/testbar),
+`hooks/useGameEngine.ts` ist die einzige Brücke zu React, `components/` sind reine
+Anzeige-Komponenten ohne eigene Spiellogik.
 
 ## Spielregeln (Kurzfassung, Details siehe Balancing unten)
 
@@ -56,13 +76,19 @@ Sobald Phase 1 startet, wird hier die Ordnerstruktur und der Aufbau
 ## Aktueller Stand
 
 - [x] Phase 0: Git-Repo initialisiert, .gitignore, CLAUDE.md angelegt.
-- [ ] Phase 1: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar (localStorage).
+- [x] Phase 1: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar (localStorage).
+      Alle Kernmechaniken durchgetestet (Tippen, Kaufen, Engpass-Warnung,
+      Offline-Verdienst, Prestige-Umzug).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
 ## Offene To-dos
 
-- Phase 1 starten, sobald Klaus das Setup getestet hat und OK gibt.
+- Phase 2 starten, sobald Klaus Phase 1 getestet hat und OK gibt.
+- Feinjustierung des Balancings folgt nach Bauchgefühl-Test durch Klaus
+  (Tempo: erster Arbeiter ~15-20s, erster Engpass ~1-2 Min, erster Umzug ~15-20 Min).
+- Stadt-Bühne (CityStage) ist bisher nur CSS-Formen (Rechtecke, Kreise), keine
+  echten Illustrationen – laut Vorgabe bewusst für später aufgeschoben.
 
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 

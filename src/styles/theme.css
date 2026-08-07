@@ -1,0 +1,55 @@
+/*
+ * Alle Design-Werte an einem Ort. Farben/Abstände/Radien hier ändern,
+ * wirkt sich automatisch auf die ganze App aus.
+ */
+:root {
+  /* Grundfarben (Dark, Standard-Look) */
+  --color-bg: #0f1216;
+  --color-surface: #1a1f26;
+  --color-surface-raised: #232a33;
+  --color-border: #2e3640;
+
+  --color-text: #f2f5f7;
+  --color-text-muted: #8b96a3;
+
+  /* Akzentfarben */
+  --color-primary: #22c55e; /* Sauberkeit / Erfolg / Grün */
+  --color-primary-dark: #16a34a;
+  --color-money: #f5b942; /* Gold für Geld */
+  --color-danger: #ef4444; /* Engpass-Warnung */
+  --color-info: #38bdf8; /* Transporter/Abfahrrate */
+
+  /* Radien */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 999px;
+
+  /* Abstände */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Typografie */
+  --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-numbers: system-ui, -apple-system, sans-serif;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #eef1f4;
+    --color-surface: #ffffff;
+    --color-surface-raised: #f7f9fb;
+    --color-border: #dde3e9;
+
+    --color-text: #1a1f26;
+    --color-text-muted: #5c6672;
+
+    color-scheme: light;
+  }
+}
