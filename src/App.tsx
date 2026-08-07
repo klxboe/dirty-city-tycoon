@@ -46,7 +46,12 @@ function App() {
         onRequestMove={() => setShowPrestigeConfirm(true)}
       />
 
-      <CityStage progress={game.cleanlinessProgress} />
+      <CityStage
+        progress={game.cleanlinessProgress}
+        workers={game.state.workers}
+        transporters={game.state.transporters}
+        bufferRatio={game.bufferCapacity > 0 ? game.state.buffer / game.bufferCapacity : 0}
+      />
 
       <BufferBar buffer={game.state.buffer} capacity={game.bufferCapacity} bottlenecked={game.bottlenecked} />
 

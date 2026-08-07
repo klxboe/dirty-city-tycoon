@@ -40,7 +40,12 @@ src/
   components/
     HUD, CleanlinessBar, CityStage, BufferBar, TapButton, ShopPanel,
     OfflineModal, PrestigeModal – je eine .tsx + eigene .css Datei
-  styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
+    WorkerSprite, TruckSprite – kleine Cartoon-Figuren als Inline-SVG
+    (kein Bild-Asset, direkt Code), werden in CityStage je nach Anzahl
+    gekaufter Einheiten mehrfach angezeigt (mit Obergrenze + "+N"-Badge)
+  styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände).
+    Heller, knalliger Mobile-Game-Look als Standard, dunkles Pendant über
+    prefers-color-scheme: dark.
   utils/format.ts   Zahlen-Kurzformat (1,5k / 2,3 Mio) und Prozent-Format
 ```
 
@@ -79,16 +84,19 @@ Anzeige-Komponenten ohne eigene Spiellogik.
 - [x] Phase 1: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar (localStorage).
       Alle Kernmechaniken durchgetestet (Tippen, Kaufen, Engpass-Warnung,
       Offline-Verdienst, Prestige-Umzug).
+      Nach erstem Feedback ("wirkt zu abstrakt, soll wie ein echtes Handyspiel
+      aussehen, Vorbild Idle Lumber Factory") komplett überarbeitetes Design:
+      helle, knallige Farbpalette, echte Cartoon-Arbeiter/Transporter-Figuren
+      (SVG) statt Balken/Icons, Müllhalde in der Stadt-Bühne visualisiert
+      direkt den Pufferstand.
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
 ## Offene To-dos
 
-- Phase 2 starten, sobald Klaus Phase 1 getestet hat und OK gibt.
+- Phase 2 starten, sobald Klaus Phase 1 final getestet hat und OK gibt.
 - Feinjustierung des Balancings folgt nach Bauchgefühl-Test durch Klaus
   (Tempo: erster Arbeiter ~15-20s, erster Engpass ~1-2 Min, erster Umzug ~15-20 Min).
-- Stadt-Bühne (CityStage) ist bisher nur CSS-Formen (Rechtecke, Kreise), keine
-  echten Illustrationen – laut Vorgabe bewusst für später aufgeschoben.
 
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 

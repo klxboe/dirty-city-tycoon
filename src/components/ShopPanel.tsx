@@ -5,6 +5,7 @@ import './ShopPanel.css';
 
 interface ShopItemProps {
   icon: ReactNode;
+  accent: 'worker' | 'transporter' | 'storage';
   name: string;
   effect: string;
   owned: number;
@@ -13,9 +14,9 @@ interface ShopItemProps {
   onBuy: () => void;
 }
 
-function ShopItem({ icon, name, effect, owned, cost, affordable, onBuy }: ShopItemProps) {
+function ShopItem({ icon, accent, name, effect, owned, cost, affordable, onBuy }: ShopItemProps) {
   return (
-    <button className="shop-item" disabled={!affordable} onClick={onBuy}>
+    <button className={`shop-item shop-item--${accent}`} disabled={!affordable} onClick={onBuy}>
       <div className="shop-item__icon">{icon}</div>
       <div className="shop-item__info">
         <div className="shop-item__name-row">
@@ -64,6 +65,7 @@ export function ShopPanel({
     <div className="shop-panel">
       <ShopItem
         icon={<HardHat size={22} />}
+        accent="worker"
         name="Arbeiter"
         effect={`+${formatRate(workerRate)} Müll/s sammeln`}
         owned={workers}
@@ -73,6 +75,7 @@ export function ShopPanel({
       />
       <ShopItem
         icon={<Truck size={22} />}
+        accent="transporter"
         name="Transporter"
         effect={`+${formatRate(transporterRate)} Müll/s abfahren`}
         owned={transporters}
@@ -82,6 +85,7 @@ export function ShopPanel({
       />
       <ShopItem
         icon={<Warehouse size={22} />}
+        accent="storage"
         name="Lager"
         effect={`+${formatNumber(storageCapacity)} Puffer-Kapazität`}
         owned={storages}

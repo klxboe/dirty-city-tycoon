@@ -19,7 +19,7 @@
   color: #08210f;
   font-size: 18px;
   font-weight: 800;
-  box-shadow: 0 6px 0 var(--color-primary-dark), 0 10px 20px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 6px 0 var(--color-primary-dark), 0 10px 20px rgba(62, 207, 93, 0.4);
   transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
   user-select: none;
 }
@@ -30,7 +30,7 @@
 
 .tap-button--pressed {
   transform: translateY(4px) scale(0.98);
-  box-shadow: 0 2px 0 var(--color-primary-dark), 0 4px 10px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 2px 0 var(--color-primary-dark), 0 4px 10px rgba(62, 207, 93, 0.4);
 }
 
 .tap-zone__floater {

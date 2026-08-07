@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4) var(--space-5);
+  margin: 0 var(--space-3);
 }
 
 .shop-item {
@@ -11,32 +11,43 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
   text-align: left;
-  transition: transform 0.08s ease-out, opacity 0.2s;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08);
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, opacity 0.2s;
 }
 
 .shop-item:not(:disabled):active {
-  transform: scale(0.98);
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .shop-item:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: default;
 }
 
 .shop-item__icon {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  color: #fff;
+}
+
+.shop-item--worker .shop-item__icon {
+  background: linear-gradient(155deg, var(--color-worker), var(--color-worker-dark));
+}
+.shop-item--transporter .shop-item__icon {
+  background: linear-gradient(155deg, var(--color-info), var(--color-info-dark));
+}
+.shop-item--storage .shop-item__icon {
+  background: linear-gradient(155deg, var(--color-storage), var(--color-storage-dark));
 }
 
 .shop-item__info {
@@ -54,12 +65,13 @@
 }
 
 .shop-item__name {
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .shop-item__owned {
   font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 700;
 }
 
 .shop-item__effect {
@@ -71,5 +83,8 @@
   flex-shrink: 0;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--color-money);
+  color: var(--color-money-dark);
+  background: color-mix(in srgb, var(--color-money) 22%, transparent);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
 }
