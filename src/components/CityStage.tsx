@@ -1,6 +1,6 @@
-import { ChevronUp, HardHat, Truck } from 'lucide-react';
 import { WorkerSprite } from './WorkerSprite';
 import { TruckSprite } from './TruckSprite';
+import { TrashItem } from './TrashItem';
 import './CityStage.css';
 
 interface CityStageProps {
@@ -15,16 +15,23 @@ interface CityStageProps {
 const MAX_VISIBLE_WORKERS = 3;
 const MAX_VISIBLE_TRUCKS = 2;
 
-const SPARKS = [
-  { left: '46%', delay: '0s' },
-  { left: '52%', delay: '0.5s' },
-  { left: '49%', delay: '1s' },
+const HOUSES = [
+  { color: '#ff9db8', roof: '#e0567f' },
+  { color: '#8fd9ff', roof: '#3a9bd6' },
+  { color: '#ffd479', roof: '#e0a52f' },
+  { color: '#a8e6a1', roof: '#4fa53f' },
 ];
 
-const FLIES = [
-  { left: '20%', top: '40%', delay: '0s' },
-  { left: '76%', top: '48%', delay: '0.7s' },
+const LITTER_SPOTS = [
+  { left: '14%', top: '58%' },
+  { left: '68%', top: '48%' },
+  { left: '40%', top: '68%' },
+  { left: '82%', top: '62%' },
+  { left: '26%', top: '40%' },
 ];
+
+const WORKER_DELAYS = ['-0.5s', '-3.2s', '-6.1s'];
+const TRUCK_DELAYS = ['0s', '-4s'];
 
 export function CityStage({ progress, workers, transporters, bufferRatio }: CityStageProps) {
   const clampedProgress = Math.min(1, Math.max(0, progress));
@@ -33,109 +40,76 @@ export function CityStage({ progress, workers, transporters, bufferRatio }: City
   const saturation = 0.6 + clampedProgress * 0.4;
 
   const visibleWorkers = Math.min(workers, MAX_VISIBLE_WORKERS);
-  const extraWorkers = workers - visibleWorkers;
   const visibleTrucks = Math.min(transporters, MAX_VISIBLE_TRUCKS);
-  const extraTrucks = transporters - visibleTrucks;
 
-  // Müllhalde: klein bis fast bis zum Anschlag, je nach Pufferstand.
-  const pileHeight = 26 + clampedBuffer * 40;
-  const pileWidth = 42 + clampedBuffer * 30;
+  // Müllhalde an der Ladestelle: klein bis groß, je nach Pufferstand.
+  const pileSize = 20 + clampedBuffer * 26;
 
   return (
     <div className="city-stage" style={{ filter: `saturate(${saturation})` }}>
       <div className="city-stage__sky">
         <div className="city-stage__sun" style={{ opacity: 0.35 + clampedProgress * 0.65 }} />
-        <div className="city-stage__cloud city-stage__cloud--1" style={{ opacity: clampedProgress }} />
-        <div className="city-stage__cloud city-stage__cloud--2" style={{ opacity: clampedProgress }} />
-        <div className="city-stage__mountains">
-          <div className="city-stage__mountain city-stage__mountain--1" />
-          <div className="city-stage__mountain city-stage__mountain--2" />
-          <div className="city-stage__mountain city-stage__mountain--3" />
-        </div>
-        <div className="city-stage__skyline">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className={`city-stage__building city-stage__building--${i}`} />
-          ))}
-        </div>
       </div>
 
-      {/* Grime-Wäsche über dem Himmel, blendet mit dem Fortschritt aus. */}
-      <div className="city-stage__haze" style={{ opacity: dirtOpacity * 0.6 }} />
-
-      {/* Türme: links Arbeiter-Depot, rechts Transporter-Garage, dazwischen der Trichter zur Halde. */}
-      <div className="city-stage__towers">
-        <div className="tower tower--worker">
-          <div className="tower__badge">
-            ×{workers}
-            <ChevronUp size={12} strokeWidth={3} />
+      <div className="city-stage__houses">
+        {HOUSES.map((house, i) => (
+          <div className="house" key={i} style={{ background: house.color }}>
+            <div className="house__roof" style={{ background: house.roof }} />
+            <div className="house__window" />
+            <div className="house__window house__window--right" />
+            <div className="house__door" />
           </div>
-          <div className="tower__cap" />
-          <div className="tower__body">
-            <div className="tower__window">
-              <HardHat size={18} />
-            </div>
-          </div>
-        </div>
-
-        <div className="city-stage__funnel">
-          {SPARKS.map((spark, i) => (
-            <span
-              key={i}
-              className="city-stage__spark"
-              style={{ left: spark.left, animationDelay: spark.delay }}
-            />
-          ))}
-        </div>
-
-        <div className="tower tower--truck">
-          <div className="tower__badge">
-            ×{transporters}
-            <ChevronUp size={12} strokeWidth={3} />
-          </div>
-          <div className="tower__cap tower__cap--truck" />
-          <div className="tower__body tower__body--truck">
-            <div className="tower__window">
-              <Truck size={18} />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      <div className="city-stage__ground">
-        {FLIES.map((fly, i) => (
+      {/* Grime-Wäsche, blendet mit dem Fortschritt aus. */}
+      <div className="city-stage__haze" style={{ opacity: dirtOpacity * 0.55 }} />
+
+      <div className="city-stage__road">
+        <div className="city-stage__road-line" />
+
+        {LITTER_SPOTS.map((spot, i) => (
           <div
             key={i}
-            className="city-stage__fly"
-            style={{ left: fly.left, top: fly.top, opacity: dirtOpacity, animationDelay: fly.delay }}
-          />
+            className="city-stage__litter"
+            style={{ left: spot.left, top: spot.top, opacity: dirtOpacity }}
+          >
+            <TrashItem variant={i} size={18} />
+          </div>
         ))}
 
-        <div className="city-stage__actors">
-          <div className="city-stage__group city-stage__group--workers">
-            {Array.from({ length: visibleWorkers }).map((_, i) => (
-              <WorkerSprite key={i} variant={i} size={32} />
-            ))}
-            {extraWorkers > 0 && <span className="city-stage__badge">+{extraWorkers}</span>}
+        {clampedBuffer > 0.05 && (
+          <div
+            className="city-stage__pile"
+            style={{ width: pileSize, height: pileSize * 0.72 }}
+            title="Zwischenlager"
+          >
+            <div className="city-stage__pile-shape" />
           </div>
+        )}
 
-          <div className="city-stage__pile-zone">
-            {clampedBuffer > 0.03 && (
-              <div
-                className="city-stage__pile"
-                style={{ width: pileWidth, height: pileHeight }}
-                title="Zwischenlager"
-              >
-                <div className="city-stage__pile-shape" />
-              </div>
-            )}
-          </div>
+        <div className="city-stage__worker-lane">
+          {Array.from({ length: visibleWorkers }).map((_, i) => (
+            <div
+              key={i}
+              className="city-stage__worker-slot"
+              style={{ animationDelay: WORKER_DELAYS[i % WORKER_DELAYS.length], bottom: `${8 + i * 15}%` }}
+            >
+              <WorkerSprite variant={i} size={30} flip={i % 2 === 1} />
+            </div>
+          ))}
+        </div>
 
-          <div className="city-stage__group city-stage__group--trucks">
-            {extraTrucks > 0 && <span className="city-stage__badge">+{extraTrucks}</span>}
-            {Array.from({ length: visibleTrucks }).map((_, i) => (
-              <TruckSprite key={i} variant={i} flip size={44} />
-            ))}
-          </div>
+        <div className="city-stage__truck-lane">
+          {Array.from({ length: visibleTrucks }).map((_, i) => (
+            <div
+              key={i}
+              className="city-stage__truck-slot"
+              style={{ animationDelay: TRUCK_DELAYS[i % TRUCK_DELAYS.length], bottom: `${6 + i * 26}%` }}
+            >
+              <TruckSprite variant={i} size={50} />
+            </div>
+          ))}
         </div>
       </div>
     </div>

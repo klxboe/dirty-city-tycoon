@@ -1,9 +1,9 @@
 .city-stage {
   position: relative;
   margin: 0 var(--space-3);
-  height: 40vh;
-  min-height: 260px;
-  max-height: 340px;
+  height: 42vh;
+  min-height: 270px;
+  max-height: 360px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -13,345 +13,122 @@
   flex-direction: column;
 }
 
+/* ---- Himmelsstreifen ---- */
 .city-stage__sky {
   position: relative;
-  flex: 1;
-  background: linear-gradient(180deg, #8fd9ff 0%, #cdeffd 100%);
+  height: 12%;
+  background: linear-gradient(180deg, #8fd9ff 0%, #bfe8ff 100%);
   overflow: hidden;
 }
 
+.city-stage__sun {
+  position: absolute;
+  top: -10px;
+  right: 10%;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe28a, #ffc94d);
+  box-shadow: 0 0 22px 7px rgba(255, 201, 77, 0.5);
+  transition: opacity 0.6s ease-out;
+}
+
+/* ---- Häuserzeile ---- */
+.city-stage__houses {
+  position: relative;
+  height: 26%;
+  display: flex;
+  align-items: flex-end;
+  gap: 4%;
+  padding: 0 4%;
+  background: linear-gradient(180deg, #bfe8ff 0%, #9be07f 75%, #7fcf6c 100%);
+}
+
+.house {
+  position: relative;
+  flex: 1;
+  height: 62%;
+  border-radius: 3px 3px 0 0;
+}
+
+.house__roof {
+  position: absolute;
+  top: -10px;
+  left: -8%;
+  width: 116%;
+  height: 12px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.house__window {
+  position: absolute;
+  top: 20%;
+  left: 14%;
+  width: 20%;
+  height: 20%;
+  background: #fff8ec;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+.house__window--right {
+  left: auto;
+  right: 14%;
+}
+
+.house__door {
+  position: absolute;
+  bottom: 0;
+  left: 38%;
+  width: 24%;
+  height: 40%;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 3px 3px 0 0;
+}
+
+/* ---- Grime-Wäsche über der ganzen Szene ---- */
 .city-stage__haze {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, #8a7d63 0%, #a89a78 100%);
   transition: opacity 0.6s ease-out;
   pointer-events: none;
+  z-index: 3;
 }
 
-.city-stage__sun {
-  position: absolute;
-  top: 12%;
-  right: 10%;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffe28a, #ffc94d);
-  box-shadow: 0 0 26px 8px rgba(255, 201, 77, 0.5);
-  transition: opacity 0.6s ease-out;
-}
-
-.city-stage__cloud {
-  position: absolute;
-  width: 46px;
-  height: 16px;
-  background: #ffffff;
-  border-radius: var(--radius-full);
-  opacity: 0.9;
-  transition: opacity 0.6s ease-out;
-}
-
-.city-stage__cloud::before,
-.city-stage__cloud::after {
-  content: '';
-  position: absolute;
-  background: #ffffff;
-  border-radius: 50%;
-}
-
-.city-stage__cloud::before {
-  width: 22px;
-  height: 22px;
-  top: -10px;
-  left: 4px;
-}
-
-.city-stage__cloud::after {
-  width: 16px;
-  height: 16px;
-  top: -6px;
-  left: 22px;
-}
-
-.city-stage__cloud--1 {
-  top: 14%;
-  left: 10%;
-}
-
-.city-stage__cloud--2 {
-  top: 8%;
-  left: 55%;
-  transform: scale(0.7);
-}
-
-.city-stage__mountains {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 65%;
+/* ---- Straße ---- */
+.city-stage__road {
+  position: relative;
+  flex: 1;
   overflow: hidden;
+  background: linear-gradient(180deg, #5b6570 0%, #454d56 100%);
+  border-top: 3px solid #363c44;
 }
 
-.city-stage__mountain {
+.city-stage__road-line {
   position: absolute;
-  bottom: -10px;
-  width: 0;
-  height: 0;
-  border-left: 60px solid transparent;
-  border-right: 60px solid transparent;
-  border-bottom: 80px solid #9fb0da;
-  opacity: 0.55;
-}
-
-.city-stage__mountain--1 {
-  left: -20px;
-  border-bottom-color: #93a6d4;
-  transform: scale(0.75);
-}
-.city-stage__mountain--2 {
-  left: 32%;
-  border-bottom-color: #829ad0;
-  transform: scale(1.05);
-}
-.city-stage__mountain--3 {
-  right: -30px;
-  border-bottom-color: #a5b6de;
-  transform: scale(0.85);
-}
-
-.city-stage__skyline {
-  position: absolute;
-  bottom: 0;
+  top: 48%;
   left: 0;
   right: 0;
-  height: 55%;
-  display: flex;
-  align-items: flex-end;
-  gap: 6%;
-  padding: 0 6%;
-}
-
-.city-stage__building {
-  flex: 1;
-  border-radius: 4px 4px 0 0;
-  opacity: 0.85;
-}
-
-.city-stage__building--0 {
-  height: 50%;
-  background: #7a93c9;
-}
-.city-stage__building--1 {
-  height: 82%;
-  background: #5f78ad;
-}
-.city-stage__building--2 {
-  height: 60%;
-  background: #8ba0d4;
-}
-.city-stage__building--3 {
-  height: 95%;
-  background: #7a93c9;
-}
-.city-stage__building--4 {
-  height: 42%;
-  background: #8ba0d4;
-}
-
-.city-stage__ground {
-  position: relative;
-  height: 42%;
-  background: linear-gradient(180deg, #9be07f 0%, #6bc157 100%);
-  border-top: 3px solid #4fa53f;
-}
-
-/* ---- Türme: links Arbeiter-Depot, rechts Transporter-Garage ---- */
-.city-stage__towers {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 42%;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 0 var(--space-3);
-  pointer-events: none;
-}
-
-.tower {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 58px;
-}
-
-.tower__badge {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  margin-bottom: 3px;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(180deg, var(--color-money), var(--color-money-dark));
-  color: #3d2600;
-  font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
-}
-
-.tower__cap {
-  width: 70%;
-  height: 16px;
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  background: var(--color-worker);
-}
-
-.tower__cap--truck {
-  background: var(--color-info);
-}
-
-.tower__body {
-  width: 100%;
-  height: 72px;
-  margin-top: -2px;
-  border-radius: 0 0 10px 10px;
-  background: linear-gradient(180deg, #8ba0d4, #6f85bb);
-  border: 2px solid #5b6ea3;
-  border-top: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tower__body--truck {
-  background: linear-gradient(180deg, #7fc4ff, #4fa3ec);
-  border-color: #3a7dc4;
-}
-
-.tower__window {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fff8ec;
-  border: 2px solid rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-worker-dark);
-}
-
-.tower__body--truck .tower__window {
-  color: var(--color-info-dark);
-}
-
-.city-stage__funnel {
-  position: relative;
-  align-self: flex-end;
-  width: 20px;
-  height: 90px;
-  margin-bottom: 8px;
-}
-
-.city-stage__spark {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-money);
-  box-shadow: 0 0 4px rgba(255, 183, 3, 0.8);
-  animation: city-stage-spark-fall 1.4s linear infinite;
-}
-
-@keyframes city-stage-spark-fall {
-  0% {
-    transform: translate(-50%, 0);
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, 80px);
-    opacity: 0;
-  }
-}
-
-.city-stage__fly {
-  position: absolute;
-  width: 4px;
   height: 4px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  animation: city-stage-fly-buzz 2.4s ease-in-out infinite;
+  background: repeating-linear-gradient(90deg, #ffd23f 0 18px, transparent 18px 34px);
+  opacity: 0.75;
 }
 
-@keyframes city-stage-fly-buzz {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(6px, -4px);
-  }
-  50% {
-    transform: translate(-3px, 3px);
-  }
-  75% {
-    transform: translate(4px, 4px);
-  }
-}
-
-.city-stage__actors {
+.city-stage__litter {
   position: absolute;
-  bottom: 6px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-1);
-  padding: 0 var(--space-2);
-}
-
-.city-stage__group {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.city-stage__group--trucks {
-  flex-direction: row-reverse;
-}
-
-.city-stage__badge {
-  align-self: center;
-  background: rgba(44, 36, 22, 0.75);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  margin: 0 2px;
-}
-
-.city-stage__pile-zone {
-  flex: 1;
-  min-width: 50px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.6s ease-out;
+  z-index: 1;
 }
 
 .city-stage__pile {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  position: absolute;
+  left: 42%;
+  bottom: 12%;
+  transform: translateX(-50%);
   transition: width 0.4s ease-out, height 0.4s ease-out;
+  z-index: 1;
 }
 
 .city-stage__pile-shape {
@@ -359,5 +136,81 @@
   height: 100%;
   background: radial-gradient(120% 100% at 50% 100%, #6b5a3f 0%, #4a3d29 70%, #3a3020 100%);
   border-radius: 50% 50% 20% 20% / 60% 60% 10% 10%;
-  box-shadow: inset -6px -6px 0 rgba(0, 0, 0, 0.15), inset 4px 4px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset -5px -5px 0 rgba(0, 0, 0, 0.15), inset 3px 3px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Arbeiter, die auf der Straße hin- und herlaufen ---- */
+.city-stage__worker-lane {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.city-stage__worker-slot {
+  position: absolute;
+  animation: worker-patrol 8s ease-in-out infinite;
+}
+
+@keyframes worker-patrol {
+  0% {
+    left: 4%;
+    transform: scaleY(1);
+  }
+  38% {
+    left: 34%;
+    transform: scaleY(1);
+  }
+  46% {
+    left: 34%;
+    transform: scaleY(0.82);
+  }
+  54% {
+    left: 34%;
+    transform: scaleY(1);
+  }
+  92% {
+    left: 4%;
+    transform: scaleY(1);
+  }
+  100% {
+    left: 4%;
+    transform: scaleY(1);
+  }
+}
+
+/* ---- Transporter, die von rechts reinfahren, kurz halten und wieder wegfahren ---- */
+.city-stage__truck-lane {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.city-stage__truck-slot {
+  position: absolute;
+  animation: truck-drive-through 7s ease-in-out infinite;
+}
+
+@keyframes truck-drive-through {
+  0% {
+    left: -30%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  42% {
+    left: 40%;
+    opacity: 1;
+  }
+  60% {
+    left: 40%;
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: 120%;
+    opacity: 0;
+  }
 }

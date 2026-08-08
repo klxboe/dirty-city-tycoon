@@ -94,6 +94,16 @@ Anzeige-Komponenten ohne eigene Spiellogik.
       mehrstöckiger Turm-Aufbau (Arbeiter-Depot links, Transporter-Garage
       rechts, je mit "×Anzahl"-Badge, Berge im Hintergrund, fallende Funken
       zwischen den Türmen), Figuren chibi-hafter (größere Köpfe).
+      Dritte Design-Runde ("Turm-Optik wirkt billig, will echte Straßen-Szene
+      mit Bewegung sehen") - Stadt-Bühne nochmal komplett neu: Häuserzeile von
+      oben, Straße mit Mittellinie, verstreute Müll-Icons (Dose/Papier/
+      Bananenschale/Flasche, TrashItem.tsx), Arbeiter patrouillieren mit
+      Lauf+Bück-Animation, Transporter fahren per CSS-Loop-Animation von
+      rechts rein, halten kurz, fahren links wieder raus. Bewusste
+      Erwartungshaltung kommuniziert: volle AAA-Studio-Illustrationsqualität
+      (siehe Referenzbild) ist per Hand-SVG in dieser Form nicht 1:1 erreichbar,
+      Fokus liegt auf "wirkt lebendig, Leute putzen wirklich, Transporter
+      fahren wirklich hin und weg".
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
