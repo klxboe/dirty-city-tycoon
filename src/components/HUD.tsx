@@ -23,26 +23,35 @@ export function HUD({
 }: HUDProps) {
   return (
     <header className="hud">
-      <div className="hud__row">
-        <div className="hud__money">
-          <Coins size={26} className="hud__icon hud__icon--money" />
-          <span className="hud__money-value">{formatNumber(money)}</span>
-        </div>
-        <div className="hud__rate">
-          <TrendingUp size={18} className="hud__icon" />
-          <span>{formatNumber(effectiveRate)}/s</span>
-        </div>
-      </div>
-      <div className="hud__row hud__row--sub">
-        <span className="hud__city">
-          Stadt {cityNumber} · {cityTier} {cityName}
-        </span>
-        {totalStars > 0 && (
-          <span className="hud__prestige">
-            <Sparkles size={14} className="hud__icon hud__icon--star" />
-            {totalStars} · ×{prestigeMultiplier.toFixed(1)}
+      <div className="hud__pills">
+        <div className="hud-pill hud-pill--money">
+          <span className="hud-pill__badge">
+            <Coins size={18} />
           </span>
+          <span className="hud-pill__value">{formatNumber(money)}</span>
+        </div>
+
+        <div className="hud-pill hud-pill--rate">
+          <span className="hud-pill__badge">
+            <TrendingUp size={16} />
+          </span>
+          <span className="hud-pill__value">{formatNumber(effectiveRate)}/s</span>
+        </div>
+
+        {totalStars > 0 && (
+          <div className="hud-pill hud-pill--stars">
+            <span className="hud-pill__badge">
+              <Sparkles size={16} />
+            </span>
+            <span className="hud-pill__value">
+              {totalStars} · ×{prestigeMultiplier.toFixed(1)}
+            </span>
+          </div>
         )}
+      </div>
+
+      <div className="hud__city-label">
+        Stadt {cityNumber} · {cityTier} {cityName}
       </div>
     </header>
   );

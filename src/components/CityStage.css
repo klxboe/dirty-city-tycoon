@@ -1,9 +1,9 @@
 .city-stage {
   position: relative;
   margin: 0 var(--space-3);
-  height: 34vh;
-  min-height: 200px;
-  max-height: 280px;
+  height: 40vh;
+  min-height: 260px;
+  max-height: 340px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -83,6 +83,42 @@
   transform: scale(0.7);
 }
 
+.city-stage__mountains {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65%;
+  overflow: hidden;
+}
+
+.city-stage__mountain {
+  position: absolute;
+  bottom: -10px;
+  width: 0;
+  height: 0;
+  border-left: 60px solid transparent;
+  border-right: 60px solid transparent;
+  border-bottom: 80px solid #9fb0da;
+  opacity: 0.55;
+}
+
+.city-stage__mountain--1 {
+  left: -20px;
+  border-bottom-color: #93a6d4;
+  transform: scale(0.75);
+}
+.city-stage__mountain--2 {
+  left: 32%;
+  border-bottom-color: #829ad0;
+  transform: scale(1.05);
+}
+.city-stage__mountain--3 {
+  right: -30px;
+  border-bottom-color: #a5b6de;
+  transform: scale(0.85);
+}
+
 .city-stage__skyline {
   position: absolute;
   bottom: 0;
@@ -127,6 +163,120 @@
   height: 42%;
   background: linear-gradient(180deg, #9be07f 0%, #6bc157 100%);
   border-top: 3px solid #4fa53f;
+}
+
+/* ---- Türme: links Arbeiter-Depot, rechts Transporter-Garage ---- */
+.city-stage__towers {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 42%;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 var(--space-3);
+  pointer-events: none;
+}
+
+.tower {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 58px;
+}
+
+.tower__badge {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-bottom: 3px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--color-money), var(--color-money-dark));
+  color: #3d2600;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.tower__cap {
+  width: 70%;
+  height: 16px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  background: var(--color-worker);
+}
+
+.tower__cap--truck {
+  background: var(--color-info);
+}
+
+.tower__body {
+  width: 100%;
+  height: 72px;
+  margin-top: -2px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(180deg, #8ba0d4, #6f85bb);
+  border: 2px solid #5b6ea3;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tower__body--truck {
+  background: linear-gradient(180deg, #7fc4ff, #4fa3ec);
+  border-color: #3a7dc4;
+}
+
+.tower__window {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff8ec;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-worker-dark);
+}
+
+.tower__body--truck .tower__window {
+  color: var(--color-info-dark);
+}
+
+.city-stage__funnel {
+  position: relative;
+  align-self: flex-end;
+  width: 20px;
+  height: 90px;
+  margin-bottom: 8px;
+}
+
+.city-stage__spark {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-money);
+  box-shadow: 0 0 4px rgba(255, 183, 3, 0.8);
+  animation: city-stage-spark-fall 1.4s linear infinite;
+}
+
+@keyframes city-stage-spark-fall {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 80px);
+    opacity: 0;
+  }
 }
 
 .city-stage__fly {

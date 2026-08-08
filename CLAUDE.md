@@ -89,6 +89,11 @@ Anzeige-Komponenten ohne eigene Spiellogik.
       helle, knallige Farbpalette, echte Cartoon-Arbeiter/Transporter-Figuren
       (SVG) statt Balken/Icons, Müllhalde in der Stadt-Bühne visualisiert
       direkt den Pufferstand.
+      Zweite Design-Runde nach Referenzbild "Idle Miner Tycoon": HUD als
+      Pillen-Badges (Coins/Rate/Sterne, dunkle Navy-Leiste), Stadt-Bühne als
+      mehrstöckiger Turm-Aufbau (Arbeiter-Depot links, Transporter-Garage
+      rechts, je mit "×Anzahl"-Badge, Berge im Hintergrund, fallende Funken
+      zwischen den Türmen), Figuren chibi-hafter (größere Köpfe).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
