@@ -1,25 +1,41 @@
-# Dirty City Tycoon – Projektstatus
+# Axe Throw – Projektstatus
 
 Diese Datei ist die "Quelle der Wahrheit" für den aktuellen Stand des Projekts.
 Bei jedem größeren Fortschritt wird sie aktualisiert, damit man beim Öffnen des
 Projekts auf einem anderen PC sofort weiß, wo wir stehen.
 
+## Pivot-Hinweis (wichtig für alle Mitwirkenden!)
+
+Dieses Repo hieß ursprünglich "Dirty City Tycoon" (ein Müll-Idle-Spiel). Nach
+mehreren Design-Anläufen, die nicht überzeugt haben, wurde entschieden, **ein
+komplett neues, anderes Spiel** im selben Repo zu bauen (um die bestehende
+GitHub-Mitarbeiter-Einladung nicht neu aufsetzen zu müssen). Der alte Code ist
+nicht verloren, sondern bleibt vollständig in der Git-Historie erhalten
+(`git log`, ältere Commits vor diesem Pivot).
+
 ## Was ist das Spiel?
 
-Ein simples Idle-/Tycoon-Handyspiel (Vorbild: "Idle Miner Tycoon", Thema: Müll statt Erz).
-Der Spieler macht eine dreckige Stadt sauber, kauft Arbeiter und Transporter,
-muss den Engpass zwischen beiden im Gleichgewicht halten, und reist am Ende
-per Prestige-System in immer größere, dreckigere Städte.
+Ein simples, süchtig machendes Arcade-Handyspiel im Stil von "Knife Hit", aber
+mit eigenem Twist: **Axt-Wurf mit Schwung-Kontrolle**.
 
-Ausführliches Spieldesign (Mechaniken, Balancing-Zahlen, UI/Look) steht in der
-ursprünglichen Anforderung – wird nach und nach in diese Datei bzw. in Code-Kommentare
-übernommen, sobald die jeweilige Phase gebaut wird.
+- Man hält den Bildschirm gedrückt, um zu "laden" – ein Regler dreht sich
+  dabei kontinuierlich.
+- Lässt man genau im richtigen Moment los (grüner Bereich im Regler), fliegt
+  die Axt sauber in die rotierende Zielscheibe.
+- Zu früh oder zu spät losgelassen → die Axt prallt ab → Game Over.
+- Trifft man eine Stelle, an der schon eine Axt steckt → auch Game Over.
+- Mit jedem Treffer wird es schwerer: Die Scheibe dreht sich schneller, der
+  Lade-Zyklus wird kürzer, das Zeitfenster für einen sauberen Treffer schrumpft.
+- Score = Anzahl sauberer Treffer in Folge. Bestwert wird lokal gespeichert.
+
+Der Skill ist bewusst anders als bei Knife Hit: nicht "im richtigen Moment
+tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
 
 ## Tech-Stack
 
 - Vite + React + TypeScript
-- Capacitor (kommt in Phase 2) für die native iOS-Verpackung
-- Speicherung: localStorage im Web, später Capacitor Preferences auf iOS
+- Capacitor (spätere Phase) für die native iOS-Verpackung
+- Speicherung: localStorage im Web (Bestwert)
 - Kein Backend, keine Accounts, kein externes Game-Framework. Alles läuft lokal.
 
 ## Architektur
@@ -27,91 +43,61 @@ ursprünglichen Anforderung – wird nach und nach in diese Datei bzw. in Code-K
 ```
 src/
   game/
-    types.ts       Alle Datentypen (GameState, CityDef, OfflineReport)
-    constants.ts    Alle Balancing-Zahlen + Städte-Liste an einem Ort
-    engine.ts       Reine Spiellogik (kein React): tick(), Kauf-Funktionen,
-                     Prestige-Berechnung, Offline-Verdienst-Berechnung
-    storage.ts      localStorage laden/speichern (wird in Phase 2 auf
-                     Capacitor Preferences umgestellt)
+    types.ts     GameState, StuckAxe, GamePhase (ready/charging/flying/gameover)
+    constants.ts  Alle Balancing-Zahlen an einem Ort
+    engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
+                   normalizeAngle, angularDistance, spinProgress, isGoodTiming,
+                   computeBoardLocalAngle, collidesWithStuckAxe,
+                   boardSpeedForScore/spinPeriodForScore/sweetSpotToleranceForScore
+                   (Schwierigkeitskurve)
+    storage.ts    Bestwert laden/speichern (localStorage)
   hooks/
-    useGameEngine.ts  Verbindet engine.ts mit React: State, 100ms-Tick-Loop,
-                       Autosave (alle 5s + beim Verstecken/Schließen der Seite),
-                       Offline-Verdienst beim Start berechnen
+    useAxeGame.ts  Verbindet engine.ts mit React: Rotations-Loop
+                    (requestAnimationFrame), Laden/Werfen per Pointer-Events,
+                    Zustandsmaschine ready -> charging -> flying -> ready/gameover
   components/
-    HUD, CleanlinessBar, CityStage, BufferBar, TapButton, ShopPanel,
-    OfflineModal, PrestigeModal – je eine .tsx + eigene .css Datei
-    WorkerSprite, TruckSprite – kleine Cartoon-Figuren als Inline-SVG
-    (kein Bild-Asset, direkt Code), werden in CityStage je nach Anzahl
-    gekaufter Einheiten mehrfach angezeigt (mit Obergrenze + "+N"-Badge)
-  styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände).
-    Heller, knalliger Mobile-Game-Look als Standard, dunkles Pendant über
-    prefers-color-scheme: dark.
-  utils/format.ts   Zahlen-Kurzformat (1,5k / 2,3 Mio) und Prozent-Format
+    Axe.tsx          Die Axt-Form (SVG), für fliegende UND steckende Äxte
+    TargetBoard.tsx  Die rotierende Zielscheibe inkl. aller steckenden Äxte
+    PowerDial.tsx    Der Lade-Regler mit dem grünen "Sweet Spot"-Keil
+    HUD.tsx          Score/Bestwert oben
+    GameOverModal.tsx
+  styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
 ```
 
-Prinzip: `game/` kennt React nicht (pure Funktionen, leicht nachvollziehbar/testbar),
-`hooks/useGameEngine.ts` ist die einzige Brücke zu React, `components/` sind reine
-Anzeige-Komponenten ohne eigene Spiellogik.
+Prinzip: `game/` kennt React nicht (pure Funktionen, leicht nachvollziehbar/
+testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
 
-## Spielregeln (Kurzfassung, Details siehe Balancing unten)
+### Die Winkel-Logik (der kniffligste Teil, kurz erklärt)
 
-- Tick alle 100ms.
-- Tippen auf "Selber kehren" gibt Geld pro Tipp.
-- Arbeiter sammeln Müll in einen Puffer (Zwischenlager).
-- Transporter leeren den Puffer und wandeln Müll in Geld um.
-- Effektiver Verdienst/s = Minimum aus Sammelrate und Abfahrrate (Engpass!).
-- Lager vergrößert den Puffer.
-- Sauberkeits-Fortschritt pro Stadt = insgesamt in dieser Stadt verdientes Geld.
-- Bei Erreichen des Stadt-Ziels: Umzug in nächste Stadt = Prestige-Reset mit
-  dauerhaftem Multiplikator (+10% pro gewonnenem Stern).
-- Offline-Einkommen beim Wiedereröffnen, gedeckelt auf 8 Stunden.
-
-## Balancing (Startwerte)
-
-- Tippen: +1 Geld/Tipp × Prestige-Multiplikator. Startkapital: 0.
-- Arbeiter: Grundpreis 15, +1.5 Sammelrate/Stück.
-- Transporter: Grundpreis 22, +1.5 Abfahrrate/Stück, Start: 1 gratis.
-- Lager: Grundpreis 120, +40 Pufferkapazität/Stück. Basis-Puffer ohne Lager: 50.
-- Kostensteigerung: grundpreis × 1.15^anzahl.
-- Städte-Ziele: Dorf 2.500 → Kleinstadt 20.000 → Mittelstadt 160.000 →
-  Großstadt 1.28 Mio → Metropole 10.24 Mio (jeweils ×8).
-- Sterne beim Umzug: floor(sqrt(verdientes_Geld_dieser_Stadt / 5000)), je Stern +10% Multiplikator.
-- Offline-Cap: 8 Stunden.
+- Die Zielscheibe rotiert kontinuierlich (Weltwinkel, 0° = oben, im Uhrzeigersinn).
+- Der Einschlagpunkt ist immer an derselben Stelle auf dem BILDSCHIRM fixiert
+  (unten an der Scheibe, `IMPACT_WORLD_ANGLE_DEG`).
+- Eine steckende Axt merkt sich ihren Winkel im LOKALEN Koordinatensystem der
+  Scheibe (`boardLocalAngleDeg = IMPACT_WORLD_ANGLE_DEG - aktueller Weltwinkel`),
+  damit sie beim Rendern korrekt "mitrotiert", wenn sich die Scheibe weiterdreht.
+- Kollisionsprüfung vergleicht den neuen lokalen Winkel gegen alle bereits
+  steckenden Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`).
+- **Wichtiges Balancing:** Die Rotationsgeschwindigkeit der Scheibe muss immer
+  deutlich schneller sein als "Kollisions-Toleranz ÷ Flugzeit", sonst kollidieren
+  selbst perfekt getimte, schnell aufeinanderfolgende Würfe unfair mit der
+  eigenen letzten Axt (das war ein echter Bug beim ersten Bauen, ist jetzt
+  behoben: `BASE_BOARD_SPEED_DEG_PER_SEC = 95`).
 
 ## Aktueller Stand
 
-- [x] Phase 0: Git-Repo initialisiert, .gitignore, CLAUDE.md angelegt.
-- [x] Phase 1: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar (localStorage).
-      Alle Kernmechaniken durchgetestet (Tippen, Kaufen, Engpass-Warnung,
-      Offline-Verdienst, Prestige-Umzug).
-      Nach erstem Feedback ("wirkt zu abstrakt, soll wie ein echtes Handyspiel
-      aussehen, Vorbild Idle Lumber Factory") komplett überarbeitetes Design:
-      helle, knallige Farbpalette, echte Cartoon-Arbeiter/Transporter-Figuren
-      (SVG) statt Balken/Icons, Müllhalde in der Stadt-Bühne visualisiert
-      direkt den Pufferstand.
-      Zweite Design-Runde nach Referenzbild "Idle Miner Tycoon": HUD als
-      Pillen-Badges (Coins/Rate/Sterne, dunkle Navy-Leiste), Stadt-Bühne als
-      mehrstöckiger Turm-Aufbau (Arbeiter-Depot links, Transporter-Garage
-      rechts, je mit "×Anzahl"-Badge, Berge im Hintergrund, fallende Funken
-      zwischen den Türmen), Figuren chibi-hafter (größere Köpfe).
-      Dritte Design-Runde ("Turm-Optik wirkt billig, will echte Straßen-Szene
-      mit Bewegung sehen") - Stadt-Bühne nochmal komplett neu: Häuserzeile von
-      oben, Straße mit Mittellinie, verstreute Müll-Icons (Dose/Papier/
-      Bananenschale/Flasche, TrashItem.tsx), Arbeiter patrouillieren mit
-      Lauf+Bück-Animation, Transporter fahren per CSS-Loop-Animation von
-      rechts rein, halten kurz, fahren links wieder raus. Bewusste
-      Erwartungshaltung kommuniziert: volle AAA-Studio-Illustrationsqualität
-      (siehe Referenzbild) ist per Hand-SVG in dieser Form nicht 1:1 erreichbar,
-      Fokus liegt auf "wirkt lebendig, Leute putzen wirklich, Transporter
-      fahren wirklich hin und weg".
+- [x] Grundgerüst: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar.
+      Kernschleife (Laden/Werfen/Kollision/Highscore) durchgetestet.
+      Balancing-Bug gefunden und behoben (siehe oben, Rotationsgeschwindigkeit).
+- [ ] Feinschliff: Visuelles Feedback bei Treffer/Fehlwurf (Juice: Partikel,
+      Screen-Shake o.ä.), evtl. Soundeffekte.
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
 ## Offene To-dos
 
-- Phase 2 starten, sobald Klaus Phase 1 final getestet hat und OK gibt.
-- Feinjustierung des Balancings folgt nach Bauchgefühl-Test durch Klaus
-  (Tempo: erster Arbeiter ~15-20s, erster Engpass ~1-2 Min, erster Umzug ~15-20 Min).
+- Klaus soll das Spiel selbst testen (`npm run dev`) und Feedback zu
+  Schwierigkeit/Timing-Gefühl geben – Balancing-Werte sind erste Schätzungen.
+- Ggf. Juice/Polish-Runde vor Phase 2.
 
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 

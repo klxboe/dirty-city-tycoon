@@ -1,17 +1,8 @@
-/*
- * Alle Design-Werte an einem Ort. Farben/Abstände/Radien hier ändern,
- * wirkt sich automatisch auf die ganze App aus.
- *
- * Look: helles, knalliges Mobile-Game-Design (wie Idle-Tycoon-Spiele) statt
- * gedämpftem Dark-Theme. Cremefarbene Panels, kräftige Akzentfarben, dicke
- * "3D"-Button-Kanten über --shadow-bevel-*.
- */
+/* Alle Design-Werte an einem Ort. Farben/Abstände/Radien hier ändern, wirkt sich auf die ganze App aus. */
 :root {
-  /* Seiten-Hintergrund: warmer Himmel-Verlauf hinter der ganzen App */
-  --color-page-top: #7fd4f5;
-  --color-page-bottom: #bdeaff;
+  --color-bg-top: #6fb6e0;
+  --color-bg-bottom: #3f7fae;
 
-  /* Panels/Karten */
   --color-surface: #fffaf0;
   --color-surface-raised: #fff1d6;
   --color-border: #e8d9b8;
@@ -19,27 +10,18 @@
   --color-text: #2c2416;
   --color-text-muted: #8a7a63;
 
-  /* Akzentfarben */
-  --color-primary: #3ecf5d; /* Sauberkeit / Erfolg / Grün */
+  --color-primary: #3ecf5d;
   --color-primary-dark: #269943;
-  --color-money: #ffb703; /* Gold für Geld */
+  --color-money: #ffb703;
   --color-money-dark: #d99400;
-  --color-danger: #ff5a5f; /* Engpass-Warnung */
+  --color-danger: #ff5a5f;
   --color-danger-dark: #d63a3f;
-  --color-info: #2f9bff; /* Transporter/Abfahrrate */
-  --color-info-dark: #1c74cc;
-  --color-worker: #ff8c42; /* Arbeiter-Akzent */
-  --color-worker-dark: #dd6c22;
-  --color-storage: #9b6bff; /* Lager-Akzent */
-  --color-storage-dark: #7a46e6;
 
-  /* Radien */
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-full: 999px;
 
-  /* Abstände */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -47,25 +29,7 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  /* Typografie */
   --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-numbers: system-ui, -apple-system, sans-serif;
 
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-page-top: #16324a;
-    --color-page-bottom: #0c1b28;
-
-    --color-surface: #23282f;
-    --color-surface-raised: #2c3239;
-    --color-border: #3a414a;
-
-    --color-text: #f4efe3;
-    --color-text-muted: #9aa3ad;
-
-    color-scheme: dark;
-  }
 }

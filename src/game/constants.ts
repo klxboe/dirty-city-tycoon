@@ -1,53 +1,35 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
-import type { CityDef } from './types';
 
-export const SAVE_VERSION = 1;
+/** Wie lange ein voller "Spin-Zyklus" beim Laden dauert (ms). Ein Release nahe 0/1 = sauberer Treffer. */
+export const BASE_SPIN_PERIOD_MS = 850;
+/** Zyklus wird mit steigendem Score etwas schneller (schwerer zu treffen). */
+export const SPIN_PERIOD_MIN_MS = 480;
+export const SPIN_PERIOD_SHRINK_PER_HIT = 12;
 
-export const TICK_MS = 100;
-export const TICKS_PER_SECOND = 1000 / TICK_MS;
-
-export const TAP_BASE_VALUE = 1;
-
-export const WORKER_BASE_COST = 15;
-export const WORKER_RATE = 1.5;
-
-export const TRANSPORTER_BASE_COST = 22;
-export const TRANSPORTER_RATE = 1.5;
-export const TRANSPORTER_START_COUNT = 1;
-
-export const STORAGE_BASE_COST = 120;
-export const STORAGE_CAPACITY_PER_UNIT = 40;
-export const BASE_BUFFER_CAPACITY = 50;
-
-export const COST_GROWTH_FACTOR = 1.15;
-
-export const OFFLINE_CAP_HOURS = 8;
-export const OFFLINE_CAP_MS = OFFLINE_CAP_HOURS * 60 * 60 * 1000;
-/** Kürzere Abwesenheiten (z.B. kurz App gewechselt) lösen keine "Willkommen zurück"-Meldung aus. */
-export const OFFLINE_MIN_MS = 60 * 1000;
-
-export const STAR_MONEY_DIVISOR = 5000;
-export const STAR_MULTIPLIER_BONUS = 0.1;
+/** Toleranz um den Sweet Spot herum (Anteil des Zyklus, 0.1 = ±10%). Schrumpft mit dem Score. */
+export const BASE_SWEET_SPOT_TOLERANCE = 0.16;
+export const MIN_SWEET_SPOT_TOLERANCE = 0.07;
+export const SWEET_SPOT_SHRINK_PER_HIT = 0.004;
 
 /**
- * Städte-Reihenfolge (fiktive Namen, keine echten Orte/Marken).
- * Jedes weitere Ziel ist grob ×8 des vorherigen.
+ * Rotationsgeschwindigkeit der Zielscheibe (Grad/Sekunde). Steigt mit dem Score.
+ * WICHTIG: muss deutlich höher sein als COLLISION_ANGLE_TOLERANCE_DEG / (FLIGHT_DURATION_MS/1000),
+ * sonst kollidieren selbst perfekt getimte Würfe im schnellstmöglichen Rhythmus unfair mit der
+ * eigenen letzten Axt, weil sich die Scheibe zwischen zwei Würfen kaum weiterdreht.
  */
-export const CITIES: CityDef[] = [
-  { name: 'Krähenwinkel', tier: 'Dorf', goal: 2_500 },
-  { name: 'Aschfeld', tier: 'Kleinstadt', goal: 20_000 },
-  { name: 'Grauhafen', tier: 'Mittelstadt', goal: 160_000 },
-  { name: 'Rußburg', tier: 'Großstadt', goal: 1_280_000 },
-  { name: 'Nebelheim', tier: 'Metropole', goal: 10_240_000 },
-];
+export const BASE_BOARD_SPEED_DEG_PER_SEC = 95;
+export const BOARD_SPEED_INCREMENT_PER_HIT = 4;
+export const MAX_BOARD_SPEED_DEG_PER_SEC = 220;
 
-/** Danach geht die Reise fiktiv weiter: gleiche Metropole, neue Runde, ×8-Ziel. */
-export function getCityForIndex(index: number): CityDef {
-  if (index < CITIES.length) return CITIES[index];
-  const last = CITIES[CITIES.length - 1];
-  const extraRounds = index - CITIES.length + 2;
-  const goal = Math.round(last.goal * Math.pow(8, index - CITIES.length + 1));
-  return { name: `${last.name} ${extraRounds}`, tier: last.tier, goal };
-}
+/** Ab welchem Winkel-Abstand zwei Äxte als "Kollision" gelten (Grad). */
+export const COLLISION_ANGLE_TOLERANCE_DEG = 16;
 
-export const SAVE_KEY = 'dirty-city-tycoon-save-v1';
+/** Wie lange die Fluganimation der Axt dauert (ms). */
+export const FLIGHT_DURATION_MS = 320;
+/** Wie oft sich die Axt während des Flugs sichtbar dreht (rein optisch). */
+export const FLIGHT_VISUAL_SPINS = 2.5;
+
+/** Fester Aufprall-Punkt der Scheibe in Weltkoordinaten (0° = oben, im Uhrzeigersinn). */
+export const IMPACT_WORLD_ANGLE_DEG = 180;
+
+export const SAVE_KEY = 'axe-throw-high-score-v1';

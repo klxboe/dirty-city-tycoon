@@ -1,0 +1,57 @@
+.target-board {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#c48a4d 0deg 8deg, #b87a3c 8deg 16deg);
+  border: 6px solid #7a5230;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2), 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.target-board__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(58, 38, 15, 0.35);
+}
+
+.target-board__ring--outer {
+  width: 176px;
+  height: 176px;
+}
+
+.target-board__ring--mid {
+  width: 122px;
+  height: 122px;
+  background: rgba(239, 231, 214, 0.18);
+}
+
+.target-board__ring--inner {
+  width: 68px;
+  height: 68px;
+  background: rgba(239, 231, 214, 0.15);
+}
+
+.target-board__bullseye {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #e3483f;
+  border: 2px solid #9a2b25;
+}
+
+.target-board__axe-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.target-board__axe-flip {
+  transform: rotate(180deg);
+}

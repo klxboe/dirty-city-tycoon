@@ -4,6 +4,60 @@
   min-height: 100svh;
   display: flex;
   flex-direction: column;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) 0 var(--space-6);
+  user-select: none;
+  touch-action: none;
+}
+
+.stage__board-zone {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.stage__thrower-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--space-3);
-  padding-bottom: var(--space-5);
+}
+
+.stage__hint {
+  min-height: 20px;
+  padding: 0 var(--space-5);
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.axe-flying {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  animation-name: axe-fly;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+  pointer-events: none;
+}
+
+@keyframes axe-fly {
+  from {
+    bottom: 8%;
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    bottom: 68%;
+    transform: translateX(-50%) rotate(900deg);
+  }
 }

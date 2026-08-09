@@ -1,160 +1,62 @@
 // Reine Spiellogik ohne React – gut einzeln nachvollziehbar und testbar.
 import {
-  BASE_BUFFER_CAPACITY,
-  COST_GROWTH_FACTOR,
-  OFFLINE_CAP_MS,
-  OFFLINE_MIN_MS,
-  STAR_MONEY_DIVISOR,
-  STAR_MULTIPLIER_BONUS,
-  STORAGE_BASE_COST,
-  STORAGE_CAPACITY_PER_UNIT,
-  TICKS_PER_SECOND,
-  TRANSPORTER_BASE_COST,
-  TRANSPORTER_RATE,
-  WORKER_BASE_COST,
-  WORKER_RATE,
+  BASE_BOARD_SPEED_DEG_PER_SEC,
+  BASE_SPIN_PERIOD_MS,
+  BASE_SWEET_SPOT_TOLERANCE,
+  BOARD_SPEED_INCREMENT_PER_HIT,
+  COLLISION_ANGLE_TOLERANCE_DEG,
+  IMPACT_WORLD_ANGLE_DEG,
+  MAX_BOARD_SPEED_DEG_PER_SEC,
+  MIN_SWEET_SPOT_TOLERANCE,
+  SPIN_PERIOD_MIN_MS,
+  SPIN_PERIOD_SHRINK_PER_HIT,
+  SWEET_SPOT_SHRINK_PER_HIT,
 } from './constants';
-import type { GameState, OfflineReport } from './types';
+import type { StuckAxe } from './types';
 
-/** Preis der nächsten Einheit: Grundpreis × 1.15^(bereits vorhandene Einheiten). */
-export function costFor(baseCost: number, owned: number): number {
-  return Math.ceil(baseCost * Math.pow(COST_GROWTH_FACTOR, owned));
+export function normalizeAngle(deg: number): number {
+  const m = deg % 360;
+  return m < 0 ? m + 360 : m;
 }
 
-export function workerCost(state: GameState): number {
-  return costFor(WORKER_BASE_COST, state.workers);
+/** Kürzester Winkel-Abstand zwischen zwei Richtungen (immer 0-180). */
+export function angularDistance(a: number, b: number): number {
+  const diff = Math.abs(normalizeAngle(a) - normalizeAngle(b));
+  return Math.min(diff, 360 - diff);
 }
 
-export function transporterCost(state: GameState): number {
-  return costFor(TRANSPORTER_BASE_COST, state.transporters);
+/** Je höher der Score, desto schneller der Lade-Zyklus (schwerer zu treffen). */
+export function spinPeriodForScore(score: number): number {
+  return Math.max(SPIN_PERIOD_MIN_MS, BASE_SPIN_PERIOD_MS - score * SPIN_PERIOD_SHRINK_PER_HIT);
 }
 
-export function storageCost(state: GameState): number {
-  return costFor(STORAGE_BASE_COST, state.storages);
+/** Je höher der Score, desto schmaler das Zeitfenster für einen sauberen Treffer. */
+export function sweetSpotToleranceForScore(score: number): number {
+  return Math.max(MIN_SWEET_SPOT_TOLERANCE, BASE_SWEET_SPOT_TOLERANCE - score * SWEET_SPOT_SHRINK_PER_HIT);
 }
 
-/** Müll, den die Arbeiter pro Sekunde einsammeln. */
-export function collectRate(state: GameState): number {
-  return state.workers * WORKER_RATE;
+/** Je höher der Score, desto schneller dreht sich die Zielscheibe. */
+export function boardSpeedForScore(score: number): number {
+  return Math.min(MAX_BOARD_SPEED_DEG_PER_SEC, BASE_BOARD_SPEED_DEG_PER_SEC + score * BOARD_SPEED_INCREMENT_PER_HIT);
 }
 
-/** Müll, den die Transporter pro Sekunde abfahren (= Geld/s, vor dem Engpass). */
-export function dispatchRate(state: GameState): number {
-  return state.transporters * TRANSPORTER_RATE * state.prestigeMultiplier;
+/** Wie weit ist der Lade-Zyklus gerade (0-1, wiederholt sich). Für die Anzeige des Drehreglers. */
+export function spinProgress(holdMs: number, spinPeriodMs: number): number {
+  return (holdMs % spinPeriodMs) / spinPeriodMs;
 }
 
-export function bufferCapacity(state: GameState): number {
-  return BASE_BUFFER_CAPACITY + state.storages * STORAGE_CAPACITY_PER_UNIT;
+/** true, wenn beim Loslassen genau jetzt die Axt sauber (mit der Klinge voran) treffen würde. */
+export function isGoodTiming(holdMs: number, spinPeriodMs: number, tolerance: number): boolean {
+  const progress = spinProgress(holdMs, spinPeriodMs);
+  return progress <= tolerance || progress >= 1 - tolerance;
 }
 
-/** Der tatsächliche Verdienst/s: immer der Engpass aus Sammeln und Abfahren. */
-export function effectiveRate(state: GameState): number {
-  return Math.min(collectRate(state), dispatchRate(state));
+/** Winkel, an dem eine neue Axt in der (rotierenden) Scheibe "einwächst", im lokalen Koordinatensystem der Scheibe. */
+export function computeBoardLocalAngle(worldBoardAngleDeg: number): number {
+  return normalizeAngle(IMPACT_WORLD_ANGLE_DEG - worldBoardAngleDeg);
 }
 
-/** true, wenn im letzten Tick Müll verloren ging, weil der Puffer voll war (Engpass-Warnung). */
-export function isBottlenecked(state: GameState): boolean {
-  return state.bufferOverflowing;
-}
-
-/**
- * Simuliert einen einzelnen Tick (100ms) der Kernschleife:
- * Puffer füllt sich aus der Sammelrate (Überschuss geht verloren),
- * Transporter leeren den Puffer und erzeugen Geld.
- */
-export function tick(state: GameState): GameState {
-  const capacity = bufferCapacity(state);
-  const collected = collectRate(state) / TICKS_PER_SECOND;
-  const rawBufferAfterCollect = state.buffer + collected;
-  const bufferAfterCollect = Math.min(rawBufferAfterCollect, capacity);
-
-  const dispatchable = dispatchRate(state) / TICKS_PER_SECOND;
-  const dispatched = Math.min(bufferAfterCollect, dispatchable);
-
-  return {
-    ...state,
-    buffer: bufferAfterCollect - dispatched,
-    // Puffer war zu klein für den gesammelten Müll -> etwas ist verloren gegangen.
-    bufferOverflowing: rawBufferAfterCollect > capacity,
-    money: state.money + dispatched,
-    totalEarnedThisCity: state.totalEarnedThisCity + dispatched,
-  };
-}
-
-/** Der Spieler tippt selbst auf "Selber kehren". */
-export function applyTap(state: GameState, tapValue: number): GameState {
-  const gained = tapValue * state.prestigeMultiplier;
-  return {
-    ...state,
-    money: state.money + gained,
-    totalEarnedThisCity: state.totalEarnedThisCity + gained,
-  };
-}
-
-export function buyWorker(state: GameState): GameState {
-  const cost = workerCost(state);
-  if (state.money < cost) return state;
-  return { ...state, money: state.money - cost, workers: state.workers + 1 };
-}
-
-export function buyTransporter(state: GameState): GameState {
-  const cost = transporterCost(state);
-  if (state.money < cost) return state;
-  return { ...state, money: state.money - cost, transporters: state.transporters + 1 };
-}
-
-export function buyStorage(state: GameState): GameState {
-  const cost = storageCost(state);
-  if (state.money < cost) return state;
-  return { ...state, money: state.money - cost, storages: state.storages + 1 };
-}
-
-/** Wie viele Sterne ein Umzug beim aktuellen Stand der Stadt bringen würde. */
-export function starsForCurrentCity(state: GameState): number {
-  return Math.floor(Math.sqrt(state.totalEarnedThisCity / STAR_MONEY_DIVISOR));
-}
-
-export function multiplierForStars(totalStars: number): number {
-  return 1 + totalStars * STAR_MULTIPLIER_BONUS;
-}
-
-/**
- * Umzug in die nächste Stadt: Sterne einsammeln, Multiplikator erhöhen,
- * alles außer Sternen/Multiplikator/Stadt-Fortschritt zurücksetzen.
- */
-export function prestige(state: GameState): GameState {
-  const gainedStars = starsForCurrentCity(state);
-  const totalStars = state.totalStars + gainedStars;
-  return {
-    ...state,
-    money: 0,
-    totalEarnedThisCity: 0,
-    workers: 0,
-    transporters: 1,
-    storages: 0,
-    buffer: 0,
-    cityIndex: state.cityIndex + 1,
-    totalStars,
-    prestigeMultiplier: multiplierForStars(totalStars),
-  };
-}
-
-/**
- * Verdienst während der Spieler weg war: vergangene Zeit × effektiver Verdienst/s,
- * gedeckelt auf OFFLINE_CAP_MS. Sehr kurze Abwesenheiten werden ignoriert.
- */
-export function computeOfflineReport(state: GameState, now: number): OfflineReport {
-  const elapsedMs = Math.min(Math.max(now - state.lastSavedAt, 0), OFFLINE_CAP_MS);
-  if (elapsedMs < OFFLINE_MIN_MS) return { earned: 0, elapsedMs: 0 };
-  const earned = effectiveRate(state) * (elapsedMs / 1000);
-  return { earned, elapsedMs };
-}
-
-export function applyOfflineReport(state: GameState, report: OfflineReport): GameState {
-  if (report.earned <= 0) return state;
-  return {
-    ...state,
-    money: state.money + report.earned,
-    totalEarnedThisCity: state.totalEarnedThisCity + report.earned,
-  };
+/** true, wenn der neue Einschlagpunkt zu nah an einer bereits steckenden Axt liegt. */
+export function collidesWithStuckAxe(candidateLocalAngle: number, stuckAxes: StuckAxe[]): boolean {
+  return stuckAxes.some((axe) => angularDistance(candidateLocalAngle, axe.boardLocalAngleDeg) < COLLISION_ANGLE_TOLERANCE_DEG);
 }
