@@ -3,18 +3,35 @@ import './LevelCompleteModal.css';
 
 interface LevelCompleteModalProps {
   level: number;
+  levelName: string;
+  nextLevelName: string | null;
   hits: number;
   axeCount: number;
   applesCollected: number;
   totalCurrency: number;
+  isLastLevel: boolean;
   onRetry: () => void;
+  onNext: () => void;
 }
 
-export function LevelCompleteModal({ level, hits, axeCount, applesCollected, totalCurrency, onRetry }: LevelCompleteModalProps) {
+export function LevelCompleteModal({
+  level,
+  levelName,
+  nextLevelName,
+  hits,
+  axeCount,
+  applesCollected,
+  totalCurrency,
+  isLastLevel,
+  onRetry,
+  onNext,
+}: LevelCompleteModalProps) {
   return (
     <div className="modal-backdrop">
       <div className="modal-card">
-        <div className="modal-card__title">Level {level} geschafft!</div>
+        <div className="modal-card__title">
+          Level {level} "{levelName}" geschafft!
+        </div>
         <div className="modal-card__body">
           {hits} von {axeCount} Äxten haben sauber getroffen.
         </div>
@@ -27,9 +44,23 @@ export function LevelCompleteModal({ level, hits, axeCount, applesCollected, tot
           Äpfel insgesamt: <strong>{totalCurrency}</strong>
         </div>
 
-        <button className="modal-card__button" onClick={onRetry}>
-          Nochmal spielen
-        </button>
+        {isLastLevel ? (
+          <>
+            <div className="modal-card__badge">Alle Level gemeistert! 🎉</div>
+            <button className="modal-card__button" onClick={onRetry}>
+              Nochmal spielen
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="modal-card__button" onClick={onNext}>
+              Weiter zu "{nextLevelName}"
+            </button>
+            <button className="modal-card__button modal-card__button--secondary" onClick={onRetry}>
+              Level nochmal spielen
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -5,20 +5,12 @@
   align-items: center;
 }
 
-.target-mount__bracket {
-  width: 34px;
-  height: 10px;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, #8a8f96, #565b61);
-  border: 1px solid #3a3e43;
-}
-
 .target-mount__chain {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 3px 0;
+  padding: 6px 0 3px;
 }
 
 .target-mount__chain span {
@@ -87,14 +79,6 @@
   background: radial-gradient(circle at 35% 30%, #ff6b61, #c62a20 70%, #8f1b14 100%);
   border: 2px solid #6b140d;
   box-shadow: 0 0 10px rgba(214, 60, 48, 0.6);
-}
-
-.target-board__shine {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, rgba(255, 255, 255, 0.28) 0deg 18deg, transparent 40deg 360deg);
-  pointer-events: none;
 }
 
 .target-board__axe-slot,

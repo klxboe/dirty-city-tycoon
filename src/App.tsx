@@ -5,7 +5,9 @@ import { HUD } from './components/HUD';
 import { TargetBoard } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS } from './game/constants';
+import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
+import { playAppleSound, playBreakSound, playHitSound, playMissSound, unlockAudio } from './game/sound';
+import type { ThrowOutcome } from './game/types';
 import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95];
@@ -14,6 +16,8 @@ function App() {
   const game = useAxeGame();
   const stageRef = useRef<HTMLDivElement>(null);
   const prevHitsRef = useRef(game.hits);
+  const prevOutcomeRef = useRef<ThrowOutcome | null>(null);
+  const prevApplesRef = useRef(game.applesCollectedThisRun);
   const [burstId, setBurstId] = useState(0);
 
   // Juice: kurzer Screen-Shake + Holzspäne-Partikel bei jedem sauberen Treffer.
@@ -30,6 +34,27 @@ function App() {
     prevHitsRef.current = game.hits;
   }, [game.hits]);
 
+  // Soundeffekte je nach Ausgang des Wurfs.
+  useEffect(() => {
+    if (game.lastOutcome && game.lastOutcome !== prevOutcomeRef.current) {
+      if (game.phase === 'levelComplete' && game.lastOutcome === 'stuck') {
+        playBreakSound();
+      } else if (game.lastOutcome === 'stuck') {
+        playHitSound();
+      } else {
+        playMissSound();
+      }
+    }
+    prevOutcomeRef.current = game.lastOutcome;
+  }, [game.lastOutcome, game.phase]);
+
+  useEffect(() => {
+    if (game.applesCollectedThisRun > prevApplesRef.current) {
+      playAppleSound();
+    }
+    prevApplesRef.current = game.applesCollectedThisRun;
+  }, [game.applesCollectedThisRun]);
+
   const hint =
     game.phase === 'flying'
       ? ''
@@ -37,11 +62,16 @@ function App() {
         ? ''
         : 'Tippen zum Werfen';
 
+  const handlePointerDown = () => {
+    unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
+    game.throwAxe();
+  };
+
   return (
     <div className="app">
       <HUD level={game.levelIndex + 1} hits={game.hits} axeCount={game.axeCount} totalCurrency={game.totalCurrency} />
 
-      <div ref={stageRef} className="stage" onPointerDown={game.throwAxe}>
+      <div ref={stageRef} className="stage" onPointerDown={handlePointerDown}>
         <div className="stage__board-zone">
           <TargetBoard
             angleDeg={game.boardAngleDeg}
@@ -82,11 +112,15 @@ function App() {
       {game.phase === 'levelComplete' && (
         <LevelCompleteModal
           level={game.levelIndex + 1}
+          levelName={game.levelName}
+          nextLevelName={game.isLastLevel ? null : LEVELS[game.levelIndex + 1].name}
           hits={game.hits}
           axeCount={game.axeCount}
           applesCollected={game.applesCollectedThisRun}
           totalCurrency={game.totalCurrency}
+          isLastLevel={game.isLastLevel}
           onRetry={game.retryLevel}
+          onNext={game.nextLevel}
         />
       )}
     </div>

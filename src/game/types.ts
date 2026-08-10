@@ -24,10 +24,13 @@ export interface FlyingAxe {
 
 /** Alle Balancing-Werte für ein Level. */
 export interface LevelConfig {
+  name: string;
   axeCount: number;
   boardSpeedDegPerSec: number;
   /** Feste Positionen (Grad, lokal am Brett) für die Äpfel in diesem Level. */
   appleAngles: number[];
+  /** Äxte, die schon zu Levelbeginn im Brett stecken (Hindernisse). Optional. */
+  preplacedAxeAngles?: number[];
 }
 
 export interface GameState {

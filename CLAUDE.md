@@ -34,18 +34,24 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Level-System
 
-- Jedes Level hat eine feste Anzahl Äxte (Level 1: 5 Stück), unten als Reihe
-  von Axt-Icons sichtbar – geworfene Äxte werden dort grau.
-- Am Brett hängen Äpfel (feste Positionen pro Level). Trifft eine erfolgreich
-  steckende Axt nah genug an einem Apfel, fällt er ab und zählt als
-  **Spielwährung** (dauerhaft über alle Durchläufe gespeichert, nicht nur
-  diese Runde).
+- **10 Level** (`LEVELS` in `constants.ts`), jedes mit fester Axt-Anzahl
+  (5-8 Stück), unten als Reihe von Axt-Icons sichtbar – geworfene Äxte werden
+  dort grau.
+- Am Brett hängen Äpfel (feste Positionen pro Level, jetzt am Rand). Trifft
+  eine erfolgreich steckende Axt nah genug an einem Apfel, fällt er ab und
+  zählt als **Spielwährung** (dauerhaft über alle Durchläufe gespeichert).
+- Manche Level starten mit bereits im Brett steckenden Äxten
+  (`preplacedAxeAngles`) als Hindernisse von Anfang an.
+- Die Rotationsgeschwindigkeit variiert bewusst pro Level (mal schneller,
+  mal langsamer) statt nur stetig zu steigen.
 - Sind alle Äxte des Levels verworfen (egal ob getroffen oder nicht), ist das
-  Level fertig → Ergebnis-Screen mit Trefferquote und gesammelten Äpfeln,
-  "Nochmal spielen" startet das gleiche Level neu.
-- Aktuell nur EIN Level, aber als Liste (`LEVELS` in `constants.ts`) angelegt,
-  damit weitere Level leicht ergänzt werden können (mehr Äxte, andere
-  Rotationsgeschwindigkeit, andere Apfel-Positionen).
+  Level fertig → Ergebnis-Screen mit Trefferquote und gesammelten Äpfeln.
+  Nicht letztes Level: Button "Weiter zu [nächstes Level]" (Hauptaktion) plus
+  kleinerer "Level nochmal spielen"-Button. Letztes Level (10) geschafft:
+  Glückwunsch-Badge "Alle Level gemeistert!" statt Weiter-Button.
+- Level-Fortschritt selbst ist NICHT gespeichert (immer Start bei Level 1
+  nach Neuladen der Seite) – nur die Apfel-Währung bleibt erhalten. Bewusste
+  Vereinfachung fürs Erste, siehe Offene To-dos.
 
 ## Tech-Stack
 
@@ -67,6 +73,11 @@ src/
                    normalizeAngle, angularDistance, computeBoardLocalAngle,
                    collidesWithStuckAxe, findHitApple
     storage.ts    Dauerhafte Apfel-Währung laden/speichern (localStorage)
+    sound.ts      Soundeffekte per Web Audio API SELBST ERZEUGT (Oszillatoren +
+                   Rausch-Bursts) – keine externen Audio-Dateien, keine
+                   Lizenzfragen. playHitSound/playMissSound/playAppleSound/
+                   playBreakSound. unlockAudio() muss innerhalb einer echten
+                   Nutzer-Interaktion aufgerufen werden (Browser-Autoplay-Regel).
   hooks/
     useAxeGame.ts  Verbindet engine.ts mit React: Rotations-Loop
                     (requestAnimationFrame), Werfen per Antippen,
@@ -134,17 +145,29 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
       und Axt-Wackel-Animation deutlich abgeschwächt (weniger "Rückeln").
       Neuer "Holz bricht"-Effekt: trifft die letzte Axt des Levels sauber,
       zeigt die Zielscheibe Risse + einen kurzen Lichtblitz.
-- [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice,
-      mehr Level, evtl. ein Shop für die gesammelten Äpfel).
+- [x] Zielscheibe aufgeräumt: Äpfel wirklich am Rand (Radius 92px, nah an
+      Axt-Radius 96px) statt in der Mitte. Das "Pizzastück"-Lichteffekt
+      (`target-board__shine`, ein Kegel-Gradient) entfernt. Das graue
+      Rechteck über der Kette (`target-mount__bracket`) entfernt.
+- [x] Soundeffekte: Treffer, Fehlwurf/Kollision, Apfel-Sammeln, Level-Ende
+      ("Holz bricht") – alle per Web Audio API im Code erzeugt, keine
+      Audio-Dateien (siehe `sound.ts` oben).
+- [x] 10 Level gebaut mit steigender/wechselnder Schwierigkeit: mehr Äxte
+      (5→8), variierende Rotationsgeschwindigkeit (55-170°/Sek, nicht nur
+      steigend), teils mit vorplatzierten Äxten als Hindernisse. Level-
+      Fortschritt mit "Weiter zu [Level]"-Button getestet (Level 1→2→3 inkl.
+      korrekt vorplatzierter Axt in Level 3).
+- [ ] Weiterer Feinschliff nach Bedarf (evtl. mehr Juice, evtl. ein Shop für
+      die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
 ## Offene To-dos
 
 - Klaus soll das Spiel selbst testen (`npm run dev`) und Feedback zu
-  Schwierigkeit/Timing-Gefühl geben – Balancing-Werte sind erste Schätzungen.
-- Weitere Level ergänzen (mehr Äxte, andere Geschwindigkeit/Toleranz, mehr
-  Äpfel) – Struktur dafür steht bereits (`LEVELS`-Liste).
+  Schwierigkeit/Level-Balancing geben – Werte sind erste Schätzungen.
+- Überlegen, ob der Level-Fortschritt (welches Level man erreicht hat)
+  zusätzlich zur Apfel-Währung gespeichert werden soll.
 - Überlegen, wofür die gesammelten Äpfel später verwendet werden (Shop?
   Freischalten weiterer Level?).
 

@@ -25,14 +25,62 @@ export const APPLE_HIT_TOLERANCE_DEG = 24;
 export const IMPACT_WORLD_ANGLE_DEG = 180;
 
 /**
- * Level-Konfiguration. Bewusst als Liste angelegt, auch wenn aktuell nur Level 1 existiert,
- * damit weitere Level später einfach ergänzt werden können.
+ * Level-Konfiguration: 10 Level mit steigender/wechselnder Schwierigkeit. Manche haben
+ * schon Äxte im Brett stecken (Hindernisse von Anfang an), die Rotationsgeschwindigkeit
+ * variiert bewusst (mal schneller, mal langsamer) statt nur stetig zu steigen.
  */
 export const LEVELS: LevelConfig[] = [
+  { name: 'Erste Würfe', axeCount: 5, boardSpeedDegPerSec: 70, appleAngles: [40, 150, 260] },
+  { name: 'Klein, aber flott', axeCount: 5, boardSpeedDegPerSec: 95, appleAngles: [60, 200] },
   {
-    axeCount: 5,
-    boardSpeedDegPerSec: 70,
-    appleAngles: [40, 150, 260],
+    name: 'Enge Lücke',
+    axeCount: 6,
+    boardSpeedDegPerSec: 65,
+    appleAngles: [30, 120, 210, 300],
+    preplacedAxeAngles: [75],
+  },
+  { name: 'Volles Rohr', axeCount: 6, boardSpeedDegPerSec: 115, appleAngles: [45, 225] },
+  {
+    name: 'Vierer-Ring',
+    axeCount: 6,
+    boardSpeedDegPerSec: 55,
+    appleAngles: [70, 160, 250, 340],
+    preplacedAxeAngles: [0, 180],
+  },
+  {
+    name: 'Tempo hoch',
+    axeCount: 7,
+    boardSpeedDegPerSec: 130,
+    appleAngles: [100, 280],
+    preplacedAxeAngles: [40],
+  },
+  {
+    name: 'Apfelernte',
+    axeCount: 7,
+    boardSpeedDegPerSec: 80,
+    appleAngles: [20, 110, 200, 290],
+    preplacedAxeAngles: [160, 340],
+  },
+  {
+    name: 'Kaum Platz',
+    axeCount: 7,
+    boardSpeedDegPerSec: 150,
+    appleAngles: [55, 200],
+    preplacedAxeAngles: [0, 120, 240],
+  },
+  {
+    name: 'Präzision',
+    axeCount: 8,
+    boardSpeedDegPerSec: 100,
+    appleAngles: [15, 105, 195, 285],
+    preplacedAxeAngles: [50, 140, 230, 320],
+  },
+  {
+    name: 'Meisterschaft',
+    axeCount: 8,
+    boardSpeedDegPerSec: 170,
+    appleAngles: [45, 225],
+    preplacedAxeAngles: [0, 90, 180, 270],
   },
 ];
 

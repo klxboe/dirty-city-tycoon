@@ -4,17 +4,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple, normalizeAngle } from '../game/engine';
 import { FLIGHT_DURATION_MS, LEVELS } from '../game/constants';
 import { loadCurrency, saveCurrency } from '../game/storage';
-import type { GameState } from '../game/types';
+import type { GameState, StuckAxe } from '../game/types';
 
 function createInitialState(levelIndex: number, totalCurrency?: number): GameState {
   const level = LEVELS[levelIndex];
+  const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
+    // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (nextAxeId, ab 0) kollidieren.
+    id: -1 - i,
+    boardLocalAngleDeg: angle,
+  }));
+
   return {
     phase: 'ready',
     levelIndex,
     axesThrown: 0,
     hits: 0,
     boardAngleDeg: 0,
-    stuckAxes: [],
+    stuckAxes: preplacedAxes,
     apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
     applesCollectedThisRun: 0,
     totalCurrency: totalCurrency ?? loadCurrency(),
@@ -123,13 +129,25 @@ export function useAxeGame() {
     setState((prev) => createInitialState(prev.levelIndex, prev.totalCurrency));
   }, []);
 
+  const nextLevel = useCallback(() => {
+    setState((prev) => {
+      const nextIndex = Math.min(prev.levelIndex + 1, LEVELS.length - 1);
+      return createInitialState(nextIndex, prev.totalCurrency);
+    });
+  }, []);
+
   const level = LEVELS[state.levelIndex];
+  const isLastLevel = state.levelIndex >= LEVELS.length - 1;
 
   return {
     ...state,
+    levelCount: LEVELS.length,
+    levelName: level.name,
+    isLastLevel,
     axeCount: level.axeCount,
     axesRemaining: level.axeCount - state.axesThrown,
     throwAxe,
     retryLevel,
+    nextLevel,
   };
 }

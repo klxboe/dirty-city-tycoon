@@ -13,12 +13,11 @@ interface TargetBoardProps {
 
 export const BOARD_SIZE = 210;
 const BOARD_RADIUS = 96;
-const APPLE_RADIUS = 88;
+const APPLE_RADIUS = 92;
 
 export function TargetBoard({ angleDeg, stuckAxes, apples, broken = false }: TargetBoardProps) {
   return (
     <div className="target-mount">
-      <div className="target-mount__bracket" />
       <div className="target-mount__chain">
         <span />
         <span />
@@ -31,7 +30,6 @@ export function TargetBoard({ angleDeg, stuckAxes, apples, broken = false }: Tar
         <div className="target-board__ring target-board__ring--mid" />
         <div className="target-board__ring target-board__ring--inner" />
         <div className="target-board__bullseye" />
-        <div className="target-board__shine" />
 
         {apples
           .filter((apple) => !apple.collected)
