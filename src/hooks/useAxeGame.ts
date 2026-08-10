@@ -1,28 +1,29 @@
 // Verbindet die reine Spiellogik (game/engine.ts) mit React: Rotations-Loop,
-// Laden/Werfen per Pointer-Events, Zustandsmaschine ready -> charging -> flying -> ready/gameover.
+// Laden/Werfen per Pointer-Events, Zustandsmaschine ready -> charging -> flying -> ready/levelComplete.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  boardSpeedForScore,
   collidesWithStuckAxe,
   computeBoardLocalAngle,
+  findHitApple,
   isGoodTiming,
   normalizeAngle,
-  spinPeriodForScore,
-  sweetSpotToleranceForScore,
 } from '../game/engine';
-import { FLIGHT_DURATION_MS } from '../game/constants';
-import { loadHighScore, saveHighScore } from '../game/storage';
+import { FLIGHT_DURATION_MS, LEVELS } from '../game/constants';
+import { loadCurrency, saveCurrency } from '../game/storage';
 import type { GameState } from '../game/types';
 
-function createInitialState(): GameState {
+function createInitialState(levelIndex: number, totalCurrency?: number): GameState {
+  const level = LEVELS[levelIndex];
   return {
     phase: 'ready',
-    score: 0,
-    highScore: loadHighScore(),
-    streak: 0,
+    levelIndex,
+    axesThrown: 0,
+    hits: 0,
     boardAngleDeg: 0,
-    boardSpeedDegPerSec: boardSpeedForScore(0),
     stuckAxes: [],
+    apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
+    applesCollectedThisRun: 0,
+    totalCurrency: totalCurrency ?? loadCurrency(),
     chargeStartedAt: null,
     flyingAxe: null,
     lastOutcome: null,
@@ -30,10 +31,10 @@ function createInitialState(): GameState {
 }
 
 export function useAxeGame() {
-  const [state, setState] = useState<GameState>(createInitialState);
+  const [state, setState] = useState<GameState>(() => createInitialState(0));
   const nextAxeId = useRef(0);
 
-  // Rotations-Loop: dreht die Scheibe kontinuierlich, außer bei Game Over.
+  // Rotations-Loop: dreht die Scheibe kontinuierlich, außer wenn das Level fertig ist.
   useEffect(() => {
     let frameId: number;
     let lastTime = performance.now();
@@ -43,11 +44,9 @@ export function useAxeGame() {
       lastTime = now;
 
       setState((prev) => {
-        if (prev.phase === 'gameover') return prev;
-        return {
-          ...prev,
-          boardAngleDeg: normalizeAngle(prev.boardAngleDeg + prev.boardSpeedDegPerSec * deltaSeconds),
-        };
+        if (prev.phase === 'levelComplete') return prev;
+        const speed = LEVELS[prev.levelIndex].boardSpeedDegPerSec;
+        return { ...prev, boardAngleDeg: normalizeAngle(prev.boardAngleDeg + speed * deltaSeconds) };
       });
 
       frameId = requestAnimationFrame(tick);
@@ -67,10 +66,9 @@ export function useAxeGame() {
   const release = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'charging' || prev.chargeStartedAt === null) return prev;
+      const level = LEVELS[prev.levelIndex];
       const holdMs = performance.now() - prev.chargeStartedAt;
-      const spinPeriod = spinPeriodForScore(prev.score);
-      const tolerance = sweetSpotToleranceForScore(prev.score);
-      const wasGoodTiming = isGoodTiming(holdMs, spinPeriod, tolerance);
+      const wasGoodTiming = isGoodTiming(holdMs, level.spinPeriodMs, level.sweetSpotTolerance);
 
       return {
         ...prev,
@@ -81,34 +79,53 @@ export function useAxeGame() {
     });
   }, []);
 
-  // Löst den Wurf nach der Flugzeit auf: Treffer, Abprall oder Kollision mit steckender Axt.
+  // Löst den Wurf nach der Flugzeit auf: Treffer, Abprall, Kollision – und verbraucht eine Axt.
   useEffect(() => {
     if (state.phase !== 'flying') return;
 
     const timeout = setTimeout(() => {
       setState((prev) => {
         if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-
-        if (!prev.flyingAxe.wasGoodTiming) {
-          return { ...prev, phase: 'gameover', flyingAxe: null, lastOutcome: 'bounced' };
-        }
+        const level = LEVELS[prev.levelIndex];
 
         // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung (sie dreht sich während des Flugs weiter).
         const localAngle = computeBoardLocalAngle(prev.boardAngleDeg);
-        if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
-          return { ...prev, phase: 'gameover', flyingAxe: null, lastOutcome: 'collided' };
+
+        let outcome: NonNullable<GameState['lastOutcome']>;
+        let stuckAxes = prev.stuckAxes;
+        let apples = prev.apples;
+        let hits = prev.hits;
+        let applesCollectedThisRun = prev.applesCollectedThisRun;
+
+        if (!prev.flyingAxe.wasGoodTiming) {
+          outcome = 'bounced';
+        } else if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
+          outcome = 'collided';
+        } else {
+          outcome = 'stuck';
+          stuckAxes = [...prev.stuckAxes, { id: nextAxeId.current++, boardLocalAngleDeg: localAngle }];
+          hits = prev.hits + 1;
+
+          const hitApple = findHitApple(localAngle, prev.apples);
+          if (hitApple) {
+            apples = prev.apples.map((apple) => (apple.id === hitApple.id ? { ...apple, collected: true } : apple));
+            applesCollectedThisRun = prev.applesCollectedThisRun + 1;
+          }
         }
 
-        const newScore = prev.score + 1;
+        const axesThrown = prev.axesThrown + 1;
+        const levelDone = axesThrown >= level.axeCount;
+
         return {
           ...prev,
-          phase: 'ready',
+          phase: levelDone ? 'levelComplete' : 'ready',
           flyingAxe: null,
-          lastOutcome: 'stuck',
-          score: newScore,
-          streak: prev.streak + 1,
-          boardSpeedDegPerSec: boardSpeedForScore(newScore),
-          stuckAxes: [...prev.stuckAxes, { id: nextAxeId.current++, boardLocalAngleDeg: localAngle }],
+          lastOutcome: outcome,
+          axesThrown,
+          hits,
+          stuckAxes,
+          apples,
+          applesCollectedThisRun,
         };
       });
     }, FLIGHT_DURATION_MS);
@@ -116,29 +133,28 @@ export function useAxeGame() {
     return () => clearTimeout(timeout);
   }, [state.phase]);
 
-  // Highscore sichern, sobald eine Runde vorbei ist.
+  // Gesammelte Äpfel dauerhaft der Gesamt-Währung gutschreiben, sobald das Level fertig ist.
   useEffect(() => {
-    if (state.phase === 'gameover' && state.score > state.highScore) {
-      saveHighScore(state.score);
-      setState((prev) => (prev.phase === 'gameover' ? { ...prev, highScore: state.score } : prev));
+    if (state.phase === 'levelComplete' && state.applesCollectedThisRun > 0) {
+      const newTotal = state.totalCurrency + state.applesCollectedThisRun;
+      saveCurrency(newTotal);
+      setState((prev) => (prev.phase === 'levelComplete' ? { ...prev, totalCurrency: newTotal } : prev));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
-  const reset = useCallback(() => {
-    setState((prev) => ({
-      ...createInitialState(),
-      highScore: Math.max(prev.highScore, prev.score),
-      boardAngleDeg: prev.boardAngleDeg,
-    }));
+  const retryLevel = useCallback(() => {
+    setState((prev) => createInitialState(prev.levelIndex, prev.totalCurrency));
   }, []);
+
+  const level = LEVELS[state.levelIndex];
 
   return {
     ...state,
-    spinPeriodMs: spinPeriodForScore(state.score),
-    sweetSpotTolerance: sweetSpotToleranceForScore(state.score),
+    axeCount: level.axeCount,
+    axesRemaining: level.axeCount - state.axesThrown,
     startCharge,
     release,
-    reset,
+    retryLevel,
   };
 }

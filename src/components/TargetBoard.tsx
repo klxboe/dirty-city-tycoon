@@ -1,16 +1,19 @@
 import { Axe } from './Axe';
-import type { StuckAxe } from '../game/types';
+import { Apple } from './Apple';
+import type { Apple as AppleData, StuckAxe } from '../game/types';
 import './TargetBoard.css';
 
 interface TargetBoardProps {
   angleDeg: number;
   stuckAxes: StuckAxe[];
+  apples: AppleData[];
 }
 
 export const BOARD_SIZE = 210;
 const BOARD_RADIUS = 96;
+const APPLE_RADIUS = 58;
 
-export function TargetBoard({ angleDeg, stuckAxes }: TargetBoardProps) {
+export function TargetBoard({ angleDeg, stuckAxes, apples }: TargetBoardProps) {
   return (
     <div className="target-mount">
       <div className="target-mount__bracket" />
@@ -27,6 +30,18 @@ export function TargetBoard({ angleDeg, stuckAxes }: TargetBoardProps) {
         <div className="target-board__ring target-board__ring--inner" />
         <div className="target-board__bullseye" />
         <div className="target-board__shine" />
+
+        {apples
+          .filter((apple) => !apple.collected)
+          .map((apple) => (
+            <div
+              key={apple.id}
+              className="target-board__apple-slot"
+              style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
+            >
+              <Apple size={22} />
+            </div>
+          ))}
 
         {stuckAxes.map((axe) => (
           <div

@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { Axe } from './components/Axe';
+import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
 import { PowerDial } from './components/PowerDial';
 import { TargetBoard } from './components/TargetBoard';
-import { GameOverModal } from './components/GameOverModal';
+import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS } from './game/constants';
+import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
 import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95];
 
 function App() {
   const game = useAxeGame();
+  const level = LEVELS[game.levelIndex];
   const stageRef = useRef<HTMLDivElement>(null);
-  const prevScoreRef = useRef(game.score);
+  const prevHitsRef = useRef(game.hits);
   const [burstId, setBurstId] = useState(0);
 
   // Juice: kurzer Screen-Shake + Holzspäne-Partikel bei jedem sauberen Treffer.
   useEffect(() => {
-    if (game.score > prevScoreRef.current) {
+    if (game.hits > prevHitsRef.current) {
       const el = stageRef.current;
       if (el) {
         el.classList.remove('stage--shake');
@@ -27,21 +29,21 @@ function App() {
       }
       setBurstId((id) => id + 1);
     }
-    prevScoreRef.current = game.score;
-  }, [game.score]);
+    prevHitsRef.current = game.hits;
+  }, [game.hits]);
 
   const hint =
     game.phase === 'charging'
-      ? 'Loslassen, wenn der Punkt oben grün ist!'
+      ? 'Loslassen, wenn der Punkt unten grün ist!'
       : game.phase === 'flying'
         ? ''
-        : game.phase === 'gameover'
+        : game.phase === 'levelComplete'
           ? ''
           : 'Halten zum Laden, loslassen zum Werfen';
 
   return (
     <div className="app">
-      <HUD score={game.score} highScore={game.highScore} />
+      <HUD level={game.levelIndex + 1} hits={game.hits} axeCount={game.axeCount} totalCurrency={game.totalCurrency} />
 
       <div
         ref={stageRef}
@@ -52,7 +54,7 @@ function App() {
         onPointerCancel={game.release}
       >
         <div className="stage__board-zone">
-          <TargetBoard angleDeg={game.boardAngleDeg} stuckAxes={game.stuckAxes} />
+          <TargetBoard angleDeg={game.boardAngleDeg} stuckAxes={game.stuckAxes} apples={game.apples} />
 
           {burstId > 0 && (
             <div key={burstId} className="hit-particles">
@@ -78,18 +80,26 @@ function App() {
         )}
 
         <div className="stage__thrower-zone">
+          <AxeInventory total={game.axeCount} thrown={game.axesThrown} />
           <PowerDial
             chargeStartedAt={game.chargeStartedAt}
-            spinPeriodMs={game.spinPeriodMs}
-            tolerance={game.sweetSpotTolerance}
+            spinPeriodMs={level.spinPeriodMs}
+            tolerance={level.sweetSpotTolerance}
             active={game.phase === 'charging'}
           />
           <div className="stage__hint">{hint}</div>
         </div>
       </div>
 
-      {game.phase === 'gameover' && (
-        <GameOverModal score={game.score} highScore={game.highScore} outcome={game.lastOutcome} onRetry={game.reset} />
+      {game.phase === 'levelComplete' && (
+        <LevelCompleteModal
+          level={game.levelIndex + 1}
+          hits={game.hits}
+          axeCount={game.axeCount}
+          applesCollected={game.applesCollectedThisRun}
+          totalCurrency={game.totalCurrency}
+          onRetry={game.retryLevel}
+        />
       )}
     </div>
   );

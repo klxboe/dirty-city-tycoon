@@ -97,10 +97,16 @@
   pointer-events: none;
 }
 
-.target-board__axe-slot {
+.target-board__axe-slot,
+.target-board__apple-slot {
   position: absolute;
   top: 50%;
   left: 50%;
+}
+
+.target-board__apple-slot {
+  transform-origin: center;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
 .target-board__axe-flip {

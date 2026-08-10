@@ -20,22 +20,36 @@ mit eigenem Twist: **Axt-Wurf mit Schwung-Kontrolle**.
 
 - Man hält den Bildschirm gedrückt, um zu "laden" – ein Regler dreht sich
   dabei kontinuierlich.
-- Lässt man genau im richtigen Moment los (grüner Bereich im Regler), fliegt
-  die Axt sauber in die rotierende Zielscheibe.
-- Zu früh oder zu spät losgelassen → die Axt prallt ab → Game Over.
-- Trifft man eine Stelle, an der schon eine Axt steckt → auch Game Over.
-- Mit jedem Treffer wird es schwerer: Die Scheibe dreht sich schneller, der
-  Lade-Zyklus wird kürzer, das Zeitfenster für einen sauberen Treffer schrumpft.
-- Score = Anzahl sauberer Treffer in Folge. Bestwert wird lokal gespeichert.
+- Lässt man genau im richtigen Moment los (grüner Bereich im Regler, unten),
+  fliegt die Axt sauber in die rotierende Zielscheibe.
+- Zu früh oder zu spät losgelassen → die Axt prallt ab. Trifft man eine
+  Stelle, an der schon eine Axt steckt → sie prallt auch ab. Beides
+  verbraucht einfach eine Axt aus dem Kontingent, beendet aber NICHT das
+  ganze Spiel (siehe Level-System unten).
 
 Der Skill ist bewusst anders als bei Knife Hit: nicht "im richtigen Moment
 tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
+
+### Level-System
+
+- Jedes Level hat eine feste Anzahl Äxte (Level 1: 5 Stück), unten als Reihe
+  von Axt-Icons sichtbar – geworfene Äxte werden dort grau.
+- Am Brett hängen Äpfel (feste Positionen pro Level). Trifft eine erfolgreich
+  steckende Axt nah genug an einem Apfel, fällt er ab und zählt als
+  **Spielwährung** (dauerhaft über alle Durchläufe gespeichert, nicht nur
+  diese Runde).
+- Sind alle Äxte des Levels verworfen (egal ob getroffen oder nicht), ist das
+  Level fertig → Ergebnis-Screen mit Trefferquote und gesammelten Äpfeln,
+  "Nochmal spielen" startet das gleiche Level neu.
+- Aktuell nur EIN Level, aber als Liste (`LEVELS` in `constants.ts`) angelegt,
+  damit weitere Level leicht ergänzt werden können (mehr Äxte, andere
+  Rotationsgeschwindigkeit/Zykluszeit/Toleranz, andere Apfel-Positionen).
 
 ## Tech-Stack
 
 - Vite + React + TypeScript
 - Capacitor (spätere Phase) für die native iOS-Verpackung
-- Speicherung: localStorage im Web (Bestwert)
+- Speicherung: localStorage im Web (dauerhafte Apfel-Währung)
 - Kein Backend, keine Accounts, kein externes Game-Framework. Alles läuft lokal.
 
 ## Architektur
@@ -43,24 +57,27 @@ tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
 ```
 src/
   game/
-    types.ts     GameState, StuckAxe, GamePhase (ready/charging/flying/gameover)
-    constants.ts  Alle Balancing-Zahlen an einem Ort
+    types.ts     GameState, StuckAxe, Apple, LevelConfig,
+                  GamePhase (ready/charging/flying/levelComplete)
+    constants.ts  LEVELS (Liste aller Level-Konfigurationen), Kollisions-/
+                   Apfel-Trefferradius, Flugzeit
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
                    normalizeAngle, angularDistance, spinProgress, isGoodTiming,
-                   computeBoardLocalAngle, collidesWithStuckAxe,
-                   boardSpeedForScore/spinPeriodForScore/sweetSpotToleranceForScore
-                   (Schwierigkeitskurve)
-    storage.ts    Bestwert laden/speichern (localStorage)
+                   computeBoardLocalAngle, collidesWithStuckAxe, findHitApple
+    storage.ts    Dauerhafte Apfel-Währung laden/speichern (localStorage)
   hooks/
     useAxeGame.ts  Verbindet engine.ts mit React: Rotations-Loop
                     (requestAnimationFrame), Laden/Werfen per Pointer-Events,
-                    Zustandsmaschine ready -> charging -> flying -> ready/gameover
+                    Zustandsmaschine ready -> charging -> flying -> ready,
+                    nach der letzten Axt -> levelComplete
   components/
-    Axe.tsx          Die Axt-Form (SVG), für fliegende UND steckende Äxte
-    TargetBoard.tsx  Die rotierende Zielscheibe inkl. aller steckenden Äxte
-    PowerDial.tsx    Der Lade-Regler mit dem grünen "Sweet Spot"-Keil
-    HUD.tsx          Score/Bestwert oben
-    GameOverModal.tsx
+    Axe.tsx              Die Axt-Form (SVG), für fliegende UND steckende Äxte
+    Apple.tsx            Der Apfel (SVG)
+    TargetBoard.tsx      Die rotierende Zielscheibe inkl. Äxte + Äpfel
+    AxeInventory.tsx     Reihe der verbleibenden/verbrauchten Äxte unten
+    PowerDial.tsx        Der Lade-Regler mit dem grünen "Sweet Spot"-Keil
+    HUD.tsx              Level / Trefferquote / Äpfel-Währung oben
+    LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
   styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
 ```
 
@@ -92,7 +109,7 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
 ## Aktueller Stand
 
 - [x] Grundgerüst: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar.
-      Kernschleife (Laden/Werfen/Kollision/Highscore) durchgetestet.
+      Kernschleife (Laden/Werfen/Kollision) durchgetestet.
       Balancing-Bug gefunden und behoben (Rotationsgeschwindigkeit, siehe oben).
       Zweiter Bug gefunden und behoben (Sweet-Spot-Position, siehe oben) –
       gemeldet von Klaus: "manchmal prallt sie ohne Grund ab, und Klicken
@@ -101,7 +118,14 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
       Holz-Zielscheibe mit Wachstumsringen + Metallrand + Kettenaufhängung,
       Bruchbude-Szenerie im Hintergrund, Treffer-Partikel/Screen-Shake/
       Wackel-Animation als Juice.
-- [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice).
+- [x] Level-System: vom endlosen Highscore-Modus auf feste Level mit
+      begrenzter Axt-Anzahl umgestellt (Level 1 = 5 Äxte), Axt-Inventar-Leiste
+      unten, Äpfel am Brett als dauerhaft gespeicherte Spielwährung.
+      Kollisions-Hitbox verkleinert (10° statt 16°) für etwas mehr Fairness.
+      Kompletter Level-Durchlauf inkl. Apfel-Sammeln, Fehlwurf-ohne-Abbruch,
+      Level-Abschluss und Neustart durchgetestet.
+- [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice,
+      mehr Level, evtl. ein Shop für die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 
@@ -109,7 +133,10 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
 
 - Klaus soll das Spiel selbst testen (`npm run dev`) und Feedback zu
   Schwierigkeit/Timing-Gefühl geben – Balancing-Werte sind erste Schätzungen.
-- Ggf. Juice/Polish-Runde vor Phase 2.
+- Weitere Level ergänzen (mehr Äxte, andere Geschwindigkeit/Toleranz, mehr
+  Äpfel) – Struktur dafür steht bereits (`LEVELS`-Liste).
+- Überlegen, wofür die gesammelten Äpfel später verwendet werden (Shop?
+  Freischalten weiterer Level?).
 
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 
