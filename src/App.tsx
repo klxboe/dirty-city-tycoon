@@ -43,7 +43,12 @@ function App() {
 
       <div ref={stageRef} className="stage" onPointerDown={game.throwAxe}>
         <div className="stage__board-zone">
-          <TargetBoard angleDeg={game.boardAngleDeg} stuckAxes={game.stuckAxes} apples={game.apples} />
+          <TargetBoard
+            angleDeg={game.boardAngleDeg}
+            stuckAxes={game.stuckAxes}
+            apples={game.apples}
+            broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}
+          />
 
           {burstId > 0 && (
             <div key={burstId} className="hit-particles">

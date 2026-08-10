@@ -1,8 +1,14 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
 import type { LevelConfig } from './types';
 
-/** Wie lange die Fluganimation der Axt dauert (ms). */
-export const FLIGHT_DURATION_MS = 320;
+/**
+ * Wie lange die Fluganimation der Axt dauert (ms). Bewusst kurz: das ist auch die
+ * kürzestmögliche Zeit zwischen zwei Würfen. Bei 70°/Sek. Board-Geschwindigkeit dreht
+ * sich die Scheibe in 140ms nur um ~9.8° – WENIGER als die Kollisions-Toleranz (10°).
+ * Wer also direkt hintereinander tippt (spammt), trifft garantiert die eigene vorherige
+ * Axt und ist raus. Bewusst getimtes Werfen (mit Pause dazwischen) bleibt sicher.
+ */
+export const FLIGHT_DURATION_MS = 140;
 /** Wie oft sich die Axt während des Flugs sichtbar dreht (rein optisch). */
 export const FLIGHT_VISUAL_SPINS = 2.5;
 

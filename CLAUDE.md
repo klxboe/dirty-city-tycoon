@@ -125,6 +125,15 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
 - [x] Timing-Mechanik (Lade-Regler) komplett entfernt – jetzt einfaches
       Antippen zum Werfen, näher am Vorbild "Knife Hit". Einziges
       Fail-Kriterium ist noch die Kollision mit einer bereits steckenden Axt.
+- [x] Feinschliff nach Feedback: Äpfel sitzen jetzt am Rand (nah am
+      Axt-Radius) statt in der Mitte. Flugzeit der Axt deutlich verkürzt
+      (320ms -> 140ms) – WICHTIG: das ist bewusst kürzer als
+      Kollisions-Toleranz/Board-Geschwindigkeit, damit schnelles
+      Hintereinander-Tippen (Spammen) riskant ist und man dabei die eigene
+      letzte Axt treffen kann (siehe Kommentar in `constants.ts`). Screen-Shake
+      und Axt-Wackel-Animation deutlich abgeschwächt (weniger "Rückeln").
+      Neuer "Holz bricht"-Effekt: trifft die letzte Axt des Levels sauber,
+      zeigt die Zielscheibe Risse + einen kurzen Lichtblitz.
 - [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice,
       mehr Level, evtl. ein Shop für die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
