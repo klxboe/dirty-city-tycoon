@@ -16,15 +16,46 @@
   padding: var(--space-4) 0 var(--space-6);
   user-select: none;
   touch-action: none;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0px 2px, transparent 2px 7px),
+    repeating-linear-gradient(90deg, #8a6239 0px 54px, #7a5530 54px 58px);
+}
+
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse 60% 45% at 50% 34%, rgba(255, 205, 122, 0.4), transparent 70%);
+  pointer-events: none;
+}
+
+.stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26%;
+  z-index: 0;
+  background: repeating-linear-gradient(115deg, #c99a56 0px 3px, #b9863f 3px 6px);
+  border-top: 4px solid #8a6530;
+  box-shadow: inset 0 8px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
 }
 
 .stage__board-zone {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: center;
   margin-top: var(--space-4);
 }
 
 .stage__thrower-zone {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,6 +74,7 @@
 
 .axe-flying {
   position: absolute;
+  z-index: 1;
   left: 50%;
   bottom: 8%;
   animation-name: axe-fly;
@@ -59,5 +91,74 @@
   to {
     bottom: 68%;
     transform: translateX(-50%) rotate(900deg);
+  }
+}
+
+/* ---- Juice: Screen-Shake bei Treffer ---- */
+.stage--shake {
+  animation: stage-shake 0.35s ease-out;
+}
+
+@keyframes stage-shake {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-6px, 3px);
+  }
+  40% {
+    transform: translate(5px, -3px);
+  }
+  60% {
+    transform: translate(-4px, 2px);
+  }
+  80% {
+    transform: translate(3px, -1px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ---- Juice: Holzspäne-Partikel bei Treffer ---- */
+.hit-particles {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hit-particles__chip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  transform-origin: center;
+  animation: chip-burst 0.55s ease-out forwards;
+}
+
+.hit-particles__chip--0 {
+  background: #dcae74;
+}
+.hit-particles__chip--1 {
+  background: #b9863f;
+}
+.hit-particles__chip--2 {
+  background: #f4ede0;
+}
+
+@keyframes chip-burst {
+  0% {
+    transform: rotate(var(--angle)) translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateY(-50px) rotate(280deg);
+    opacity: 0;
   }
 }

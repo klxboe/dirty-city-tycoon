@@ -1,11 +1,51 @@
+.target-mount {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.target-mount__bracket {
+  width: 34px;
+  height: 10px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, #8a8f96, #565b61);
+  border: 1px solid #3a3e43;
+}
+
+.target-mount__chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 0;
+}
+
+.target-mount__chain span {
+  width: 12px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2.5px solid #9aa1a8;
+  background: transparent;
+}
+
 .target-board {
   position: relative;
   width: 210px;
   height: 210px;
   border-radius: 50%;
-  background: repeating-conic-gradient(#c48a4d 0deg 8deg, #b87a3c 8deg 16deg);
-  border: 6px solid #7a5230;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2), 0 10px 24px rgba(0, 0, 0, 0.25);
+  /* Metallring als Hintergrund; das Holz-Gesicht liegt als eigener Kreis obendrauf. */
+  background: linear-gradient(155deg, #eef2f5, #9aa5ad 45%, #626a72);
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22), 0 12px 26px rgba(0, 0, 0, 0.3);
+}
+
+.target-board__grain {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(74, 45, 15, 0.08) 0deg 3deg, transparent 3deg 9deg),
+    repeating-radial-gradient(circle at 50% 50%, #dcae74 0px, #dcae74 5px, #c8934f 5px 10px);
+  box-shadow: inset 0 0 22px rgba(74, 45, 15, 0.4);
 }
 
 .target-board__ring {
@@ -14,36 +54,47 @@
   left: 50%;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 3px solid rgba(58, 38, 15, 0.35);
 }
 
 .target-board__ring--outer {
   width: 176px;
   height: 176px;
+  border: 5px solid #f4ede0;
+  box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.25);
 }
 
 .target-board__ring--mid {
   width: 122px;
   height: 122px;
-  background: rgba(239, 231, 214, 0.18);
+  border: 5px solid #d94b41;
+  box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.2);
 }
 
 .target-board__ring--inner {
   width: 68px;
   height: 68px;
-  background: rgba(239, 231, 214, 0.15);
+  border: 4px solid #f4ede0;
 }
 
 .target-board__bullseye {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: #e3483f;
-  border: 2px solid #9a2b25;
+  background: radial-gradient(circle at 35% 30%, #ff6b61, #c62a20 70%, #8f1b14 100%);
+  border: 2px solid #6b140d;
+  box-shadow: 0 0 10px rgba(214, 60, 48, 0.6);
+}
+
+.target-board__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, rgba(255, 255, 255, 0.28) 0deg 18deg, transparent 40deg 360deg);
+  pointer-events: none;
 }
 
 .target-board__axe-slot {
@@ -54,4 +105,27 @@
 
 .target-board__axe-flip {
   transform: rotate(180deg);
+}
+
+.target-board__axe-flip--landed {
+  animation: axe-land-wiggle 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform-origin: 50% 15%;
+}
+
+@keyframes axe-land-wiggle {
+  0% {
+    transform: rotate(178deg);
+  }
+  25% {
+    transform: rotate(191deg);
+  }
+  50% {
+    transform: rotate(172deg);
+  }
+  75% {
+    transform: rotate(184deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
 }

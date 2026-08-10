@@ -6,35 +6,59 @@
 }
 
 .hud-pill {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 96px;
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md);
+  background: linear-gradient(155deg, #c9975f, #a5713c);
+  border: 2px solid #6b4420;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hud-pill::before,
+.hud-pill::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f4ede0, #8a8f96);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.hud-pill::before {
+  left: 6px;
+}
+
+.hud-pill::after {
+  right: 6px;
 }
 
 .hud-pill__label {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  color: rgba(255, 250, 240, 0.85);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .hud-pill__value {
   font-size: 26px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text);
+  color: #fff8ec;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
 }
 
 .hud-pill--score .hud-pill__value {
-  color: var(--color-primary-dark);
+  color: #d9ffe0;
 }
 
 .hud-pill--best .hud-pill__value {
-  color: var(--color-money-dark);
+  color: #ffe9ae;
 }
