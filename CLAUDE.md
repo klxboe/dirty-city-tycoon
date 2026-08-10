@@ -82,14 +82,26 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
   selbst perfekt getimte, schnell aufeinanderfolgende Würfe unfair mit der
   eigenen letzten Axt (das war ein echter Bug beim ersten Bauen, ist jetzt
   behoben: `BASE_BOARD_SPEED_DEG_PER_SEC = 95`).
+- **Wichtig (Sweet-Spot-Position):** Der Sweet Spot in `isGoodTiming()` liegt
+  bewusst bei `progress ≈ 0.5` (Zyklus-MITTE), nicht bei `progress ≈ 0` (Start).
+  War anfangs falsch bei 0/1 – dadurch war ein sofortiges Loslassen (0ms halten)
+  IMMER ein Treffer (0 liegt trivial innerhalb jeder Toleranz um 0), was die
+  ganze Lade-Mechanik zu einem "einfach schnell klicken"-Exploit gemacht hat.
+  Deswegen auch der grüne Keil im PowerDial bei 180° (unten), nicht bei 0° (oben).
 
 ## Aktueller Stand
 
 - [x] Grundgerüst: Vite+React+TS-Projekt, komplettes Spiel im Browser spielbar.
       Kernschleife (Laden/Werfen/Kollision/Highscore) durchgetestet.
-      Balancing-Bug gefunden und behoben (siehe oben, Rotationsgeschwindigkeit).
-- [ ] Feinschliff: Visuelles Feedback bei Treffer/Fehlwurf (Juice: Partikel,
-      Screen-Shake o.ä.), evtl. Soundeffekte.
+      Balancing-Bug gefunden und behoben (Rotationsgeschwindigkeit, siehe oben).
+      Zweiter Bug gefunden und behoben (Sweet-Spot-Position, siehe oben) –
+      gemeldet von Klaus: "manchmal prallt sie ohne Grund ab, und Klicken
+      (statt Halten) geht immer".
+- [x] Design-Politur: hochwertigere Axt (Tomahawk-Form, Metall-Gradient),
+      Holz-Zielscheibe mit Wachstumsringen + Metallrand + Kettenaufhängung,
+      Bruchbude-Szenerie im Hintergrund, Treffer-Partikel/Screen-Shake/
+      Wackel-Animation als Juice.
+- [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
 

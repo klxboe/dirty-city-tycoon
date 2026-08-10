@@ -45,10 +45,15 @@ export function spinProgress(holdMs: number, spinPeriodMs: number): number {
   return (holdMs % spinPeriodMs) / spinPeriodMs;
 }
 
-/** true, wenn beim Loslassen genau jetzt die Axt sauber (mit der Klinge voran) treffen würde. */
+/**
+ * true, wenn beim Loslassen genau jetzt die Axt sauber (mit der Klinge voran) treffen würde.
+ * Der Sweet Spot liegt bewusst in der MITTE des Zyklus (progress ≈ 0.5), nicht am Anfang
+ * (progress ≈ 0) – sonst wäre ein sofortiges Loslassen (0ms halten) immer ein Treffer, was
+ * die ganze Lade-Mechanik überflüssig machen würde.
+ */
 export function isGoodTiming(holdMs: number, spinPeriodMs: number, tolerance: number): boolean {
   const progress = spinProgress(holdMs, spinPeriodMs);
-  return progress <= tolerance || progress >= 1 - tolerance;
+  return Math.abs(progress - 0.5) <= tolerance;
 }
 
 /** Winkel, an dem eine neue Axt in der (rotierenden) Scheibe "einwächst", im lokalen Koordinatensystem der Scheibe. */
