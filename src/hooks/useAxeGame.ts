@@ -36,16 +36,33 @@ function createInitialState(levelIndex: number, totalCurrency?: number): GameSta
 export function useAxeGame(getBoardAngleDeg: () => number) {
   const [state, setState] = useState<GameState>(() => createInitialState(0));
   const nextAxeId = useRef(0);
+  /**
+   * Tippt man, während schon eine Axt fliegt, geht der Tap NICHT verloren, sondern wird hier
+   * gemerkt und feuert automatisch, sobald die aktuelle Axt gelandet ist (siehe Resolve-Effekt
+   * unten). Ohne das fühlte sich schnelles Antippen "kaputt" an, weil Taps mitten im kurzen
+   * Flug (140ms) einfach ignoriert wurden, ohne dass etwas passierte.
+   */
+  const pendingThrowRef = useRef(false);
 
   /** Antippen wirft sofort eine Axt (kein Laden/Timing mehr, wie beim Vorbild). */
   const throwAxe = useCallback(() => {
     setState((prev) => {
-      if (prev.phase !== 'ready') return prev;
+      if (prev.phase !== 'ready') {
+        pendingThrowRef.current = true;
+        return prev;
+      }
       return { ...prev, phase: 'flying', flyingAxe: { startedAt: performance.now() }, lastOutcome: null };
     });
   }, []);
 
   // Löst den Wurf nach der Flugzeit auf: Treffer oder Kollision – und verbraucht eine Axt.
+  //
+  // WICHTIG: Abhängigkeit ist `state.flyingAxe` (nicht nur `state.phase`)! Wenn ein gepufferter
+  // Tap direkt "fliegend -> fliegend" verkettet (siehe pendingThrowRef oben), bleibt state.phase
+  // unverändert 'flying' - React würde den Effekt dann NICHT erneut ausführen und der Timer für
+  // die zweite Axt würde nie starten, das Spiel bliebe für immer im "fliegend"-Zustand hängen.
+  // `flyingAxe.startedAt` bekommt bei jeder neuen Axt einen frischen Wert und löst den Effekt
+  // deshalb zuverlässig auch bei so einer Verkettung erneut aus.
   useEffect(() => {
     if (state.phase !== 'flying') return;
 
@@ -80,6 +97,23 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         const axesThrown = prev.axesThrown + 1;
         const levelDone = axesThrown >= level.axeCount;
 
+        // Wurde während des Fluges schon wieder getippt? Dann sofort die nächste Axt losschicken.
+        if (!levelDone && pendingThrowRef.current) {
+          pendingThrowRef.current = false;
+          return {
+            ...prev,
+            phase: 'flying',
+            flyingAxe: { startedAt: performance.now() },
+            lastOutcome: outcome,
+            axesThrown,
+            hits,
+            stuckAxes,
+            apples,
+            applesCollectedThisRun,
+          };
+        }
+
+        pendingThrowRef.current = false;
         return {
           ...prev,
           phase: levelDone ? 'levelComplete' : 'ready',
@@ -95,7 +129,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     }, FLIGHT_DURATION_MS);
 
     return () => clearTimeout(timeout);
-  }, [state.phase, getBoardAngleDeg]);
+  }, [state.phase, state.flyingAxe, getBoardAngleDeg]);
 
   // Gesammelte Äpfel dauerhaft der Gesamt-Währung gutschreiben, sobald das Level fertig ist.
   useEffect(() => {
@@ -108,10 +142,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, [state.phase]);
 
   const retryLevel = useCallback(() => {
+    pendingThrowRef.current = false;
     setState((prev) => createInitialState(prev.levelIndex, prev.totalCurrency));
   }, []);
 
   const nextLevel = useCallback(() => {
+    pendingThrowRef.current = false;
     setState((prev) => {
       const nextIndex = Math.min(prev.levelIndex + 1, LEVELS.length - 1);
       return createInitialState(nextIndex, prev.totalCurrency);
@@ -124,7 +160,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   return {
     ...state,
     levelCount: LEVELS.length,
-    levelName: level.name,
     isLastLevel,
     boardSpeedDegPerSec: level.boardSpeedDegPerSec,
     axeCount: level.axeCount,

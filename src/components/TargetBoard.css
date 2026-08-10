@@ -95,6 +95,15 @@
   }
 }
 
+.target-board__apple-stem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #8a5a2b, #5a3a1a);
+}
+
 .target-board__axe-slot,
 .target-board__apple-slot {
   position: absolute;

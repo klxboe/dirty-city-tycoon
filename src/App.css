@@ -91,6 +91,23 @@
   pointer-events: none;
 }
 
+.stage__vine {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+.stage__vine--left {
+  left: -6px;
+}
+
+.stage__vine--right {
+  right: -6px;
+}
+
 .stage__board-zone {
   position: relative;
   z-index: 1;

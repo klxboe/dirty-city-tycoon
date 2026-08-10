@@ -22,7 +22,10 @@ interface TargetBoardProps {
 
 export const BOARD_SIZE = 210;
 const BOARD_RADIUS = 96;
-const APPLE_RADIUS = 92;
+/** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
+const APPLE_RADIUS = 112;
+const APPLE_STEM_LENGTH = 16;
+const APPLE_STEM_RADIUS = 100 + APPLE_STEM_LENGTH / 2;
 
 /**
  * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das
@@ -86,12 +89,20 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         {apples
           .filter((apple) => !apple.collected)
           .map((apple) => (
-            <div
-              key={apple.id}
-              className="target-board__apple-slot"
-              style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
-            >
-              <Apple size={22} />
+            <div key={apple.id}>
+              <div
+                className="target-board__apple-stem"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_STEM_RADIUS}px)`,
+                  height: APPLE_STEM_LENGTH,
+                }}
+              />
+              <div
+                className="target-board__apple-slot"
+                style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
+              >
+                <Apple size={22} />
+              </div>
             </div>
           ))}
 

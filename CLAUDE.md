@@ -34,20 +34,29 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Level-System
 
-- **10 Level** (`LEVELS` in `constants.ts`), jedes mit fester Axt-Anzahl
-  (5-8 Stück), unten als Reihe von Axt-Icons sichtbar – geworfene Äxte werden
-  dort grau.
-- Am Brett hängen Äpfel (feste Positionen pro Level, jetzt am Rand). Trifft
-  eine erfolgreich steckende Axt nah genug an einem Apfel, fällt er ab und
-  zählt als **Spielwährung** (dauerhaft über alle Durchläufe gespeichert).
-- Manche Level starten mit bereits im Brett steckenden Äxten
-  (`preplacedAxeAngles`) als Hindernisse von Anfang an.
-- Die Rotationsgeschwindigkeit variiert bewusst pro Level (mal schneller,
-  mal langsamer) statt nur stetig zu steigen.
+- **100 Level** = 20 Schwierigkeitsstufen × 5 Varianten pro Stufe, PER FORMEL
+  erzeugt (`generateLevel()` in `constants.ts`), nicht von Hand aufgeschrieben
+  (bei 100 Stück unübersichtlich). Innerhalb einer Stufe gleiche Schwierigkeit
+  (Axt-Anzahl, Grundtempo, Anzahl Hindernisse/Äpfel), nur genaue Platzierung
+  von Äpfeln/vorplatzierten Äxten und exaktes Tempo variieren
+  (`SPEED_MULTIPLIERS`) – für 5 spürbar unterschiedliche, gleich schwere
+  Level pro Stufe. Level haben KEINE Namen mehr (auf Wunsch entfernt), nur
+  die Nummer 1-100.
+- Jedes Level hat eine feste Axt-Anzahl (steigt von 5 auf 8 über die Stufen),
+  unten als Reihe von Axt-Icons sichtbar – geworfene Äxte werden dort grau.
+- Am Brett hängen Äpfel (feste Positionen pro Level, jetzt AUSSERHALB des
+  Randes an einem kleinen Stiel, nicht auf dem Holz). Trifft eine erfolgreich
+  steckende Axt nah genug an einem Apfel, fällt er ab und zählt als
+  **Spielwährung** (dauerhaft über alle Durchläufe gespeichert).
+- Ab Stufe 2 starten Level mit bereits im Brett steckenden Äxten
+  (`preplacedAxeAngles`) als Hindernisse von Anfang an, Anzahl steigt mit
+  der Stufe (max. 3).
+- Die Rotationsgeschwindigkeit steigt über die Stufen, variiert aber auch
+  innerhalb einer Stufe (mal schneller, mal langsamer) statt nur stetig.
 - Sind alle Äxte des Levels verworfen (egal ob getroffen oder nicht), ist das
   Level fertig → Ergebnis-Screen mit Trefferquote und gesammelten Äpfeln.
-  Nicht letztes Level: Button "Weiter zu [nächstes Level]" (Hauptaktion) plus
-  kleinerer "Level nochmal spielen"-Button. Letztes Level (10) geschafft:
+  Nicht letztes Level: Button "Weiter zu Level N+1" (Hauptaktion) plus
+  kleinerer "Level nochmal spielen"-Button. Level 100 geschafft:
   Glückwunsch-Badge "Alle Level gemeistert!" statt Weiter-Button.
 - Level-Fortschritt selbst ist NICHT gespeichert (immer Start bei Level 1
   nach Neuladen der Seite) – nur die Apfel-Währung bleibt erhalten. Bewusste
@@ -67,7 +76,7 @@ src/
   game/
     types.ts     GameState, StuckAxe, Apple, LevelConfig,
                   GamePhase (ready/flying/levelComplete)
-    constants.ts  LEVELS (Liste aller Level-Konfigurationen), Kollisions-/
+    constants.ts  LEVELS (100 Stück, per generateLevel() erzeugt), Kollisions-/
                    Apfel-Trefferradius, Flugzeit
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
                    normalizeAngle, angularDistance, computeBoardLocalAngle,
@@ -87,7 +96,10 @@ src/
     Axe.tsx              Die Axt-Form (SVG), für fliegende UND steckende Äxte
     Apple.tsx            Der Apfel (SVG)
     TargetBoard.tsx      Die rotierende Zielscheibe inkl. Äxte + Äpfel
+                          (forwardRef + useImperativeHandle, siehe Performance-
+                          Abschnitt unten)
     AxeInventory.tsx     Reihe der verbleibenden/verbrauchten Äxte unten
+    VineDecoration.tsx   Rein dekorative Ranken in den Bühnen-Ecken
     HUD.tsx              Level / Trefferquote / Äpfel-Währung oben
     LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
   styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
@@ -128,6 +140,23 @@ ist unkritisch, weil die selten passieren (nicht 60x/Sek.).
   "Sweet Spot"). Auf Wunsch entfernt – jetzt zählt nur noch die Position
   (Kollision mit vorherigen Äxten), kein Timing-Fenster mehr. Einfacher und
   näher am Vorbild "Knife Hit".
+
+### Wichtiger Bug (behoben): Spiel blieb bei schnellem Tippen für immer hängen
+
+Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
+und feuert automatisch, sobald die aktuelle Axt gelandet ist – sonst fühlt
+sich schnelles Tippen "kaputt" an, weil Taps im kurzen 140ms-Flug einfach
+verschluckt wurden. ABER: der Auflöse-`useEffect` in `useAxeGame.ts` hatte
+ursprünglich nur `[state.phase, ...]` als Abhängigkeit. Wenn ein gepufferter
+Tap den State direkt "fliegend -> fliegend" verkettet (ohne Zwischenstopp bei
+"ready"), ändert sich `state.phase` NICHT – React führt den Effekt dann nicht
+erneut aus, der Timer für die zweite Axt startet nie, und das Spiel blieb für
+immer im "fliegend"-Zustand hängen (reproduziert mit einem automatisierten
+120-Tap-Stresstest: Spiel blieb bei Level 1 stecken statt durchzuspielen).
+**Fix:** Abhängigkeit auf `[state.phase, state.flyingAxe, getBoardAngleDeg]`
+erweitert – `flyingAxe.startedAt` bekommt bei jeder neuen Axt einen frischen
+Wert und löst den Effekt auch bei einer Verkettung zuverlässig erneut aus.
+Nach dem Fix: derselbe Stresstest kommt bis Level 13 statt hängenzubleiben.
 
 ## Aktueller Stand
 
@@ -179,6 +208,19 @@ ist unkritisch, weil die selten passieren (nicht 60x/Sek.).
       alle gleich braun), pulsierende Bullseye, wärmerer/atmenderer
       Spotlight-Glow, treibende Staubpartikel im Hintergrund, glänzende
       HUD-Pillen, aufgeräumtere Axt-Inventar-Leiste.
+- [x] Auf Feedback ("Namen weg", "100 Level", "buggt bei schnellem Werfen",
+      "Äpfel wirklich außen", "detailreicher") reagiert:
+      - Level-Namen entfernt, nur noch Nummern 1-100.
+      - Von 10 Hand-Leveln auf 100 formel-generierte Level umgestellt
+        (20 Schwierigkeitsstufen × 5 Varianten, siehe Level-System oben).
+      - ECHTEN Freeze-Bug bei schnellem Tippen gefunden und behoben (siehe
+        Bug-Abschnitt oben) – vorher blieb das Spiel bei Spam-Tippen komplett
+        hängen, das war vermutlich der Kern des "buggt rum"-Feedbacks.
+      - Äpfel hängen jetzt wirklich außerhalb des Bretts (Radius 112px, Board
+        endet bei ~105px) an einem kleinen Holzstiel statt auf dem Holz zu
+        kleben.
+      - Zwei dekorative Efeu-Ranken (`VineDecoration.tsx`) in den
+        Bühnen-Ecken für mehr Detail/weniger "leer".
 - [ ] Weiterer Feinschliff nach Bedarf (evtl. mehr Juice, evtl. ein Shop für
       die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.

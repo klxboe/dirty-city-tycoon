@@ -4,8 +4,9 @@ import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
 import { TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
+import { VineDecoration } from './components/VineDecoration';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
+import { FLIGHT_DURATION_MS } from './game/constants';
 import { playAppleSound, playBreakSound, playHitSound, playMissSound, unlockAudio } from './game/sound';
 import type { ThrowOutcome } from './game/types';
 import './App.css';
@@ -85,6 +86,9 @@ function App() {
       <HUD level={game.levelIndex + 1} hits={game.hits} axeCount={game.axeCount} totalCurrency={game.totalCurrency} />
 
       <div ref={stageRef} className="stage" onPointerDown={handlePointerDown}>
+        <VineDecoration className="stage__vine stage__vine--left" />
+        <VineDecoration flip className="stage__vine stage__vine--right" />
+
         <div className="stage__dust">
           {DUST_MOTES.map((mote, i) => (
             <span key={i} style={{ left: mote.left, animationDelay: mote.delay, animationDuration: mote.duration }} />
@@ -133,8 +137,6 @@ function App() {
       {game.phase === 'levelComplete' && (
         <LevelCompleteModal
           level={game.levelIndex + 1}
-          levelName={game.levelName}
-          nextLevelName={game.isLastLevel ? null : LEVELS[game.levelIndex + 1].name}
           hits={game.hits}
           axeCount={game.axeCount}
           applesCollected={game.applesCollectedThisRun}
