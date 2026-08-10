@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Axe } from './components/Axe';
 import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
-import { TargetBoard } from './components/TargetBoard';
+import { TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
@@ -12,8 +12,21 @@ import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95];
 
+// Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
+const DUST_MOTES = [
+  { left: '12%', delay: '0s', duration: '9s' },
+  { left: '28%', delay: '2.5s', duration: '11s' },
+  { left: '48%', delay: '1s', duration: '8s' },
+  { left: '66%', delay: '4s', duration: '12s' },
+  { left: '82%', delay: '1.8s', duration: '10s' },
+  { left: '92%', delay: '3.4s', duration: '9.5s' },
+];
+
 function App() {
-  const game = useAxeGame();
+  const boardHandleRef = useRef<TargetBoardHandle>(null);
+  const getBoardAngleDeg = useCallback(() => boardHandleRef.current?.getAngleDeg() ?? 0, []);
+  const game = useAxeGame(getBoardAngleDeg);
+
   const stageRef = useRef<HTMLDivElement>(null);
   const prevHitsRef = useRef(game.hits);
   const prevOutcomeRef = useRef<ThrowOutcome | null>(null);
@@ -72,9 +85,17 @@ function App() {
       <HUD level={game.levelIndex + 1} hits={game.hits} axeCount={game.axeCount} totalCurrency={game.totalCurrency} />
 
       <div ref={stageRef} className="stage" onPointerDown={handlePointerDown}>
+        <div className="stage__dust">
+          {DUST_MOTES.map((mote, i) => (
+            <span key={i} style={{ left: mote.left, animationDelay: mote.delay, animationDuration: mote.duration }} />
+          ))}
+        </div>
+
         <div className="stage__board-zone">
           <TargetBoard
-            angleDeg={game.boardAngleDeg}
+            ref={boardHandleRef}
+            speedDegPerSec={game.boardSpeedDegPerSec}
+            paused={game.phase === 'levelComplete'}
             stuckAxes={game.stuckAxes}
             apples={game.apples}
             broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}

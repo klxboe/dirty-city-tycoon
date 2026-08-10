@@ -10,12 +10,14 @@
   --color-text: #2c2416;
   --color-text-muted: #8a7a63;
 
-  --color-primary: #3ecf5d;
-  --color-primary-dark: #269943;
-  --color-money: #ffb703;
-  --color-money-dark: #d99400;
-  --color-danger: #ff5a5f;
-  --color-danger-dark: #d63a3f;
+  --color-primary: #2fe862;
+  --color-primary-dark: #189946;
+  --color-money: #ffc233;
+  --color-money-dark: #d98a00;
+  --color-danger: #ff4757;
+  --color-danger-dark: #c62232;
+  --color-accent: #ff8a3d;
+  --color-accent-dark: #d4611c;
 
   --radius-sm: 10px;
   --radius-md: 16px;

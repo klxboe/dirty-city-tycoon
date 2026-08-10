@@ -1,10 +1,19 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Axe } from './Axe';
 import { Apple } from './Apple';
+import { normalizeAngle } from '../game/engine';
 import type { Apple as AppleData, StuckAxe } from '../game/types';
 import './TargetBoard.css';
 
+export interface TargetBoardHandle {
+  /** Aktueller Rotationswinkel der Scheibe (Grad). Live, ohne über React-State zu gehen. */
+  getAngleDeg: () => number;
+}
+
 interface TargetBoardProps {
-  angleDeg: number;
+  speedDegPerSec: number;
+  /** Rotation anhalten (z.B. wenn das Level fertig ist). */
+  paused: boolean;
   stuckAxes: StuckAxe[];
   apples: AppleData[];
   /** true, wenn die letzte Axt des Levels gerade sauber getroffen hat – zeigt einen Riss-Effekt. */
@@ -15,7 +24,50 @@ export const BOARD_SIZE = 210;
 const BOARD_RADIUS = 96;
 const APPLE_RADIUS = 92;
 
-export function TargetBoard({ angleDeg, stuckAxes, apples, broken = false }: TargetBoardProps) {
+/**
+ * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das
+ * DOM-Element schreibt (kein React-State pro Frame). So läuft die Drehung butterweich,
+ * ohne dass bei jedem Frame die ganze App neu gerendert wird. Andere Komponenten
+ * (useAxeGame) lesen den aktuellen Winkel bei Bedarf über `getAngleDeg()`.
+ */
+export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(function TargetBoard(
+  { speedDegPerSec, paused, stuckAxes, apples, broken = false },
+  ref,
+) {
+  const boardElRef = useRef<HTMLDivElement>(null);
+  const angleRef = useRef(0);
+  const speedRef = useRef(speedDegPerSec);
+  const pausedRef = useRef(paused);
+
+  speedRef.current = speedDegPerSec;
+  pausedRef.current = paused;
+
+  useImperativeHandle(ref, () => ({
+    getAngleDeg: () => angleRef.current,
+  }));
+
+  useEffect(() => {
+    let frameId: number;
+    let lastTime = performance.now();
+
+    const tick = (now: number) => {
+      const deltaSeconds = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (!pausedRef.current) {
+        angleRef.current = normalizeAngle(angleRef.current + speedRef.current * deltaSeconds);
+        if (boardElRef.current) {
+          boardElRef.current.style.transform = `rotate(${angleRef.current}deg)`;
+        }
+      }
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
   return (
     <div className="target-mount">
       <div className="target-mount__chain">
@@ -24,7 +76,7 @@ export function TargetBoard({ angleDeg, stuckAxes, apples, broken = false }: Tar
         <span />
       </div>
 
-      <div className="target-board" style={{ transform: `rotate(${angleDeg}deg)` }}>
+      <div ref={boardElRef} className="target-board">
         <div className="target-board__grain" />
         <div className="target-board__ring target-board__ring--outer" />
         <div className="target-board__ring target-board__ring--mid" />
@@ -78,4 +130,4 @@ export function TargetBoard({ angleDeg, stuckAxes, apples, broken = false }: Tar
       </div>
     </div>
   );
-}
+});

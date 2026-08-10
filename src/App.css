@@ -18,8 +18,8 @@
   touch-action: none;
   overflow: hidden;
   background:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0px 2px, transparent 2px 7px),
-    repeating-linear-gradient(90deg, #8a6239 0px 54px, #7a5530 54px 58px);
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.08) 0px 2px, transparent 2px 7px),
+    repeating-linear-gradient(90deg, #96693b 0px 54px, #7f5127 54px 58px);
 }
 
 .stage::before {
@@ -27,8 +27,54 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(ellipse 60% 45% at 50% 34%, rgba(255, 205, 122, 0.4), transparent 70%);
+  background: radial-gradient(ellipse 62% 48% at 50% 32%, rgba(255, 200, 110, 0.55), transparent 72%);
   pointer-events: none;
+  animation: stage-glow-breathe 4s ease-in-out infinite;
+}
+
+@keyframes stage-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.stage__dust {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage__dust span {
+  position: absolute;
+  bottom: -6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 226, 168, 0.55);
+  animation: dust-float linear infinite;
+}
+
+@keyframes dust-float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-320px) translateX(14px);
+    opacity: 0;
+  }
 }
 
 .stage::after {

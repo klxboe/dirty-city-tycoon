@@ -4,16 +4,20 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.18);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.15));
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .axe-inventory__slot {
   display: flex;
   align-items: flex-end;
-  transition: opacity 0.25s, filter 0.25s;
+  transition: opacity 0.25s, filter 0.25s, transform 0.25s;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
 .axe-inventory__slot--used {
-  opacity: 0.35;
+  opacity: 0.3;
   filter: grayscale(1);
+  transform: translateY(2px) scale(0.92);
 }

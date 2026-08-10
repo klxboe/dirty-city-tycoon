@@ -13,9 +13,10 @@
   min-width: 78px;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  background: linear-gradient(155deg, #c9975f, #a5713c);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 55%), linear-gradient(155deg, #c9975f, #a5713c);
   border: 2px solid #6b4420;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28), 0 6px 14px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  overflow: hidden;
 }
 
 .hud-pill::before,
@@ -28,6 +29,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #f4ede0, #8a8f96);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 .hud-pill::before {
@@ -38,12 +40,23 @@
   right: 6px;
 }
 
+.hud-pill--hits {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 55%), linear-gradient(155deg, #4fae5f, #2c7a3a);
+  border-color: #1c5226;
+}
+
+.hud-pill--currency {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 55%),
+    linear-gradient(155deg, var(--color-money), var(--color-money-dark));
+  border-color: #8a5a00;
+}
+
 .hud-pill__label {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255, 250, 240, 0.85);
+  color: rgba(255, 250, 240, 0.9);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
@@ -52,7 +65,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #fff8ec;
-  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
 }
 
 .hud-pill__value--currency {
@@ -62,9 +75,10 @@
 }
 
 .hud-pill--hits .hud-pill__value {
-  color: #d9ffe0;
+  color: #ffffff;
 }
 
 .hud-pill--currency .hud-pill__value {
-  color: #ffe9ae;
+  color: #3d2600;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }

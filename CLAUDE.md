@@ -96,6 +96,20 @@ src/
 Prinzip: `game/` kennt React nicht (pure Funktionen, leicht nachvollziehbar/
 testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
 
+### Performance: Rotation läuft NICHT über React-State
+
+`TargetBoard.tsx` dreht sich per eigenem `requestAnimationFrame`-Loop, der
+direkt `element.style.transform` setzt – NICHT über React-State. Vorherige
+Version hat den Winkel bei jedem Frame (60x/Sek.) in den State von
+`useAxeGame` geschrieben, was bei jedem Frame die GESAMTE App neu gerendert
+hat (HUD, Inventar, alles) und sich "unflüssig"/ruckelig angefühlt hat.
+Jetzt: `TargetBoard` hält den Winkel in einer Ref und exposed ihn per
+`useImperativeHandle` (`getAngleDeg()`), `useAxeGame` bekommt eine
+`getBoardAngleDeg`-Callback-Funktion übergeben statt selbst zu rotieren, und
+fragt den Winkel nur beim Wurf-Auflösen einmalig ab. Andere State-Änderungen
+(Treffer, Level-Wechsel) lösen weiterhin normale React-Re-Renders aus – das
+ist unkritisch, weil die selten passieren (nicht 60x/Sek.).
+
 ### Die Winkel-Logik (der kniffligste Teil, kurz erklärt)
 
 - Die Zielscheibe rotiert kontinuierlich (Weltwinkel, 0° = oben, im Uhrzeigersinn).
@@ -157,6 +171,14 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
       steigend), teils mit vorplatzierten Äxten als Hindernisse. Level-
       Fortschritt mit "Weiter zu [Level]"-Button getestet (Level 1→2→3 inkl.
       korrekt vorplatzierter Axt in Level 3).
+- [x] Feedback "unflüssig + langweilig" behoben: Board-Rotation läuft jetzt
+      komplett außerhalb von React-State (siehe Architektur-Abschnitt oben) –
+      behebt die Ruckler, die durch 60x/Sek. volle App-Re-Renders entstanden
+      sind. Zusätzlich Design-Politur: kräftigere/gesättigtere Farben
+      (Theme + Zielscheibe + HUD-Pillen jetzt farblich unterschieden statt
+      alle gleich braun), pulsierende Bullseye, wärmerer/atmenderer
+      Spotlight-Glow, treibende Staubpartikel im Hintergrund, glänzende
+      HUD-Pillen, aufgeräumtere Axt-Inventar-Leiste.
 - [ ] Weiterer Feinschliff nach Bedarf (evtl. mehr Juice, evtl. ein Shop für
       die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.

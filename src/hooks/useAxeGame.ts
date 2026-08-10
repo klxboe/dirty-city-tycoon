@@ -1,7 +1,12 @@
-// Verbindet die reine Spiellogik (game/engine.ts) mit React: Rotations-Loop,
-// Werfen per Antippen, Zustandsmaschine ready -> flying -> ready/levelComplete.
+// Verbindet die reine Spiellogik (game/engine.ts) mit React: Werfen per Antippen,
+// Zustandsmaschine ready -> flying -> ready/levelComplete.
+//
+// Wichtig: die Scheiben-ROTATION selbst lebt NICHT hier (siehe TargetBoard.tsx) –
+// die dreht sich per eigenem rAF-Loop direkt im DOM, ohne React-State pro Frame,
+// damit die Drehung flüssig bleibt und nicht 60x/Sekunde die ganze App neu rendert.
+// Dieser Hook fragt den aktuellen Winkel nur bei Bedarf über `getBoardAngleDeg` ab.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple, normalizeAngle } from '../game/engine';
+import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
 import { FLIGHT_DURATION_MS, LEVELS } from '../game/constants';
 import { loadCurrency, saveCurrency } from '../game/storage';
 import type { GameState, StuckAxe } from '../game/types';
@@ -19,7 +24,6 @@ function createInitialState(levelIndex: number, totalCurrency?: number): GameSta
     levelIndex,
     axesThrown: 0,
     hits: 0,
-    boardAngleDeg: 0,
     stuckAxes: preplacedAxes,
     apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
     applesCollectedThisRun: 0,
@@ -29,31 +33,9 @@ function createInitialState(levelIndex: number, totalCurrency?: number): GameSta
   };
 }
 
-export function useAxeGame() {
+export function useAxeGame(getBoardAngleDeg: () => number) {
   const [state, setState] = useState<GameState>(() => createInitialState(0));
   const nextAxeId = useRef(0);
-
-  // Rotations-Loop: dreht die Scheibe kontinuierlich, außer wenn das Level fertig ist.
-  useEffect(() => {
-    let frameId: number;
-    let lastTime = performance.now();
-
-    const tick = (now: number) => {
-      const deltaSeconds = (now - lastTime) / 1000;
-      lastTime = now;
-
-      setState((prev) => {
-        if (prev.phase === 'levelComplete') return prev;
-        const speed = LEVELS[prev.levelIndex].boardSpeedDegPerSec;
-        return { ...prev, boardAngleDeg: normalizeAngle(prev.boardAngleDeg + speed * deltaSeconds) };
-      });
-
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, []);
 
   /** Antippen wirft sofort eine Axt (kein Laden/Timing mehr, wie beim Vorbild). */
   const throwAxe = useCallback(() => {
@@ -73,7 +55,7 @@ export function useAxeGame() {
         const level = LEVELS[prev.levelIndex];
 
         // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung (sie dreht sich während des Flugs weiter).
-        const localAngle = computeBoardLocalAngle(prev.boardAngleDeg);
+        const localAngle = computeBoardLocalAngle(getBoardAngleDeg());
 
         let outcome: NonNullable<GameState['lastOutcome']>;
         let stuckAxes = prev.stuckAxes;
@@ -113,7 +95,7 @@ export function useAxeGame() {
     }, FLIGHT_DURATION_MS);
 
     return () => clearTimeout(timeout);
-  }, [state.phase]);
+  }, [state.phase, getBoardAngleDeg]);
 
   // Gesammelte Äpfel dauerhaft der Gesamt-Währung gutschreiben, sobald das Level fertig ist.
   useEffect(() => {
@@ -144,6 +126,7 @@ export function useAxeGame() {
     levelCount: LEVELS.length,
     levelName: level.name,
     isLastLevel,
+    boardSpeedDegPerSec: level.boardSpeedDegPerSec,
     axeCount: level.axeCount,
     axesRemaining: level.axeCount - state.axesThrown,
     throwAxe,

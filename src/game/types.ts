@@ -38,7 +38,6 @@ export interface GameState {
   levelIndex: number;
   axesThrown: number;
   hits: number;
-  boardAngleDeg: number;
   stuckAxes: StuckAxe[];
   apples: Apple[];
   /** In diesem Level-Durchlauf gesammelte Äpfel (= Spielwährung). */
