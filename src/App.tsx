@@ -2,18 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Axe } from './components/Axe';
 import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
-import { PowerDial } from './components/PowerDial';
 import { TargetBoard } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
+import { FLIGHT_DURATION_MS } from './game/constants';
 import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95];
 
 function App() {
   const game = useAxeGame();
-  const level = LEVELS[game.levelIndex];
   const stageRef = useRef<HTMLDivElement>(null);
   const prevHitsRef = useRef(game.hits);
   const [burstId, setBurstId] = useState(0);
@@ -33,26 +31,17 @@ function App() {
   }, [game.hits]);
 
   const hint =
-    game.phase === 'charging'
-      ? 'Loslassen, wenn der Punkt unten grün ist!'
-      : game.phase === 'flying'
+    game.phase === 'flying'
+      ? ''
+      : game.phase === 'levelComplete'
         ? ''
-        : game.phase === 'levelComplete'
-          ? ''
-          : 'Halten zum Laden, loslassen zum Werfen';
+        : 'Tippen zum Werfen';
 
   return (
     <div className="app">
       <HUD level={game.levelIndex + 1} hits={game.hits} axeCount={game.axeCount} totalCurrency={game.totalCurrency} />
 
-      <div
-        ref={stageRef}
-        className="stage"
-        onPointerDown={game.startCharge}
-        onPointerUp={game.release}
-        onPointerLeave={game.release}
-        onPointerCancel={game.release}
-      >
+      <div ref={stageRef} className="stage" onPointerDown={game.throwAxe}>
         <div className="stage__board-zone">
           <TargetBoard angleDeg={game.boardAngleDeg} stuckAxes={game.stuckAxes} apples={game.apples} />
 
@@ -81,12 +70,6 @@ function App() {
 
         <div className="stage__thrower-zone">
           <AxeInventory total={game.axeCount} thrown={game.axesThrown} />
-          <PowerDial
-            chargeStartedAt={game.chargeStartedAt}
-            spinPeriodMs={level.spinPeriodMs}
-            tolerance={level.sweetSpotTolerance}
-            active={game.phase === 'charging'}
-          />
           <div className="stage__hint">{hint}</div>
         </div>
       </div>

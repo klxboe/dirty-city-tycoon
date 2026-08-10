@@ -1,6 +1,6 @@
 // Alle Datentypen für den Spielzustand an einem Ort.
 
-export type GamePhase = 'ready' | 'charging' | 'flying' | 'levelComplete';
+export type GamePhase = 'ready' | 'flying' | 'levelComplete';
 
 /** Eine bereits in der Zielscheibe steckende Axt. Winkel ist im LOKALEN Koordinatensystem der Scheibe. */
 export interface StuckAxe {
@@ -16,13 +16,9 @@ export interface Apple {
 }
 
 /** Ergebnis eines einzelnen Wurfs, für kurzes Feedback nach der Flugphase. */
-export type ThrowOutcome = 'stuck' | 'bounced' | 'collided';
+export type ThrowOutcome = 'stuck' | 'collided';
 
 export interface FlyingAxe {
-  /** Winkel der Scheibe (im Weltkoordinatensystem) im Moment des Loslassens. */
-  releaseBoardAngleDeg: number;
-  /** Ob der Wurf im "Sweet Spot" war, also sauber stecken bleiben würde. */
-  wasGoodTiming: boolean;
   startedAt: number;
 }
 
@@ -30,8 +26,6 @@ export interface FlyingAxe {
 export interface LevelConfig {
   axeCount: number;
   boardSpeedDegPerSec: number;
-  spinPeriodMs: number;
-  sweetSpotTolerance: number;
   /** Feste Positionen (Grad, lokal am Brett) für die Äpfel in diesem Level. */
   appleAngles: number[];
 }
@@ -48,7 +42,6 @@ export interface GameState {
   applesCollectedThisRun: number;
   /** Dauerhaft gespeicherte Gesamt-Währung über alle Durchläufe hinweg. */
   totalCurrency: number;
-  chargeStartedAt: number | null;
   flyingAxe: FlyingAxe | null;
   lastOutcome: ThrowOutcome | null;
 }

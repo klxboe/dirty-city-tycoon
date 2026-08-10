@@ -13,22 +13,6 @@ export function angularDistance(a: number, b: number): number {
   return Math.min(diff, 360 - diff);
 }
 
-/** Wie weit ist der Lade-Zyklus gerade (0-1, wiederholt sich). Für die Anzeige des Drehreglers. */
-export function spinProgress(holdMs: number, spinPeriodMs: number): number {
-  return (holdMs % spinPeriodMs) / spinPeriodMs;
-}
-
-/**
- * true, wenn beim Loslassen genau jetzt die Axt sauber (mit der Klinge voran) treffen würde.
- * Der Sweet Spot liegt bewusst in der MITTE des Zyklus (progress ≈ 0.5), nicht am Anfang
- * (progress ≈ 0) – sonst wäre ein sofortiges Loslassen (0ms halten) immer ein Treffer, was
- * die ganze Lade-Mechanik überflüssig machen würde.
- */
-export function isGoodTiming(holdMs: number, spinPeriodMs: number, tolerance: number): boolean {
-  const progress = spinProgress(holdMs, spinPeriodMs);
-  return Math.abs(progress - 0.5) <= tolerance;
-}
-
 /** Winkel, an dem eine neue Axt in der (rotierenden) Scheibe "einwächst", im lokalen Koordinatensystem der Scheibe. */
 export function computeBoardLocalAngle(worldBoardAngleDeg: number): number {
   return normalizeAngle(IMPACT_WORLD_ANGLE_DEG - worldBoardAngleDeg);

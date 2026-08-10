@@ -15,20 +15,22 @@ nicht verloren, sondern bleibt vollständig in der Git-Historie erhalten
 
 ## Was ist das Spiel?
 
-Ein simples, süchtig machendes Arcade-Handyspiel im Stil von "Knife Hit", aber
-mit eigenem Twist: **Axt-Wurf mit Schwung-Kontrolle**.
+Ein simples, süchtig machendes Arcade-Handyspiel, sehr nah am Vorbild
+"Knife Hit": **Axt-Wurf auf eine rotierende Zielscheibe**.
 
-- Man hält den Bildschirm gedrückt, um zu "laden" – ein Regler dreht sich
-  dabei kontinuierlich.
-- Lässt man genau im richtigen Moment los (grüner Bereich im Regler, unten),
-  fliegt die Axt sauber in die rotierende Zielscheibe.
-- Zu früh oder zu spät losgelassen → die Axt prallt ab. Trifft man eine
-  Stelle, an der schon eine Axt steckt → sie prallt auch ab. Beides
-  verbraucht einfach eine Axt aus dem Kontingent, beendet aber NICHT das
-  ganze Spiel (siehe Level-System unten).
+- Die Zielscheibe dreht sich kontinuierlich.
+- Antippen wirft sofort eine Axt (kein Halten/Laden/Timing-Fenster mehr –
+  das gab es in einer früheren Version, wurde auf Wunsch entfernt, um näher
+  am Vorbild zu sein).
+- Trifft man eine Stelle, an der schon eine Axt steckt → sie prallt ab.
+  Das verbraucht einfach eine Axt aus dem Kontingent, beendet aber NICHT
+  das ganze Spiel (siehe Level-System unten).
+- Der einzige Skill: den richtigen Moment zum Antippen abpassen, damit die
+  Axt in eine freie Lücke zwischen den schon steckenden Äxten trifft.
 
-Der Skill ist bewusst anders als bei Knife Hit: nicht "im richtigen Moment
-tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
+Rechtlich unbedenklich: Spielmechaniken sind nicht urheberrechtlich
+geschützt, nur die konkrete Umsetzung (eigene Grafiken/Sounds/Code – haben
+wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Level-System
 
@@ -43,7 +45,7 @@ tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
   "Nochmal spielen" startet das gleiche Level neu.
 - Aktuell nur EIN Level, aber als Liste (`LEVELS` in `constants.ts`) angelegt,
   damit weitere Level leicht ergänzt werden können (mehr Äxte, andere
-  Rotationsgeschwindigkeit/Zykluszeit/Toleranz, andere Apfel-Positionen).
+  Rotationsgeschwindigkeit, andere Apfel-Positionen).
 
 ## Tech-Stack
 
@@ -58,24 +60,23 @@ tippen", sondern "die Ladezeit/den Schwung richtig dosieren".
 src/
   game/
     types.ts     GameState, StuckAxe, Apple, LevelConfig,
-                  GamePhase (ready/charging/flying/levelComplete)
+                  GamePhase (ready/flying/levelComplete)
     constants.ts  LEVELS (Liste aller Level-Konfigurationen), Kollisions-/
                    Apfel-Trefferradius, Flugzeit
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
-                   normalizeAngle, angularDistance, spinProgress, isGoodTiming,
-                   computeBoardLocalAngle, collidesWithStuckAxe, findHitApple
+                   normalizeAngle, angularDistance, computeBoardLocalAngle,
+                   collidesWithStuckAxe, findHitApple
     storage.ts    Dauerhafte Apfel-Währung laden/speichern (localStorage)
   hooks/
     useAxeGame.ts  Verbindet engine.ts mit React: Rotations-Loop
-                    (requestAnimationFrame), Laden/Werfen per Pointer-Events,
-                    Zustandsmaschine ready -> charging -> flying -> ready,
+                    (requestAnimationFrame), Werfen per Antippen,
+                    Zustandsmaschine ready -> flying -> ready,
                     nach der letzten Axt -> levelComplete
   components/
     Axe.tsx              Die Axt-Form (SVG), für fliegende UND steckende Äxte
     Apple.tsx            Der Apfel (SVG)
     TargetBoard.tsx      Die rotierende Zielscheibe inkl. Äxte + Äpfel
     AxeInventory.tsx     Reihe der verbleibenden/verbrauchten Äxte unten
-    PowerDial.tsx        Der Lade-Regler mit dem grünen "Sweet Spot"-Keil
     HUD.tsx              Level / Trefferquote / Äpfel-Währung oben
     LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
   styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
@@ -96,15 +97,12 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
   steckenden Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`).
 - **Wichtiges Balancing:** Die Rotationsgeschwindigkeit der Scheibe muss immer
   deutlich schneller sein als "Kollisions-Toleranz ÷ Flugzeit", sonst kollidieren
-  selbst perfekt getimte, schnell aufeinanderfolgende Würfe unfair mit der
-  eigenen letzten Axt (das war ein echter Bug beim ersten Bauen, ist jetzt
-  behoben: `BASE_BOARD_SPEED_DEG_PER_SEC = 95`).
-- **Wichtig (Sweet-Spot-Position):** Der Sweet Spot in `isGoodTiming()` liegt
-  bewusst bei `progress ≈ 0.5` (Zyklus-MITTE), nicht bei `progress ≈ 0` (Start).
-  War anfangs falsch bei 0/1 – dadurch war ein sofortiges Loslassen (0ms halten)
-  IMMER ein Treffer (0 liegt trivial innerhalb jeder Toleranz um 0), was die
-  ganze Lade-Mechanik zu einem "einfach schnell klicken"-Exploit gemacht hat.
-  Deswegen auch der grüne Keil im PowerDial bei 180° (unten), nicht bei 0° (oben).
+  selbst schnell aufeinanderfolgende Würfe unfair mit der eigenen letzten Axt
+  (war ein echter Bug in einer früheren Version).
+- Es gab früher eine Halten-und-Loslassen-Timing-Mechanik (Lade-Regler mit
+  "Sweet Spot"). Auf Wunsch entfernt – jetzt zählt nur noch die Position
+  (Kollision mit vorherigen Äxten), kein Timing-Fenster mehr. Einfacher und
+  näher am Vorbild "Knife Hit".
 
 ## Aktueller Stand
 
@@ -124,6 +122,9 @@ testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
       Kollisions-Hitbox verkleinert (10° statt 16°) für etwas mehr Fairness.
       Kompletter Level-Durchlauf inkl. Apfel-Sammeln, Fehlwurf-ohne-Abbruch,
       Level-Abschluss und Neustart durchgetestet.
+- [x] Timing-Mechanik (Lade-Regler) komplett entfernt – jetzt einfaches
+      Antippen zum Werfen, näher am Vorbild "Knife Hit". Einziges
+      Fail-Kriterium ist noch die Kollision mit einer bereits steckenden Axt.
 - [ ] Weiterer Feinschliff nach Bedarf (Soundeffekte, evtl. weitere Juice,
       mehr Level, evtl. ein Shop für die gesammelten Äpfel).
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.

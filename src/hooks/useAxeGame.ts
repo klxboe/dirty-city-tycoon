@@ -1,13 +1,7 @@
 // Verbindet die reine Spiellogik (game/engine.ts) mit React: Rotations-Loop,
-// Laden/Werfen per Pointer-Events, Zustandsmaschine ready -> charging -> flying -> ready/levelComplete.
+// Werfen per Antippen, Zustandsmaschine ready -> flying -> ready/levelComplete.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  collidesWithStuckAxe,
-  computeBoardLocalAngle,
-  findHitApple,
-  isGoodTiming,
-  normalizeAngle,
-} from '../game/engine';
+import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple, normalizeAngle } from '../game/engine';
 import { FLIGHT_DURATION_MS, LEVELS } from '../game/constants';
 import { loadCurrency, saveCurrency } from '../game/storage';
 import type { GameState } from '../game/types';
@@ -24,7 +18,6 @@ function createInitialState(levelIndex: number, totalCurrency?: number): GameSta
     apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
     applesCollectedThisRun: 0,
     totalCurrency: totalCurrency ?? loadCurrency(),
-    chargeStartedAt: null,
     flyingAxe: null,
     lastOutcome: null,
   };
@@ -56,30 +49,15 @@ export function useAxeGame() {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  const startCharge = useCallback(() => {
+  /** Antippen wirft sofort eine Axt (kein Laden/Timing mehr, wie beim Vorbild). */
+  const throwAxe = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'ready') return prev;
-      return { ...prev, phase: 'charging', chargeStartedAt: performance.now(), lastOutcome: null };
+      return { ...prev, phase: 'flying', flyingAxe: { startedAt: performance.now() }, lastOutcome: null };
     });
   }, []);
 
-  const release = useCallback(() => {
-    setState((prev) => {
-      if (prev.phase !== 'charging' || prev.chargeStartedAt === null) return prev;
-      const level = LEVELS[prev.levelIndex];
-      const holdMs = performance.now() - prev.chargeStartedAt;
-      const wasGoodTiming = isGoodTiming(holdMs, level.spinPeriodMs, level.sweetSpotTolerance);
-
-      return {
-        ...prev,
-        phase: 'flying',
-        chargeStartedAt: null,
-        flyingAxe: { releaseBoardAngleDeg: prev.boardAngleDeg, wasGoodTiming, startedAt: performance.now() },
-      };
-    });
-  }, []);
-
-  // Löst den Wurf nach der Flugzeit auf: Treffer, Abprall, Kollision – und verbraucht eine Axt.
+  // Löst den Wurf nach der Flugzeit auf: Treffer oder Kollision – und verbraucht eine Axt.
   useEffect(() => {
     if (state.phase !== 'flying') return;
 
@@ -97,9 +75,7 @@ export function useAxeGame() {
         let hits = prev.hits;
         let applesCollectedThisRun = prev.applesCollectedThisRun;
 
-        if (!prev.flyingAxe.wasGoodTiming) {
-          outcome = 'bounced';
-        } else if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
+        if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
           outcome = 'collided';
         } else {
           outcome = 'stuck';
@@ -153,8 +129,7 @@ export function useAxeGame() {
     ...state,
     axeCount: level.axeCount,
     axesRemaining: level.axeCount - state.axesThrown,
-    startCharge,
-    release,
+    throwAxe,
     retryLevel,
   };
 }

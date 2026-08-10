@@ -26,11 +26,8 @@ export const LEVELS: LevelConfig[] = [
   {
     axeCount: 5,
     boardSpeedDegPerSec: 70,
-    spinPeriodMs: 950,
-    sweetSpotTolerance: 0.2,
     appleAngles: [40, 150, 260],
   },
 ];
 
-export const HIGH_SCORE_SAVE_KEY = 'axe-throw-high-score-v1';
 export const CURRENCY_SAVE_KEY = 'axe-throw-currency-v1';
