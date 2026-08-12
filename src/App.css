@@ -135,11 +135,18 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
+/*
+ * Die Axt fliegt von unten-Mitte zum Einschlagpunkt. --flight-dx/--flight-dy setzt App.tsx
+ * je nach Zielrichtung: (0,0) = Wurf in die Mitte (unten an der Scheibe), positives dx =
+ * weiter rechts, positives dy = weiter oben am Scheibenrand.
+ */
 .axe-flying {
   position: absolute;
   z-index: 1;
   left: 50%;
   bottom: 8%;
+  --flight-dx: 0px;
+  --flight-dy: 0px;
   animation-name: axe-fly;
   animation-timing-function: ease-in;
   animation-fill-mode: forwards;
@@ -153,7 +160,8 @@
   }
   to {
     bottom: 68%;
-    transform: translateX(-50%) rotate(900deg);
+    transform: translateX(-50%) translate(var(--flight-dx), calc(-1 * var(--flight-dy)))
+      rotate(900deg);
   }
 }
 

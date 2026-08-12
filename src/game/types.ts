@@ -1,6 +1,6 @@
 // Alle Datentypen für den Spielzustand an einem Ort.
 
-export type GamePhase = 'ready' | 'flying' | 'levelComplete';
+export type GamePhase = 'ready' | 'flying' | 'levelComplete' | 'gameOver';
 
 /** Eine bereits in der Zielscheibe steckende Axt. Winkel ist im LOKALEN Koordinatensystem der Scheibe. */
 export interface StuckAxe {
@@ -20,6 +20,12 @@ export type ThrowOutcome = 'stuck' | 'collided';
 
 export interface FlyingAxe {
   startedAt: number;
+  /**
+   * Welt-Winkel, an dem diese Axt einschlägt – ergibt sich daraus, wohin der Spieler
+   * getippt hat. Bestimmt sowohl die Trefferauswertung als auch die Flugrichtung
+   * der Animation.
+   */
+  impactWorldAngleDeg: number;
 }
 
 /** Alle Balancing-Werte für ein Level. */

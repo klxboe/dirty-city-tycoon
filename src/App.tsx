@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Axe } from './components/Axe';
 import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
-import { TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
+import { BOARD_RADIUS, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
+import { GameOverModal } from './components/GameOverModal';
 import { VineDecoration } from './components/VineDecoration';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS } from './game/constants';
@@ -69,17 +70,24 @@ function App() {
     prevApplesRef.current = game.applesCollectedThisRun;
   }, [game.applesCollectedThisRun]);
 
-  const hint =
-    game.phase === 'flying'
-      ? ''
-      : game.phase === 'levelComplete'
-        ? ''
-        : 'Tippen zum Werfen';
+  const hint = game.phase === 'ready' ? 'Links/Mitte/rechts tippen zum Zielen' : '';
 
-  const handlePointerDown = () => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
-    game.throwAxe();
+
+    // Zielen: horizontaler Abstand der Tippposition zur Scheibenmitte, normiert auf den
+    // Scheibenradius. -1 = linker Rand, 0 = Mitte, +1 = rechter Rand (Werte darüber hinaus
+    // schneidet die Engine ab, damit auch ein Tap weit neben der Scheibe noch funktioniert).
+    const centerX = boardHandleRef.current?.getCenterX() ?? event.clientX;
+    game.throwAxe((event.clientX - centerX) / BOARD_RADIUS);
   };
+
+  // Flugziel der Axt in Pixeln, relativ zum Einschlag eines Mittel-Wurfs (unten an der Scheibe).
+  // Weltwinkel: 0° = oben, im Uhrzeigersinn -> Punkt auf dem Kreis ist (R·sin a) nach rechts
+  // und (R·cos a) nach oben, gemessen von der Scheibenmitte.
+  const flightAngleRad = ((game.flyingAxe?.impactWorldAngleDeg ?? 180) * Math.PI) / 180;
+  const flightDx = BOARD_RADIUS * Math.sin(flightAngleRad);
+  const flightDy = BOARD_RADIUS * (Math.cos(flightAngleRad) + 1);
 
   return (
     <div className="app">
@@ -99,7 +107,7 @@ function App() {
           <TargetBoard
             ref={boardHandleRef}
             speedDegPerSec={game.boardSpeedDegPerSec}
-            paused={game.phase === 'levelComplete'}
+            paused={game.phase === 'levelComplete' || game.phase === 'gameOver'}
             stuckAxes={game.stuckAxes}
             apples={game.apples}
             broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}
@@ -122,7 +130,11 @@ function App() {
           <div
             key={game.flyingAxe.startedAt}
             className="axe-flying"
-            style={{ animationDuration: `${FLIGHT_DURATION_MS}ms` }}
+            style={{
+              animationDuration: `${FLIGHT_DURATION_MS}ms`,
+              ['--flight-dx' as string]: `${flightDx}px`,
+              ['--flight-dy' as string]: `${flightDy}px`,
+            }}
           >
             <Axe size={34} />
           </div>
@@ -144,6 +156,16 @@ function App() {
           isLastLevel={game.isLastLevel}
           onRetry={game.retryLevel}
           onNext={game.nextLevel}
+        />
+      )}
+
+      {game.phase === 'gameOver' && (
+        <GameOverModal
+          level={game.levelIndex + 1}
+          hits={game.hits}
+          applesLost={game.applesCollectedThisRun}
+          totalCurrency={game.totalCurrency}
+          onRetry={game.retryLevel}
         />
       )}
     </div>

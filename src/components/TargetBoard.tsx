@@ -8,6 +8,8 @@ import './TargetBoard.css';
 export interface TargetBoardHandle {
   /** Aktueller Rotationswinkel der Scheibe (Grad). Live, ohne über React-State zu gehen. */
   getAngleDeg: () => number;
+  /** Horizontale Bildschirm-Mitte der Scheibe (px). Basis fürs Zielen: Tippposition minus diesem Wert. */
+  getCenterX: () => number;
 }
 
 interface TargetBoardProps {
@@ -21,7 +23,8 @@ interface TargetBoardProps {
 }
 
 export const BOARD_SIZE = 210;
-const BOARD_RADIUS = 96;
+/** Radius, auf dem die Äxte im Holz stecken. Auch die Bezugsgröße fürs Zielen und die Flugbahn. */
+export const BOARD_RADIUS = 96;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 112;
 const APPLE_STEM_LENGTH = 16;
@@ -47,6 +50,12 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
 
   useImperativeHandle(ref, () => ({
     getAngleDeg: () => angleRef.current,
+    getCenterX: () => {
+      const el = boardElRef.current;
+      if (!el) return 0;
+      const rect = el.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    },
   }));
 
   useEffect(() => {

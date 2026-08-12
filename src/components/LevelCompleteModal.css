@@ -32,10 +32,20 @@
   line-height: 1.25;
 }
 
+/* Game Over statt geschafftem Level: gleiche Karte, nur in Warnfarbe. */
+.modal-card__title--fail {
+  color: var(--color-danger-dark);
+}
+
 .modal-card__body {
   color: var(--color-text-muted);
   font-size: 14px;
   min-height: 20px;
+}
+
+.modal-card__sub--warn {
+  color: var(--color-danger-dark);
+  font-weight: 700;
 }
 
 .modal-card__apples {

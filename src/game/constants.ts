@@ -23,19 +23,43 @@ export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 /** Wie nah eine Axt an einem Apfel landen muss, damit er abfällt (Grad). Großzügiger als die Kollisions-Hitbox. */
 export const APPLE_HIT_TOLERANCE_DEG = 24;
 
-/** Fester Aufprall-Punkt der Scheibe in Weltkoordinaten (0° = oben, im Uhrzeigersinn). */
+/**
+ * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten
+ * (0° = oben, im Uhrzeigersinn) – also unten an der Scheibe.
+ * Zielt man daneben, verschiebt sich der Einschlag um bis zu MAX_AIM_SPREAD_DEG
+ * (siehe aimToImpactWorldAngle in engine.ts).
+ */
 export const IMPACT_WORLD_ANGLE_DEG = 180;
 
 /**
+ * Wie weit man den Einschlag durch Zielen nach links/rechts verschieben kann (Grad).
+ * Tippt man ganz am linken/rechten Rand der Scheibe, landet die Axt um diesen Winkel
+ * neben dem Mittel-Einschlag. 75° deckt zusammen die gesamte untere Hälfte plus etwas
+ * ab – genug Kontrolle zum gezielten Apfel-Treffen, ohne dass ein von unten geworfener
+ * Wurf unglaubwürdig auf der Oberseite einschlägt.
+ */
+export const MAX_AIM_SPREAD_DEG = 75;
+
+/**
  * 100 Level = 20 Schwierigkeitsstufen × 5 Varianten pro Stufe, per Formel erzeugt statt von
- * Hand aufgeschrieben (wäre bei 100 Stück unübersichtlich). Innerhalb einer Stufe ist die
- * Schwierigkeit gleich (Axt-Anzahl, ungefähres Tempo, Anzahl Hindernisse/Äpfel), nur die
- * genaue Platzierung von Äpfeln/vorplatzierten Äxten und das exakte Tempo variieren – für
- * fünf spürbar unterschiedliche, aber gleich schwere Level pro Stufe.
+ * Hand aufgeschrieben (wäre bei 100 Stück unübersichtlich). Die Stufe bestimmt Axt-Anzahl,
+ * Anzahl Hindernisse und Äpfel; innerhalb einer Stufe variiert nur die genaue Platzierung
+ * von Äpfeln/vorplatzierten Äxten – für fünf spürbar unterschiedliche Level pro Stufe.
+ * Die Drehgeschwindigkeit steigt davon unabhängig mit JEDEM einzelnen Level (siehe unten).
  */
 const DIFFICULTY_TIERS = 20;
 const VARIATIONS_PER_TIER = 5;
-const SPEED_MULTIPLIERS = [0.85, 1.0, 1.15, 0.75, 1.05];
+
+/**
+ * Die Scheibe dreht sich mit JEDEM Level ein Stück schneller (streng steigend über alle
+ * 100 Level, nicht nur pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist
+ * das Zeitfenster, in dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das
+ * macht das gezielte Apfel-Sammeln nach oben hin schwerer.
+ * Level 1 = 55°/Sek., Level 100 = ~199°/Sek.
+ */
+const BASE_SPEED_DEG_PER_SEC = 55;
+const SPEED_STEP_PER_LEVEL = 1.45;
+const MAX_SPEED_DEG_PER_SEC = 200;
 
 function normalizeDeg(deg: number): number {
   const m = deg % 360;
@@ -48,14 +72,14 @@ function spreadAngles(count: number, startDeg: number): number[] {
   return Array.from({ length: count }, (_, i) => normalizeDeg(startDeg + (360 / count) * i));
 }
 
-function generateLevel(tier: number, variation: number): LevelConfig {
+function generateLevel(tier: number, variation: number, levelIndex: number): LevelConfig {
   const axeCount = Math.min(8, 5 + Math.floor((tier - 1) / 5));
   const preplacedCount = Math.min(3, Math.floor((tier - 1) / 6));
   const appleCount = 2 + Math.floor((tier - 1) / 10);
 
-  const baseSpeed = 55 + tier * 6;
-  const speedMultiplier = SPEED_MULTIPLIERS[(variation - 1) % SPEED_MULTIPLIERS.length];
-  const boardSpeedDegPerSec = Math.round(Math.min(200, Math.max(50, baseSpeed * speedMultiplier)));
+  const boardSpeedDegPerSec = Math.round(
+    Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL),
+  );
 
   const appleSeed = normalizeDeg(tier * 47 + variation * 83);
   const preplacedSeed = normalizeDeg(tier * 29 + variation * 61 + 25);
@@ -69,7 +93,9 @@ function generateLevel(tier: number, variation: number): LevelConfig {
 }
 
 export const LEVELS: LevelConfig[] = Array.from({ length: DIFFICULTY_TIERS }, (_, tierIndex) =>
-  Array.from({ length: VARIATIONS_PER_TIER }, (_, variationIndex) => generateLevel(tierIndex + 1, variationIndex + 1)),
+  Array.from({ length: VARIATIONS_PER_TIER }, (_, variationIndex) =>
+    generateLevel(tierIndex + 1, variationIndex + 1, tierIndex * VARIATIONS_PER_TIER + variationIndex),
+  ),
 ).flat();
 
 export const CURRENCY_SAVE_KEY = 'axe-throw-currency-v1';
