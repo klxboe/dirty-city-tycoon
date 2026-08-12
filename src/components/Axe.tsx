@@ -9,70 +9,67 @@ interface AxeProps {
 }
 
 interface AxeStyle {
-  /** Klinge: hell -> mittel -> dunkel. */
+  /** Klinge: Glanzkante -> Fläche -> Schattenseite. */
   steel: [string, string, string];
-  /** Griff: hell -> mittel -> dunkel. */
-  wood: [string, string, string];
-  /** Kontur der Klinge. */
-  steelStroke: string;
-  /** Kontur/Wicklung am Griff. */
-  woodStroke: string;
-  /** Farbe des Auges (Schaftloch). */
-  eye: string;
+  /** Griff: hell -> dunkel. */
+  wood: [string, string];
+  /** Farbe der Wicklungs-Ringe am Griff. */
+  wrap: string;
+  /** Kontur, hebt die Silhouette vom dunklen Hintergrund ab. */
+  outline: string;
   /** Optionaler farbiger Schein um die Klinge (z.B. Glut, Frost). */
   glow?: string;
 }
 
 const AXE_STYLES: Record<string, AxeStyle> = {
   'axe-standard': {
-    steel: ['#f3f6f8', '#c7d1d9', '#8b98a3'],
-    wood: ['#a5713c', '#8a5a2b', '#6b4420'],
-    steelStroke: '#5c6670',
-    woodStroke: '#4d3016',
-    eye: '#3a4149',
+    steel: ['#ffffff', '#dbe4ec', '#9aa6b2'],
+    wood: ['#a5713c', '#6b4420'],
+    wrap: '#4a2c14',
+    outline: '#141820',
   },
   'axe-bronze': {
-    steel: ['#ffe0a8', '#d99a4e', '#95561f'],
-    wood: ['#6b4a30', '#513524', '#3a2417'],
-    steelStroke: '#7a4415',
-    woodStroke: '#2a1a10',
-    eye: '#4a2c14',
+    steel: ['#ffeec2', '#e0a959', '#9d5f24'],
+    wood: ['#6b4a30', '#3a2417'],
+    wrap: '#241509',
+    outline: '#140d06',
   },
   'axe-frost': {
-    steel: ['#f2fbff', '#a8dcf5', '#4d90b8'],
-    wood: ['#8fa8b5', '#6b8391', '#4a5c68'],
-    steelStroke: '#2f6c8f',
-    woodStroke: '#33444e',
-    eye: '#2c4652',
-    glow: 'rgba(130, 215, 255, 0.85)',
+    steel: ['#ffffff', '#bfe7f8', '#5b9dc4'],
+    wood: ['#8fa8b5', '#4a5c68'],
+    wrap: '#2c3f49',
+    outline: '#0e1d26',
+    glow: 'rgba(130, 215, 255, 0.9)',
   },
   'axe-ember': {
-    steel: ['#fff0c4', '#ff8a3d', '#a32a10'],
-    wood: ['#4a3a33', '#33261f', '#1e1512'],
-    steelStroke: '#7a1e08',
-    woodStroke: '#150e0b',
-    eye: '#2b1410',
-    glow: 'rgba(255, 138, 61, 0.9)',
+    steel: ['#fff4d0', '#ff9a4d', '#b23412'],
+    wood: ['#4a3a33', '#1e1512'],
+    wrap: '#150e0b',
+    outline: '#180a04',
+    glow: 'rgba(255, 138, 61, 0.95)',
   },
   'axe-gold': {
-    steel: ['#fffbe0', '#ffd24a', '#b8860b'],
-    wood: ['#8a6b3a', '#6b5129', '#4a361a'],
-    steelStroke: '#8a6508',
-    woodStroke: '#2f2210',
-    eye: '#5c4408',
-    glow: 'rgba(255, 210, 74, 0.7)',
+    steel: ['#fffce8', '#ffd756', '#bf8c0d'],
+    wood: ['#8a6b3a', '#4a361a'],
+    wrap: '#2f2210',
+    outline: '#17110a',
+    glow: 'rgba(255, 210, 74, 0.8)',
   },
 };
 
 /**
- * Eine Tomahawk-Axt. Bei Rotation 0° zeigt die Klinge nach oben (= "voran"),
- * so wie sie in der Zielscheibe stecken soll. Rotation wird vom Aufrufer per CSS gesteuert.
+ * Die Wurf-Axt. Bei Rotation 0° zeigt die Klinge nach oben (= "voran"), so wie sie in
+ * der Zielscheibe stecken soll; die Rotation steuert der Aufrufer per CSS.
+ *
+ * Zeichenstil: flach und kontraststark statt fein schattiert. Jede Form hat eine
+ * dunkle Kontur, damit die Axt auch klein (22px im Vorrat) und vor dem fast schwarzen
+ * Hintergrund noch klar lesbar ist.
  */
 export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps) {
-  // useId statt eines hochgezählten Moduls-Zählers: die Gradient-IDs müssen eindeutig sein,
-  // wenn mehrere Äxte gleichzeitig im DOM hängen, und dürfen sich beim Re-Render nicht ändern.
+  // useId: die Gradient-IDs müssen eindeutig sein, wenn mehrere Äxte gleichzeitig im
+  // DOM hängen, und dürfen sich beim Re-Render nicht ändern.
   const uid = useId().replace(/:/g, '');
-  const steelId = `axe-steel-${uid}`;
+  const bladeId = `axe-blade-${uid}`;
   const woodId = `axe-wood-${uid}`;
   const style = AXE_STYLES[skin] ?? AXE_STYLES[DEFAULT_AXE_SKIN];
 
@@ -83,46 +80,64 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
       viewBox="0 0 32 60"
       className={className}
       overflow="visible"
-      style={style.glow ? { filter: `drop-shadow(0 0 5px ${style.glow})` } : undefined}
+      style={style.glow ? { filter: `drop-shadow(0 0 6px ${style.glow})` } : undefined}
     >
       <defs>
-        <linearGradient id={steelId} x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={bladeId} x1="0" y1="0" x2="1" y2="0.35">
           <stop offset="0%" stopColor={style.steel[0]} />
-          <stop offset="45%" stopColor={style.steel[1]} />
+          <stop offset="52%" stopColor={style.steel[1]} />
           <stop offset="100%" stopColor={style.steel[2]} />
         </linearGradient>
         <linearGradient id={woodId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={style.wood[0]} />
-          <stop offset="50%" stopColor={style.wood[1]} />
-          <stop offset="100%" stopColor={style.wood[2]} />
+          <stop offset="100%" stopColor={style.wood[1]} />
         </linearGradient>
       </defs>
 
-      {/* Griff */}
-      <rect x="12" y="20" width="8" height="36" rx="4" fill={`url(#${woodId})`} stroke={style.woodStroke} strokeWidth="1" />
-      {/* Leder-Wicklung am Griffansatz */}
-      <rect x="11.5" y="21" width="9" height="3" rx="1.2" fill={style.woodStroke} />
-      <rect x="11.5" y="25.5" width="9" height="3" rx="1.2" fill={style.woodStroke} />
-      {/* Lederschlaufe am Griffende */}
-      <circle cx="16" cy="54" r="3" fill="none" stroke={style.woodStroke} strokeWidth="2" />
+      {/* Griff: kräftig genug, um bei 30px noch als Stiel lesbar zu sein */}
+      <path
+        d="M12.8 14 L19.2 14 L18.5 55 C18.5 57.2 17.4 58.4 16 58.4 C14.6 58.4 13.5 57.2 13.5 55 Z"
+        fill={`url(#${woodId})`}
+        stroke={style.outline}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      {/* Wicklung am Griff – drei kräftige Ringe, wie beim Vorbild */}
+      <rect x="12.2" y="26" width="7.6" height="3.6" rx="1.6" fill={style.wrap} />
+      <rect x="12.3" y="33" width="7.4" height="3.6" rx="1.6" fill={style.wrap} />
+      <rect x="12.4" y="40" width="7.2" height="3.6" rx="1.6" fill={style.wrap} />
 
-      {/* Axtkopf: Rückspitze links, geschwungene Klinge rechts */}
+      {/* Hammer-Sporn hinten links. Zusammen mit dem Blatt rechts wird der Kopf breit
+          und flach – erst dadurch liest sich die Silhouette klein noch als Axt und
+          nicht als runder Klecks. */}
       <path
-        d="M16 18 L7 15 C4.5 14 4 11 6 9 L9 6 C10.5 4.5 12.5 5 13 7 L16 18 Z"
-        fill={`url(#${steelId})`}
-        stroke={style.steelStroke}
-        strokeWidth="1"
+        d="M13 7.5 L5.5 8.8 C2.6 9.4 2.2 13.4 4.8 14.8 L13 18.6 Z"
+        fill={`url(#${bladeId})`}
+        stroke={style.outline}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
       />
+
+      {/* Blatt: breite, nach rechts ausschwingende Schneide. */}
       <path
-        d="M16 2 C22 1 29 5 29.5 12 C30 18 24 22.5 17 21.5 L14.5 21 C13 20.5 12.5 18.5 13.5 17 L16 2 Z"
-        fill={`url(#${steelId})`}
-        stroke={style.steelStroke}
-        strokeWidth="1.2"
+        d="M12.5 3.5
+           C21.5 2 30 6.5 30.8 12.5
+           C31.5 18 24.5 22 16.5 20.6
+           L12.5 19.8 Z"
+        fill={`url(#${bladeId})`}
+        stroke={style.outline}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
       />
-      {/* Glanzlicht auf der Klinge */}
-      <path d="M18 5 C22 5 26 8 26.5 12" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" opacity="0.75" />
-      {/* Auge/Schaftloch, verbindet Kopf und Griff optisch */}
-      <rect x="12.5" y="15" width="7" height="8" rx="2.5" fill={style.eye} />
+      {/* Schneide: heller Saum entlang der Außenkante */}
+      <path
+        d="M15.5 5 C22.8 4.2 28.6 7.8 29.2 12.8"
+        fill="none"
+        stroke={style.steel[0]}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.95"
+      />
     </svg>
   );
 }

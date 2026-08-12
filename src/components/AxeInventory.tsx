@@ -13,7 +13,7 @@ export function AxeInventory({ total, thrown, skin }: AxeInventoryProps) {
     <div className="axe-inventory">
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className={`axe-inventory__slot ${i < thrown ? 'axe-inventory__slot--used' : ''}`}>
-          <Axe size={22} skin={skin} />
+          <Axe size={30} skin={skin} />
         </div>
       ))}
     </div>

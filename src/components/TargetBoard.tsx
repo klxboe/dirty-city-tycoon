@@ -28,6 +28,9 @@ interface TargetBoardProps {
   broken?: boolean;
 }
 
+/** Anzahl der radialen Segmente auf der Scheibe (rein optisch, wie Stamm-Spalten). */
+const WEDGE_COUNT = 12;
+
 /** Wie lange ein voller Puls-Zyklus dauert (Sek.) bzw. wie lange bis zum Richtungswechsel. */
 const PULSE_PERIOD_SEC = 2.6;
 const REVERSE_PERIOD_SEC = 3.4;
@@ -56,13 +59,13 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
   }
 }
 
-export const BOARD_SIZE = 210;
+export const BOARD_SIZE = 260;
 /** Radius, auf dem die Äxte im Holz stecken. Auch die Bezugsgröße fürs Zielen und die Flugbahn. */
-export const BOARD_RADIUS = 96;
+export const BOARD_RADIUS = 120;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
-const APPLE_RADIUS = 112;
-const APPLE_STEM_LENGTH = 16;
-const APPLE_STEM_RADIUS = 100 + APPLE_STEM_LENGTH / 2;
+const APPLE_RADIUS = 152;
+const APPLE_STEM_LENGTH = 20;
+const APPLE_STEM_RADIUS = 128 + APPLE_STEM_LENGTH / 2;
 
 /**
  * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das
@@ -128,17 +131,16 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
 
   return (
     <div className="target-mount">
-      <div className="target-mount__chain">
-        <span />
-        <span />
-        <span />
-      </div>
-
       <div ref={boardElRef} className={`target-board board-skin board-skin--${boardSkin}`}>
-        <div className="target-board__grain" />
+        {/* Holzfläche mit radialen Segmenten – wie ein aufgeschnittener Stamm. */}
+        <div className="target-board__face" />
+        <div className="target-board__wedges">
+          {Array.from({ length: WEDGE_COUNT }).map((_, i) => (
+            <span key={i} style={{ transform: `rotate(${(360 / WEDGE_COUNT) * i}deg)` }} />
+          ))}
+        </div>
         <div className="target-board__ring target-board__ring--outer" />
         <div className="target-board__ring target-board__ring--mid" />
-        <div className="target-board__ring target-board__ring--inner" />
         <div className="target-board__bullseye" />
 
         {apples
@@ -156,7 +158,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
                 className="target-board__apple-slot"
                 style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
               >
-                <Apple size={22} />
+                <Apple size={30} />
               </div>
             </div>
           ))}
@@ -168,7 +170,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             style={{ transform: `translate(-50%, -50%) rotate(${axe.boardLocalAngleDeg}deg) translateY(-${BOARD_RADIUS}px)` }}
           >
             <div className="target-board__axe-flip target-board__axe-flip--landed">
-              <Axe size={26} skin={axeSkin} />
+              <Axe size={40} skin={axeSkin} />
             </div>
           </div>
         ))}
@@ -176,18 +178,18 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         {broken && <div className="target-board__flash" />}
 
         {broken && (
-          <svg className="target-board__cracks" viewBox="0 0 210 210">
+          <svg className="target-board__cracks" viewBox="0 0 260 260">
             <path
-              d="M105 105 L70 40 M105 105 L150 30 M105 105 L20 90 M105 105 L30 150 M105 105 L100 195 M105 105 L180 120 M105 105 L165 175"
-              stroke="#2a1c0e"
-              strokeWidth="3"
+              d="M130 130 L88 48 M130 130 L186 36 M130 130 L24 110 M130 130 L38 186 M130 130 L124 242 M130 130 L224 148 M130 130 L204 216"
+              stroke="#1b1206"
+              strokeWidth="4"
               strokeLinecap="round"
               fill="none"
             />
             <path
-              d="M105 105 L70 40 M105 105 L150 30 M105 105 L20 90 M105 105 L30 150 M105 105 L100 195 M105 105 L180 120 M105 105 L165 175"
-              stroke="#6b4a2a"
-              strokeWidth="1.2"
+              d="M130 130 L88 48 M130 130 L186 36 M130 130 L24 110 M130 130 L38 186 M130 130 L124 242 M130 130 L224 148 M130 130 L204 216"
+              stroke="#8a6034"
+              strokeWidth="1.4"
               strokeLinecap="round"
               fill="none"
             />

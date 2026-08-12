@@ -7,7 +7,13 @@
 // Dieser Hook fragt den aktuellen Winkel nur bei Bedarf über `getBoardAngleDeg` ab.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { aimToImpactWorldAngle, collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
-import { COINS_PER_APPLE, FLIGHT_DURATION_MS, LEVELS, levelCompletionBonus } from '../game/constants';
+import {
+  blockStartIndex,
+  COINS_PER_APPLE,
+  FLIGHT_DURATION_MS,
+  LEVELS,
+  levelCompletionBonus,
+} from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { getSkin, isFreeSkin } from '../game/shop';
 import type { GameState, StuckAxe } from '../game/types';
@@ -170,10 +176,13 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
-  /** Nach einem Game Over: kompletter Neustart des Laufs bei Level 1. Münzen bleiben. */
+  /**
+   * Nach einem Game Over: Neustart am Anfang des aktuellen 10er-Blocks (nicht bei Level 1).
+   * Münzen und Skins bleiben erhalten.
+   */
   const restartRun = useCallback(() => {
     pendingAimRef.current = null;
-    setState((prev) => ({ ...createLevelState(0), save: prev.save }));
+    setState((prev) => ({ ...createLevelState(blockStartIndex(prev.levelIndex)), save: prev.save }));
   }, []);
 
   const nextLevel = useCallback(() => {
@@ -226,6 +235,8 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     ...state,
     levelCount: LEVELS.length,
     isLastLevel,
+    /** Erster Level-Index des aktuellen 10er-Blocks – dorthin geht es nach einem Game Over. */
+    blockStart: blockStartIndex(state.levelIndex),
     boardSpeedDegPerSec: level.boardSpeedDegPerSec,
     spinPattern: level.spinPattern,
     axeCount: level.axeCount,

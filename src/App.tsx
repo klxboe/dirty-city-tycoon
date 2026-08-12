@@ -6,7 +6,6 @@ import { BOARD_RADIUS, TargetBoard, type TargetBoardHandle } from './components/
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { GameOverModal } from './components/GameOverModal';
 import { Shop } from './components/Shop';
-import { VineDecoration } from './components/VineDecoration';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
 import { playAppleSound, playBreakSound, playHitSound, playMissSound, unlockAudio } from './game/sound';
@@ -113,16 +112,14 @@ function App() {
     <div className="app">
       <HUD
         level={game.levelIndex + 1}
-        hits={game.hits}
-        axeCount={game.axeCount}
+        levelInBlock={game.levelIndex - game.blockStart}
         coins={game.save.coins}
         coinsFlash={coinsFlash}
         onOpenShop={() => setShopOpen(true)}
       />
 
       <div ref={stageRef} className="stage" onPointerDown={handlePointerDown}>
-        <VineDecoration className="stage__vine stage__vine--left" />
-        <VineDecoration flip className="stage__vine stage__vine--right" />
+        <AxeInventory total={game.axeCount} thrown={game.axesThrown} skin={game.save.equippedAxeSkin} />
 
         <div className="stage__dust">
           {DUST_MOTES.map((mote, i) => (
@@ -171,12 +168,17 @@ function App() {
             }}
           >
             <span className="axe-flying__trail" />
-            <Axe size={34} skin={game.save.equippedAxeSkin} />
+            <Axe size={42} skin={game.save.equippedAxeSkin} />
           </div>
         )}
 
         <div className="stage__thrower-zone">
-          <AxeInventory total={game.axeCount} thrown={game.axesThrown} skin={game.save.equippedAxeSkin} />
+          {/* Die "bereitliegende" Axt zeigt, von wo geworfen wird. */}
+          {game.phase !== 'flying' && game.axesThrown < game.axeCount && (
+            <div className="stage__ready-axe">
+              <Axe size={42} skin={game.save.equippedAxeSkin} />
+            </div>
+          )}
           <div className="stage__hint">{hint}</div>
         </div>
       </div>
@@ -201,6 +203,7 @@ function App() {
       {!shopOpen && game.phase === 'gameOver' && (
         <GameOverModal
           level={game.levelIndex + 1}
+          restartLevel={game.blockStart + 1}
           bestLevel={game.save.bestLevel}
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}

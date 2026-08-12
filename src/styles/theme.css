@@ -1,23 +1,40 @@
-/* Alle Design-Werte an einem Ort. Farben/Abstände/Radien hier ändern, wirkt sich auf die ganze App aus. */
+/*
+ * Alle Design-Werte an einem Ort. Farben/Abstände/Radien hier ändern, wirkt sich auf die ganze App aus.
+ *
+ * Look: dunkle, kontraststarke Arcade-Optik (Vorbild: "Knife Hit"). Fast schwarzer
+ * Hintergrund mit kantigen Schatten-Schichten, darauf wenige, dafür sehr kräftige
+ * Farben. Flache Formen mit klaren Silhouetten statt vieler Verläufe – das hält die
+ * Szene auch auf kleinen Handy-Displays lesbar.
+ */
 :root {
-  --color-bg-top: #6fb6e0;
-  --color-bg-bottom: #3f7fae;
+  /* Bühne/Hintergrund */
+  --color-bg-top: #1c2029;
+  --color-bg-bottom: #0b0d11;
+  --color-shard-light: rgba(255, 255, 255, 0.03);
+  --color-shard-dark: rgba(0, 0, 0, 0.32);
 
-  --color-surface: #fffaf0;
-  --color-surface-raised: #fff1d6;
-  --color-border: #e8d9b8;
+  /* Panels (Modals, Shop) – dunkel, damit sie sich in die Szene einfügen */
+  --color-surface: #232833;
+  --color-surface-raised: #2d3340;
+  --color-border: #3c4453;
 
-  --color-text: #2c2416;
-  --color-text-muted: #8a7a63;
+  --color-text: #f2f5f8;
+  --color-text-muted: #98a2b3;
 
-  --color-primary: #2fe862;
-  --color-primary-dark: #189946;
-  --color-money: #ffc233;
+  /* Akzentfarben. Orange ist die Leitfarbe (Währung, Level, Highlights). */
+  --color-primary: #ff9f1c;
+  --color-primary-dark: #d97a06;
+  --color-money: #ffb703;
   --color-money-dark: #d98a00;
   --color-danger: #ff4757;
   --color-danger-dark: #c62232;
-  --color-accent: #ff8a3d;
-  --color-accent-dark: #d4611c;
+  --color-accent: #2ec4b6;
+  --color-accent-dark: #1a9c90;
+
+  /* Metall der Klinge und Holz des Griffs – gelten für alle Skins als Basis. */
+  --color-steel: #f4f7fa;
+  --color-steel-mid: #cdd6de;
+  --color-steel-dark: #8f9aa5;
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -33,5 +50,5 @@
 
   --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
-  color-scheme: light;
+  color-scheme: dark;
 }

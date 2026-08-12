@@ -116,30 +116,26 @@
   position: absolute;
   inset: 3px;
   border-radius: 50%;
-  background: repeating-radial-gradient(
-    circle at 50% 50%,
-    var(--board-wood-light) 0px,
-    var(--board-wood-light) 2px,
-    var(--board-wood-dark) 2px 4px
-  );
+  background: radial-gradient(circle at 50% 50%, var(--board-face-inner) 12%, var(--board-face-outer) 92%);
 }
 
 .shop-card__board-ring {
   position: absolute;
-  inset: 9px;
+  inset: 8px;
   border-radius: 50%;
-  border: 2px solid var(--board-ring-accent);
+  border: 1.5px solid var(--board-ring-accent);
 }
 
 .shop-card__board-eye {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
   border-radius: 50%;
-  background: var(--board-bullseye);
+  background: var(--board-core);
+  border: 1px solid var(--board-core-edge);
 }
 
 .shop-card__info {

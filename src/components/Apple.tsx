@@ -2,19 +2,47 @@ interface AppleProps {
   size?: number;
 }
 
-/** Ein kleiner Apfel, der am Zielbrett hängt und abgeworfen werden kann. */
-export function Apple({ size = 22 }: AppleProps) {
+/**
+ * Ein Apfel, der am Rand der Zielscheibe hängt und abgeworfen werden kann.
+ * Flach und kontraststark gezeichnet (kräftiges Rot, dunkle Kontur, ein Glanzpunkt),
+ * damit er vor dem dunklen Hintergrund auch klein sofort erkennbar ist.
+ */
+export function Apple({ size = 30 }: AppleProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24">
+    <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
+      {/* Frucht: zwei verschmolzene Rundungen mit Kerbe oben */}
       <path
-        d="M12 9 C7 9 5 12.5 5 16 C5 19.5 8 22 11 22 C11.7 22 12.3 21.8 12.9 21.6 C13.5 21.8 14.1 22 14.8 22 C17.8 22 20.5 19 20.5 15.5 C20.5 12.3 18.3 9.3 15 9 Z"
-        fill="#e6433a"
-        stroke="#9c2620"
-        strokeWidth="1"
+        d="M16 10.5
+           C12.5 7.8 6 8.8 5 15
+           C4 21.2 8.6 28 12.8 28
+           C14.2 28 15.2 27.4 16 27
+           C16.8 27.4 17.8 28 19.2 28
+           C23.4 28 28 21.2 27 15
+           C26 8.8 19.5 7.8 16 10.5 Z"
+        fill="#e63946"
+        stroke="#7a1119"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
       />
-      <path d="M9 12 C9.5 13 10.5 13.3 11.5 13" stroke="#ff8f88" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.7" />
-      <path d="M12 9 C11.5 6.5 12 5 12.8 3.8" stroke="#6b4420" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-      <path d="M12.5 5 C13.5 3.8 15 3.6 16 4.2 C15.2 5.6 13.6 5.8 12.5 5 Z" fill="#4fa53f" stroke="#2f7a24" strokeWidth="0.8" />
+      {/* Glanzlicht */}
+      <path
+        d="M10.5 14.5 C9.4 16.2 9.3 18.6 10.2 20.4"
+        stroke="#ff9b9b"
+        strokeWidth="2.4"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
+      {/* Stiel */}
+      <path d="M16 10 C15.6 7 15.9 5.4 16.8 4" stroke="#5c3a1a" strokeWidth="2" fill="none" strokeLinecap="round" />
+      {/* Blatt */}
+      <path
+        d="M17 6.4 C19 4.2 22.2 3.8 24 4.8 C22.6 7.4 19.6 8.2 17 6.4 Z"
+        fill="#4caf50"
+        stroke="#256b2b"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

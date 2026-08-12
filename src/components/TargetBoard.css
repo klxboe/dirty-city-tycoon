@@ -5,22 +5,6 @@
   align-items: center;
 }
 
-.target-mount__chain {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 0 3px;
-}
-
-.target-mount__chain span {
-  width: 12px;
-  height: 9px;
-  border-radius: 50%;
-  border: 2.5px solid #9aa1a8;
-  background: transparent;
-}
-
 /*
  * Scheiben-Skins: jede Variante setzt nur diese Variablen, das restliche Layout ist
  * für alle gleich. Neuen Skin anlegen = Eintrag in shop.ts + ein Block hier.
@@ -30,30 +14,102 @@
  * nicht direkt auf `.target-board` – sonst hätte die Vorschau keine Farben.
  */
 .board-skin {
-  --board-rim: linear-gradient(155deg, #f5f8fa, #a4afb8 45%, #5a626a);
-  --board-wood-light: #e5b378;
-  --board-wood-dark: #c8873f;
-  --board-grain-line: rgba(74, 45, 15, 0.1);
-  --board-inner-shadow: rgba(60, 34, 8, 0.45);
-  --board-glow: rgba(255, 178, 82, 0.35);
-  --board-ring-light: #f4ede0;
-  --board-ring-accent: #e63b30;
-  --board-bullseye: radial-gradient(circle at 35% 30%, #ff8f74, #e63321 65%, #931307 100%);
-  --board-bullseye-glow: rgba(230, 51, 33, 0.7);
-  --board-bullseye-edge: #6b140d;
+  /* Äußerer Rand der Scheibe (Rinde/Metall). */
+  --board-rim: linear-gradient(150deg, #c98a45, #8a5420 55%, #5c3512);
+  /* Fläche innen: heller Kern nach außen dunkler. */
+  --board-face-inner: #ffd9a0;
+  --board-face-outer: #f0a94e;
+  /* Trennlinien der radialen Segmente. */
+  --board-wedge: rgba(255, 255, 255, 0.55);
+  --board-glow: rgba(255, 159, 28, 0.4);
+  --board-ring-light: rgba(255, 255, 255, 0.5);
+  --board-ring-accent: rgba(196, 106, 20, 0.55);
+  --board-core: radial-gradient(circle at 38% 32%, #fff1d4, #f5c98a 70%, #d99a4e 100%);
+  --board-core-edge: rgba(140, 80, 20, 0.5);
+  --board-core-glow: rgba(255, 190, 90, 0.55);
 }
 
+.board-skin--board-walnut {
+  --board-rim: linear-gradient(150deg, #a8843c, #6b4c10 55%, #40300a);
+  --board-face-inner: #c99a5e;
+  --board-face-outer: #8a5a34;
+  --board-wedge: rgba(255, 232, 190, 0.35);
+  --board-glow: rgba(201, 153, 47, 0.35);
+  --board-ring-light: rgba(255, 235, 190, 0.35);
+  --board-ring-accent: rgba(60, 38, 10, 0.55);
+  --board-core: radial-gradient(circle at 38% 32%, #ffe9b0, #c9992f 70%, #6b4c10 100%);
+  --board-core-edge: rgba(40, 26, 6, 0.6);
+  --board-core-glow: rgba(201, 153, 47, 0.5);
+}
+
+.board-skin--board-ice {
+  --board-rim: linear-gradient(150deg, #eaf7ff, #7fb4d0 55%, #3d6f8c);
+  --board-face-inner: #f2fbff;
+  --board-face-outer: #a8d8ef;
+  --board-wedge: rgba(255, 255, 255, 0.85);
+  --board-glow: rgba(140, 220, 255, 0.5);
+  --board-ring-light: rgba(255, 255, 255, 0.7);
+  --board-ring-accent: rgba(58, 166, 216, 0.5);
+  --board-core: radial-gradient(circle at 38% 32%, #ffffff, #8ed6f2 70%, #2b7fa5 100%);
+  --board-core-edge: rgba(23, 90, 120, 0.6);
+  --board-core-glow: rgba(94, 196, 234, 0.7);
+}
+
+.board-skin--board-volcano {
+  --board-rim: linear-gradient(150deg, #5c5c5c, #2e2e2e 55%, #141414);
+  --board-face-inner: #6b4a3a;
+  --board-face-outer: #33241e;
+  --board-wedge: rgba(255, 110, 40, 0.65);
+  --board-glow: rgba(255, 110, 40, 0.5);
+  --board-ring-light: rgba(255, 150, 80, 0.4);
+  --board-ring-accent: rgba(255, 110, 40, 0.5);
+  --board-core: radial-gradient(circle at 38% 32%, #ffe08a, #ff6e28 60%, #8a1c00 100%);
+  --board-core-edge: rgba(92, 20, 0, 0.7);
+  --board-core-glow: rgba(255, 110, 40, 0.85);
+}
+
+/*
+ * Die Scheibe ist als Querschnitt aufgebaut, wie ein aufgeschnittener Stamm:
+ * außen der Rand, darauf die Fläche mit hellem Kern, darüber die radialen
+ * Segment-Linien und zwei dezente Ringe, in der Mitte der Kern.
+ */
 .target-board {
   position: relative;
-  width: 210px;
-  height: 210px;
+  width: 260px;
+  height: 260px;
   border-radius: 50%;
-  /* Metallring als Hintergrund; das Holz-Gesicht liegt als eigener Kreis obendrauf. */
   background: var(--board-rim);
   box-shadow:
-    0 7px 0 rgba(0, 0, 0, 0.25),
-    0 14px 30px rgba(0, 0, 0, 0.35),
-    0 0 34px 6px var(--board-glow);
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    0 0 50px 12px var(--board-glow);
+}
+
+.target-board__face {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--board-face-inner) 12%, var(--board-face-outer) 92%);
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Radiale Trennlinien: je ein dünner Balken vom Mittelpunkt nach außen, per
+   transform gedreht. Der Mittelbereich bleibt frei, damit der Kern sauber sitzt. */
+.target-board__wedges {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.target-board__wedges span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 50%;
+  margin-left: -2px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, var(--board-wedge), transparent 84%);
 }
 
 .board-skin--board-walnut {
@@ -98,69 +154,49 @@
   --board-bullseye-edge: #5c1400;
 }
 
-.target-board__grain {
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, var(--board-grain-line) 0deg 3deg, transparent 3deg 9deg),
-    repeating-radial-gradient(
-      circle at 50% 50%,
-      var(--board-wood-light) 0px,
-      var(--board-wood-light) 5px,
-      var(--board-wood-dark) 5px 10px
-    );
-  box-shadow: inset 0 0 26px var(--board-inner-shadow);
-}
-
 .target-board__ring {
   position: absolute;
   top: 50%;
   left: 50%;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .target-board__ring--outer {
-  width: 176px;
-  height: 176px;
-  border: 5px solid var(--board-ring-light);
-  box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.25);
+  width: 208px;
+  height: 208px;
+  border: 3px solid var(--board-ring-light);
 }
 
 .target-board__ring--mid {
-  width: 122px;
-  height: 122px;
-  border: 5px solid var(--board-ring-accent);
-  box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.2);
+  width: 134px;
+  height: 134px;
+  border: 3px solid var(--board-ring-accent);
 }
 
-.target-board__ring--inner {
-  width: 68px;
-  height: 68px;
-  border: 4px solid var(--board-ring-light);
-}
-
+/* Heller Kern in der Mitte – das optische Zentrum, an dem sich die Drehung ablesen lässt. */
 .target-board__bullseye {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 26px;
-  height: 26px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: var(--board-bullseye);
-  border: 2px solid var(--board-bullseye-edge);
-  box-shadow: 0 0 16px 3px var(--board-bullseye-glow);
-  animation: bullseye-pulse 2.2s ease-in-out infinite;
+  background: var(--board-core);
+  border: 3px solid var(--board-core-edge);
+  box-shadow: 0 0 18px 3px var(--board-core-glow);
+  animation: bullseye-pulse 2.6s ease-in-out infinite;
 }
 
 @keyframes bullseye-pulse {
   0%,
   100% {
-    box-shadow: 0 0 16px 3px var(--board-bullseye-glow);
+    box-shadow: 0 0 18px 3px var(--board-core-glow);
   }
   50% {
-    box-shadow: 0 0 26px 8px var(--board-bullseye-glow);
+    box-shadow: 0 0 30px 9px var(--board-core-glow);
   }
 }
 

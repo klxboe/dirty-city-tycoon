@@ -28,8 +28,9 @@ Ein simples, süchtig machendes Arcade-Handyspiel, sehr nah am Vorbild
   `MAX_AIM_SPREAD_DEG` (75°) zur Seite. Damit ist das Spiel nicht mehr nur
   Timing, sondern Timing + Zielen.
 - Trifft man eine Stelle, an der schon eine Axt steckt → **sofort Game Over**.
-  Der ganze Lauf endet und startet wieder bei **Level 1**. Münzen aus bereits
-  abgeschlossenen Leveln bleiben erhalten, nur das angefangene Level bringt nichts.
+  Der Lauf endet und startet am **Anfang des aktuellen 10er-Blocks** neu (wer in
+  Level 34 stirbt, macht bei 31 weiter). Münzen aus bereits abgeschlossenen
+  Leveln bleiben erhalten, nur das angefangene Level bringt nichts.
 - Der Skill: den richtigen Moment UND die richtige Stelle treffen, damit die
   Axt in eine freie Lücke zwischen den schon steckenden Äxten geht – und dabei
   möglichst nah an den Äpfeln landen.
@@ -79,9 +80,12 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Münzen, Läufe und die Werkstatt (Shop)
 
-- **Ein Lauf geht immer von Level 1 aufwärts.** Ein Game Over beendet den Lauf
-  komplett – der nächste Versuch startet wieder bei Level 1. Das höchste je
-  erreichte Level bleibt als "Bestmarke" gespeichert.
+- **Die 100 Level sind in 10er-Blöcke gruppiert** (`LEVELS_PER_BLOCK`,
+  `blockStartIndex()` in `constants.ts`). Ein Game Over wirft nicht bis Level 1
+  zurück, sondern nur an den Anfang des aktuellen Blocks – Level 1, 11, 21, …
+  So bleibt der Einsatz spürbar, ohne dass ein später Fehler den ganzen
+  Fortschritt kostet. Das höchste je erreichte Level bleibt als "Bestmarke"
+  gespeichert. Die Punktreihe im HUD zeigt die Position im aktuellen Block.
 - **Münzen** sind die einzige Währung (früher waren es Äpfel; alte Spielstände
   werden beim ersten Start umgerechnet, siehe `loadSave()` in `storage.ts`).
   Es gibt sie NUR beim Abschluss eines Levels:
@@ -139,10 +143,10 @@ src/
     TargetBoard.tsx      Die rotierende Zielscheibe inkl. Äxte + Äpfel
                           (forwardRef + useImperativeHandle, siehe Performance-
                           Abschnitt unten)
-    AxeInventory.tsx     Reihe der verbleibenden/verbrauchten Äxte unten
+    AxeInventory.tsx     Senkrechte Reihe der verbleibenden Äxte am linken Rand
     VineDecoration.tsx   Rein dekorative Ranken in den Bühnen-Ecken
-    HUD.tsx              Level / Äxte / Münzen oben. Die Münz-Pille ist zugleich
-                          der Werkstatt-Button.
+    HUD.tsx              Levelnummer / Block-Punktreihe / Münzen oben. Der
+                          Münzstand ist zugleich der Werkstatt-Button.
     Shop.tsx             Die Werkstatt: Skins kaufen und ausrüsten
     LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
     GameOverModal.tsx    Screen nach Treffer auf die eigene Axt (nutzt dieselbe
@@ -152,6 +156,25 @@ src/
 
 Prinzip: `game/` kennt React nicht (pure Funktionen, leicht nachvollziehbar/
 testbar), `hooks/useAxeGame.ts` ist die einzige Brücke zu React.
+
+### Look: dunkle Arcade-Optik (Vorbild "Knife Hit")
+
+Die Optik ist bewusst flach und kontraststark statt fein schattiert:
+
+- **Hintergrund:** fast schwarz mit kantigen, senkrechten Schatten-"Scherben"
+  (zwei überlagerte `repeating-linear-gradient` in `.stage`, kein Bild-Asset).
+  Ein warmer Lichtkegel hinter der Scheibe hebt das Ziel ab.
+- **Zielscheibe:** aufgebaut wie ein aufgeschnittener Stamm – Rand, Fläche mit
+  hellem Kern, 12 radiale Segmentlinien, zwei dezente Ringe, glühender Kern.
+  Alle Farben kommen aus `--board-*`-Variablen auf `.board-skin`, damit die
+  Shop-Vorschau dieselben Werte nutzen kann.
+- **Axt:** breiter, flacher Kopf (Blatt rechts, Hammer-Sporn links) mit kräftiger
+  dunkler Kontur. Die Kontur ist wichtig: ohne sie zerläuft die Silhouette vor
+  dem dunklen Hintergrund, und im Vorrat wird sie bei 30px zum weißen Klecks.
+- **HUD:** keine Kästchen mehr, sondern freistehende Zahlen – Levelnummer links,
+  Punktreihe für den Block-Fortschritt in der Mitte, Münzstand rechts.
+- **Axt-Vorrat:** senkrechte Reihe am linken Bühnenrand statt Kasten unter der
+  Wurfzone. Hält die Mitte frei.
 
 ### Performance: Rotation läuft NICHT über React-State
 
@@ -304,6 +327,24 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Münzen zählen im Ergebnis-Screen sichtbar hoch.
       Durchgetestet: Kauf + Ausrüsten beider Skin-Arten, Münz-Rechnung, Level 1-4
       am Stück, Game Over samt Rückwurf auf Level 1 mit erhaltenen Münzen.
+- [x] Optik komplett auf den "Knife Hit"-Look umgestellt (Screenshot als Vorlage)
+      und Game Over entschärft:
+      - **10er-Blöcke:** Game Over wirft nur an den Blockanfang zurück (Level 1,
+        11, 21, …) statt bis Level 1. Das war die Antwort auf die Frage, ob der
+        Rückwurf zu hart ist.
+      - **Dunkles Theme:** fast schwarzer Hintergrund mit kantigen Schatten-
+        Scherben statt Holzwand, Orange als einzige Leitfarbe.
+      - **Zielscheibe neu:** Stamm-Querschnitt mit radialen Segmenten, glühendem
+        Kern und kräftigem Rand, 260px statt 210px. Alle vier Skins mitgezogen.
+      - **Axt neu gezeichnet:** breiter flacher Kopf mit Blatt und Hammer-Sporn,
+        dunkle Kontur, gewickelter Griff. Vorher lief sie klein zu einem weißen
+        Klecks zusammen.
+      - **Äpfel** deutlich größer und mit Blatt, hängen klar außerhalb des Rands.
+      - **HUD neu:** freistehende Zahlen statt Pillen, Punktreihe zeigt die
+        Position im aktuellen 10er-Block.
+      - **Axt-Vorrat** wandert an den linken Bühnenrand.
+      - Kette über der Scheibe und die Efeu-Ranken (`VineDecoration.tsx`)
+        entfernt – passten nicht mehr zum aufgeräumten Look.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
@@ -311,14 +352,9 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 ## Offene To-dos
 
 - Selbst durchspielen und Feedback zum Balancing geben – die Werte sind
-  Schätzungen. Zwei konkrete Fragen:
-  1. **Härte des Rückwurfs:** Ein Game Over kostet den ganzen Lauf. Wer in
-     Level 30 stirbt, fängt bei Level 1 an. Fühlt sich das nach "nochmal!" an
-     oder nach Strafe? Mögliche Abmilderungen: Leben pro Lauf, oder Level in
-     10er-Blöcken (Neustart nur zum Blockanfang).
-  2. **Münz-Tempo:** Aktuell ~15-25 Münzen pro Level. Der erste Skin (150)
-     kommt also nach ~7-10 Leveln, der teuerste (2000) sehr viel später.
-     Zu schnell, zu langsam?
+  Schätzungen. Offene Frage: **Münz-Tempo.** Aktuell ~15-25 Münzen pro Level,
+  der erste Skin (150) kommt also nach ~7-10 Leveln, der teuerste (2000) sehr
+  viel später. Zu schnell, zu langsam?
 - Apfel-Ausbeute prüfen: mit `APPLE_HIT_TOLERANCE_DEG = 24` erwischt man pro
   Level oft nur 1 von 2 Äpfeln. Da Äpfel jetzt Münzen bringen, wirkt das direkt
   aufs Tempo der Shop-Progression.

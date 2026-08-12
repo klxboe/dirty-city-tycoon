@@ -51,6 +51,19 @@ const DIFFICULTY_TIERS = 20;
 const VARIATIONS_PER_TIER = 5;
 
 /**
+ * Die 100 Level sind in Blöcke zu 10 gruppiert. Ein Game Over wirft nicht bis Level 1
+ * zurück, sondern nur an den Anfang des aktuellen Blocks – wer in Level 34 stirbt,
+ * startet bei 31. So bleibt der Einsatz spürbar, ohne dass ein später Fehler den
+ * ganzen Fortschritt kostet.
+ */
+export const LEVELS_PER_BLOCK = 10;
+
+/** Erster Level-Index des Blocks, in dem `levelIndex` liegt (0-basiert). */
+export function blockStartIndex(levelIndex: number): number {
+  return Math.floor(levelIndex / LEVELS_PER_BLOCK) * LEVELS_PER_BLOCK;
+}
+
+/**
  * Die Scheibe dreht sich mit JEDEM Level ein Stück schneller (streng steigend über alle
  * 100 Level, nicht nur pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist
  * das Zeitfenster, in dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das
