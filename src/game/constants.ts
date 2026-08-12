@@ -1,5 +1,5 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
-import type { LevelConfig } from './types';
+import type { LevelConfig, SpinPattern } from './types';
 
 /**
  * Wie lange die Fluganimation der Axt dauert (ms). Bewusst kurz: das ist auch die
@@ -72,6 +72,18 @@ function spreadAngles(count: number, startDeg: number): number[] {
   return Array.from({ length: count }, (_, i) => normalizeDeg(startDeg + (360 / count) * i));
 }
 
+/**
+ * Dreh-Muster pro Level. Die ersten Stufen laufen bewusst gleichmäßig, damit man die
+ * Grundmechanik lernt; ab Stufe 4 kommt Pulsieren dazu, ab Stufe 8 auch Richtungswechsel.
+ * Innerhalb einer Stufe wechseln die Muster durch – das ist die zweite Zutat (neben der
+ * Platzierung), die die 5 Varianten einer Stufe unterschiedlich anfühlen lässt.
+ */
+function spinPatternFor(tier: number, variation: number): SpinPattern {
+  if (tier < 4) return 'steady';
+  const pool: SpinPattern[] = tier < 8 ? ['steady', 'pulse'] : ['steady', 'pulse', 'reverse'];
+  return pool[(variation - 1) % pool.length];
+}
+
 function generateLevel(tier: number, variation: number, levelIndex: number): LevelConfig {
   const axeCount = Math.min(8, 5 + Math.floor((tier - 1) / 5));
   const preplacedCount = Math.min(3, Math.floor((tier - 1) / 6));
@@ -87,6 +99,7 @@ function generateLevel(tier: number, variation: number, levelIndex: number): Lev
   return {
     axeCount,
     boardSpeedDegPerSec,
+    spinPattern: spinPatternFor(tier, variation),
     appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: preplacedCount > 0 ? spreadAngles(preplacedCount, preplacedSeed) : undefined,
   };
@@ -98,4 +111,25 @@ export const LEVELS: LevelConfig[] = Array.from({ length: DIFFICULTY_TIERS }, (_
   ),
 ).flat();
 
+/** Alter Speicherstand (nur eine Apfel-Zahl). Wird beim ersten Start in Münzen migriert. */
 export const CURRENCY_SAVE_KEY = 'axe-throw-currency-v1';
+/** Aktueller Speicherstand: Münzen, Skins, bestes Level (JSON). */
+export const SAVE_KEY = 'axe-throw-save-v2';
+
+/**
+ * Münz-Wirtschaft. Münzen gibt es NUR bei geschafftem Level – ein Game Over kostet
+ * alles, was im laufenden Versuch gesammelt wurde. Das macht vorsichtiges Spielen
+ * wertvoll und ist der Grund, überhaupt zu zielen statt zu spammen.
+ */
+export const COINS_PER_APPLE = 5;
+/** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
+export const COINS_PER_LEGACY_APPLE = 5;
+
+/**
+ * Münz-Bonus fürs Abschließen eines Levels, steigt mit der Levelnummer.
+ * Level 1 = 10, Level 50 = 59, Level 100 = 109 – zusammen mit den Äpfeln kommt man
+ * so in einem guten Lauf zügig an den ersten Skin (150 Münzen).
+ */
+export function levelCompletionBonus(levelIndex: number): number {
+  return 10 + levelIndex;
+}

@@ -1,60 +1,58 @@
-import { Apple } from './Apple';
+import { Coin } from './Coin';
+import { useCountUp } from '../hooks/useCountUp';
 import './LevelCompleteModal.css';
 
 interface LevelCompleteModalProps {
   level: number;
-  hits: number;
-  axeCount: number;
   applesCollected: number;
-  totalCurrency: number;
+  appleCount: number;
+  coinsEarned: number;
+  totalCoins: number;
   isLastLevel: boolean;
-  onRetry: () => void;
   onNext: () => void;
+  onOpenShop: () => void;
 }
 
 export function LevelCompleteModal({
   level,
-  hits,
-  axeCount,
   applesCollected,
-  totalCurrency,
+  appleCount,
+  coinsEarned,
+  totalCoins,
   isLastLevel,
-  onRetry,
   onNext,
+  onOpenShop,
 }: LevelCompleteModalProps) {
+  // Zählt die verdienten Münzen hoch, statt sie fertig hinzuklatschen – fühlt sich
+  // nach Belohnung an statt nach Zahl auf einem Zettel.
+  const shownCoins = useCountUp(coinsEarned, 700);
+
   return (
     <div className="modal-backdrop">
       <div className="modal-card">
         <div className="modal-card__title">Level {level} geschafft!</div>
         <div className="modal-card__body">
-          {hits} von {axeCount} Äxten haben sauber getroffen.
+          {applesCollected} von {appleCount} {appleCount === 1 ? 'Apfel' : 'Äpfeln'} eingesammelt.
         </div>
 
         <div className="modal-card__apples">
-          <Apple size={30} />
-          <span className="modal-card__score">+{applesCollected}</span>
+          <Coin size={34} className="modal-card__coin-spin" />
+          <span className="modal-card__score">+{shownCoins}</span>
         </div>
         <div className="modal-card__sub">
-          Äpfel insgesamt: <strong>{totalCurrency}</strong>
+          Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
 
         {isLastLevel ? (
-          <>
-            <div className="modal-card__badge">Alle Level gemeistert! 🎉</div>
-            <button className="modal-card__button" onClick={onRetry}>
-              Nochmal spielen
-            </button>
-          </>
+          <div className="modal-card__badge">Alle Level gemeistert! 🎉</div>
         ) : (
-          <>
-            <button className="modal-card__button" onClick={onNext}>
-              Weiter zu Level {level + 1}
-            </button>
-            <button className="modal-card__button modal-card__button--secondary" onClick={onRetry}>
-              Level nochmal spielen
-            </button>
-          </>
+          <button className="modal-card__button" onClick={onNext}>
+            Weiter zu Level {level + 1}
+          </button>
         )}
+        <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
+          Werkstatt öffnen
+        </button>
       </div>
     </div>
   );

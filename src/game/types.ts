@@ -1,4 +1,5 @@
 // Alle Datentypen für den Spielzustand an einem Ort.
+import type { SaveData } from './storage';
 
 export type GamePhase = 'ready' | 'flying' | 'levelComplete' | 'gameOver';
 
@@ -28,10 +29,19 @@ export interface FlyingAxe {
   impactWorldAngleDeg: number;
 }
 
+/**
+ * Wie sich die Scheibe dreht. Sorgt für Abwechslung, ohne an den Grundwerten zu drehen:
+ * - `steady`  gleichmäßig, das klassische Muster
+ * - `pulse`   Tempo schwankt weich zwischen langsam und schnell (Rhythmus finden)
+ * - `reverse` dreht periodisch die Richtung um (kurz vor dem Wechsel wird es knifflig)
+ */
+export type SpinPattern = 'steady' | 'pulse' | 'reverse';
+
 /** Alle Balancing-Werte für ein Level. */
 export interface LevelConfig {
   axeCount: number;
   boardSpeedDegPerSec: number;
+  spinPattern: SpinPattern;
   /** Feste Positionen (Grad, lokal am Brett) für die Äpfel in diesem Level. */
   appleAngles: number[];
   /** Äxte, die schon zu Levelbeginn im Brett stecken (Hindernisse). Optional. */
@@ -45,10 +55,12 @@ export interface GameState {
   hits: number;
   stuckAxes: StuckAxe[];
   apples: Apple[];
-  /** In diesem Level-Durchlauf gesammelte Äpfel (= Spielwährung). */
+  /** In diesem Level gesammelte Äpfel. Bei Game Over verfallen sie. */
   applesCollectedThisRun: number;
-  /** Dauerhaft gespeicherte Gesamt-Währung über alle Durchläufe hinweg. */
-  totalCurrency: number;
+  /** Münzen aus dem gerade abgeschlossenen Level (Äpfel + Abschluss-Bonus), für den Ergebnis-Screen. */
+  coinsEarnedThisLevel: number;
   flyingAxe: FlyingAxe | null;
   lastOutcome: ThrowOutcome | null;
+  /** Dauerhafter Spielstand: Münzen, Skins, bestes Level. */
+  save: SaveData;
 }

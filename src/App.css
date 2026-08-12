@@ -165,28 +165,55 @@
   }
 }
 
-/* ---- Juice: dezenter Screen-Shake bei Treffer (bewusst subtil) ---- */
+/* Bewegungsschweif hinter der Axt: sitzt im rotierenden Element, wischt also mit. */
+.axe-flying__trail {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 10px;
+  height: 78px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  filter: blur(3px);
+  pointer-events: none;
+  animation: axe-trail-fade 0.18s ease-out forwards;
+}
+
+@keyframes axe-trail-fade {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- Juice: Screen-Shake bei Treffer. Spürbar, aber kurz genug, um nicht zu nerven. ---- */
 .stage--shake {
-  animation: stage-shake 0.22s ease-out;
+  animation: stage-shake 0.26s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
 @keyframes stage-shake {
   0% {
-    transform: translate(0, 0);
+    transform: translate(0, 0) scale(1);
   }
-  30% {
-    transform: translate(-2px, 1px);
+  20% {
+    transform: translate(-4px, 2px) scale(1.006);
   }
-  60% {
-    transform: translate(1.5px, -1px);
+  45% {
+    transform: translate(3px, -2px) scale(1.004);
+  }
+  70% {
+    transform: translate(-2px, 1px) scale(1.002);
   }
   100% {
-    transform: translate(0, 0);
+    transform: translate(0, 0) scale(1);
   }
 }
 
-/* ---- Juice: Holzspäne-Partikel bei Treffer ---- */
-.hit-particles {
+/* ---- Juice: Holzspäne + Schockwelle bei Treffer ---- */
+.hit-effect {
   position: absolute;
   left: 50%;
   bottom: 6px;
@@ -196,7 +223,33 @@
   pointer-events: none;
 }
 
-.hit-particles__chip {
+/* Ausbreitender Ring am Einschlag – gibt dem Treffer Wucht. */
+.hit-effect__shockwave {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 236, 190, 0.9);
+  animation: shockwave-expand 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes shockwave-expand {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.95;
+    border-width: 4px;
+  }
+  100% {
+    transform: scale(5.5);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+.hit-effect__chip {
   position: absolute;
   left: 0;
   top: 0;
@@ -204,26 +257,58 @@
   height: 10px;
   border-radius: 1px;
   transform-origin: center;
-  animation: chip-burst 0.55s ease-out forwards;
+  animation: chip-burst 0.6s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
 }
 
-.hit-particles__chip--0 {
+.hit-effect__chip--0 {
   background: #dcae74;
 }
-.hit-particles__chip--1 {
+.hit-effect__chip--1 {
   background: #b9863f;
 }
-.hit-particles__chip--2 {
+.hit-effect__chip--2 {
   background: #f4ede0;
 }
 
 @keyframes chip-burst {
   0% {
-    transform: rotate(var(--angle)) translateY(0) rotate(0deg);
+    transform: rotate(var(--angle)) translateY(0) rotate(0deg) scale(1.2);
     opacity: 1;
   }
   100% {
-    transform: rotate(var(--angle)) translateY(-50px) rotate(280deg);
+    transform: rotate(var(--angle)) translateY(-64px) rotate(340deg) scale(0.6);
     opacity: 0;
+  }
+}
+
+/* ---- Eingesammelter Apfel fliegt zur Münz-Anzeige und wird dabei zur Münze ---- */
+.apple-to-coin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #ff8f88, #e6433a 60%, #9c2620 100%);
+  animation: apple-to-coin-fly 0.75s cubic-bezier(0.4, 0, 0.3, 1) forwards;
+}
+
+@keyframes apple-to-coin-fly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    background: radial-gradient(circle at 35% 30%, #ff8f88, #e6433a 60%, #9c2620 100%);
+  }
+  55% {
+    background: radial-gradient(circle at 35% 30%, #fff3b8, #ffce3d 60%, #d99a00 100%);
+  }
+  100% {
+    /* grob zur Münz-Pille oben rechts */
+    transform: translate(90px, -230px) scale(0.45);
+    opacity: 0;
+    background: radial-gradient(circle at 35% 30%, #fff3b8, #ffce3d 60%, #d99a00 100%);
   }
 }

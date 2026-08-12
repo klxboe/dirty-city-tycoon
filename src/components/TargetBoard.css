@@ -21,26 +21,95 @@
   background: transparent;
 }
 
+/*
+ * Scheiben-Skins: jede Variante setzt nur diese Variablen, das restliche Layout ist
+ * für alle gleich. Neuen Skin anlegen = Eintrag in shop.ts + ein Block hier.
+ *
+ * `.board-skin` trägt die Farbwerte und wird von ZWEI Stellen benutzt: der echten
+ * Zielscheibe und der Mini-Vorschau im Shop. Deshalb stehen die Variablen hier und
+ * nicht direkt auf `.target-board` – sonst hätte die Vorschau keine Farben.
+ */
+.board-skin {
+  --board-rim: linear-gradient(155deg, #f5f8fa, #a4afb8 45%, #5a626a);
+  --board-wood-light: #e5b378;
+  --board-wood-dark: #c8873f;
+  --board-grain-line: rgba(74, 45, 15, 0.1);
+  --board-inner-shadow: rgba(60, 34, 8, 0.45);
+  --board-glow: rgba(255, 178, 82, 0.35);
+  --board-ring-light: #f4ede0;
+  --board-ring-accent: #e63b30;
+  --board-bullseye: radial-gradient(circle at 35% 30%, #ff8f74, #e63321 65%, #931307 100%);
+  --board-bullseye-glow: rgba(230, 51, 33, 0.7);
+  --board-bullseye-edge: #6b140d;
+}
+
 .target-board {
   position: relative;
   width: 210px;
   height: 210px;
   border-radius: 50%;
   /* Metallring als Hintergrund; das Holz-Gesicht liegt als eigener Kreis obendrauf. */
-  background: linear-gradient(155deg, #f5f8fa, #a4afb8 45%, #5a626a);
+  background: var(--board-rim);
   box-shadow:
     0 7px 0 rgba(0, 0, 0, 0.25),
     0 14px 30px rgba(0, 0, 0, 0.35),
-    0 0 34px 6px rgba(255, 178, 82, 0.35);
+    0 0 34px 6px var(--board-glow);
+}
+
+.board-skin--board-walnut {
+  --board-rim: linear-gradient(155deg, #ffe9b0, #c9992f 45%, #6b4c10);
+  --board-wood-light: #8a5a34;
+  --board-wood-dark: #5d3a1f;
+  --board-grain-line: rgba(20, 10, 4, 0.22);
+  --board-inner-shadow: rgba(25, 12, 4, 0.6);
+  --board-glow: rgba(201, 153, 47, 0.4);
+  --board-ring-light: #f0dcb0;
+  --board-ring-accent: #c9992f;
+  --board-bullseye: radial-gradient(circle at 35% 30%, #ffe9b0, #c9992f 65%, #6b4c10 100%);
+  --board-bullseye-glow: rgba(201, 153, 47, 0.7);
+  --board-bullseye-edge: #4a3408;
+}
+
+.board-skin--board-ice {
+  --board-rim: linear-gradient(155deg, #ffffff, #b9dcef 45%, #5d8ba8);
+  --board-wood-light: #d8f0fb;
+  --board-wood-dark: #9cc9e0;
+  --board-grain-line: rgba(40, 90, 120, 0.18);
+  --board-inner-shadow: rgba(30, 80, 110, 0.45);
+  --board-glow: rgba(140, 220, 255, 0.55);
+  --board-ring-light: #ffffff;
+  --board-ring-accent: #3aa6d8;
+  --board-bullseye: radial-gradient(circle at 35% 30%, #ffffff, #5ec4ea 65%, #1c6d92 100%);
+  --board-bullseye-glow: rgba(94, 196, 234, 0.8);
+  --board-bullseye-edge: #175a78;
+}
+
+.board-skin--board-volcano {
+  --board-rim: linear-gradient(155deg, #8a8a8a, #4a4a4a 45%, #1c1c1c);
+  --board-wood-light: #4a3730;
+  --board-wood-dark: #241a16;
+  --board-grain-line: rgba(255, 110, 40, 0.28);
+  --board-inner-shadow: rgba(0, 0, 0, 0.7);
+  --board-glow: rgba(255, 110, 40, 0.55);
+  --board-ring-light: #d8c0b0;
+  --board-ring-accent: #ff6e28;
+  --board-bullseye: radial-gradient(circle at 35% 30%, #ffe08a, #ff6e28 60%, #8a1c00 100%);
+  --board-bullseye-glow: rgba(255, 110, 40, 0.9);
+  --board-bullseye-edge: #5c1400;
 }
 
 .target-board__grain {
   position: absolute;
   inset: 7px;
   border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, rgba(74, 45, 15, 0.1) 0deg 3deg, transparent 3deg 9deg),
-    repeating-radial-gradient(circle at 50% 50%, #e5b378 0px, #e5b378 5px, #c8873f 5px 10px);
-  box-shadow: inset 0 0 26px rgba(60, 34, 8, 0.45);
+  background: repeating-conic-gradient(from 0deg, var(--board-grain-line) 0deg 3deg, transparent 3deg 9deg),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      var(--board-wood-light) 0px,
+      var(--board-wood-light) 5px,
+      var(--board-wood-dark) 5px 10px
+    );
+  box-shadow: inset 0 0 26px var(--board-inner-shadow);
 }
 
 .target-board__ring {
@@ -54,21 +123,21 @@
 .target-board__ring--outer {
   width: 176px;
   height: 176px;
-  border: 5px solid #f4ede0;
+  border: 5px solid var(--board-ring-light);
   box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.25);
 }
 
 .target-board__ring--mid {
   width: 122px;
   height: 122px;
-  border: 5px solid #e63b30;
+  border: 5px solid var(--board-ring-accent);
   box-shadow: 0 0 0 2px rgba(74, 45, 15, 0.2);
 }
 
 .target-board__ring--inner {
   width: 68px;
   height: 68px;
-  border: 4px solid #f4ede0;
+  border: 4px solid var(--board-ring-light);
 }
 
 .target-board__bullseye {
@@ -79,19 +148,19 @@
   height: 26px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at 35% 30%, #ff8f74, #e63321 65%, #931307 100%);
-  border: 2px solid #6b140d;
-  box-shadow: 0 0 16px 3px rgba(230, 51, 33, 0.7);
+  background: var(--board-bullseye);
+  border: 2px solid var(--board-bullseye-edge);
+  box-shadow: 0 0 16px 3px var(--board-bullseye-glow);
   animation: bullseye-pulse 2.2s ease-in-out infinite;
 }
 
 @keyframes bullseye-pulse {
   0%,
   100% {
-    box-shadow: 0 0 16px 3px rgba(230, 51, 33, 0.7);
+    box-shadow: 0 0 16px 3px var(--board-bullseye-glow);
   }
   50% {
-    box-shadow: 0 0 22px 6px rgba(230, 51, 33, 0.9);
+    box-shadow: 0 0 26px 8px var(--board-bullseye-glow);
   }
 }
 
