@@ -22,11 +22,12 @@ Ein simples, süchtig machendes Arcade-Handyspiel, sehr nah am Vorbild
 - Antippen wirft sofort eine Axt (kein Halten/Laden/Timing-Fenster mehr –
   das gab es in einer früheren Version, wurde auf Wunsch entfernt, um näher
   am Vorbild zu sein).
-- **Zielen:** Die Axt fliegt **senkrecht nach oben von der Stelle, an der man
-  tippt**, und schlägt dort ein, wo diese Linie die Scheibe schneidet. Mitte
-  tippen trifft unten an der Scheibe, ganz links/rechts trifft den linken/rechten
-  Scheibenrand. Damit ist das Spiel nicht mehr nur Timing, sondern Timing +
-  Zielen.
+- **Es gibt KEIN Zielen.** Die Axt fliegt immer geradeaus nach oben und schlägt
+  immer an derselben Stelle auf dem Bildschirm ein (unten an der Scheibe) – egal,
+  wo man tippt. Der einzige Skill ist das **Timing**: die Scheibe dreht sich
+  darunter weg. Genau wie beim Vorbild. (Es gab zwischendurch eine Ziel-Mechanik,
+  bei der die Tippposition den Einschlagpunkt verschob; auf Wunsch wieder
+  entfernt, weil sie das Spiel unnötig kompliziert gemacht hat.)
 - Trifft man eine Stelle, an der schon eine Axt steckt → **sofort Game Over**.
   Der Lauf endet und startet am **Anfang des aktuellen 10er-Blocks** neu (wer in
   Level 34 stirbt, macht bei 31 weiter). Münzen aus bereits abgeschlossenen
@@ -228,8 +229,8 @@ src/
     constants.ts  LEVELS (100 Stück, per generateLevel() erzeugt), Kollisions-/
                    Apfel-Trefferradius, Flugzeit, Ziel-Spreizung, Münz-Wirtschaft
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
-                   normalizeAngle, angularDistance, aimToImpactWorldAngle,
-                   computeBoardLocalAngle, collidesWithStuckAxe, findHitApple
+                   normalizeAngle, angularDistance, computeBoardLocalAngle,
+                   collidesWithStuckAxe, findHitApple
     shop.ts       Designs als DATEN: Äxte, Scheiben, Boss-Früchte, Preise und
                    alle Farbwerte (BOARD_STYLES/AXE_STYLES). Rein kosmetisch.
     storage.ts    Spielstand laden/speichern (Münzen, Designs, Bestmarke,
@@ -309,32 +310,18 @@ Zeitschritt nach der Rückkehr die GESAMTE Pausendauer, und die Scheibe würde u
 hunderte Grad weiterspringen, mitten in einem Spiel, in dem die genaue Position
 über Sieg und Niederlage entscheidet. (Fiel beim Testen auf, weil ein
 Hintergrund-Tab die Scheibe komplett einfriert – nützlich zu wissen, wenn man
-das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
+das Spiel automatisiert testet.)
 
 ### Die Winkel-Logik (der kniffligste Teil, kurz erklärt)
 
 - Die Zielscheibe rotiert kontinuierlich (Weltwinkel, 0° = oben, im Uhrzeigersinn).
-- Der Einschlagpunkt auf dem BILDSCHIRM ergibt sich aus der Tippposition:
-  `aimToImpactWorldAngle()` rechnet sie (-1 = linker Scheibenrand, 0 = Mitte,
-  +1 = rechter Rand) in einen Weltwinkel um. Rechts tippen = kleinerer Winkel,
-  links = größerer (Weltwinkel laufen im Uhrzeigersinn).
-
-  **Die Umrechnung ist ein Arkussinus, keine Multiplikation – das ist wichtig.**
-  Eine frühere Fassung rechnete linear (`180° - aim × 75°`). Das klingt
-  naheliegend, legt den Einschlag aber nicht senkrecht über den Finger: bei
-  halbem Ausschlag landete die Axt bei 61% des Radius statt bei 50%, zum Rand hin
-  noch weiter daneben. Die Axt musste deshalb SCHRÄG zum Ziel fliegen, und diese
-  Schräge entsprach nichts, was der Spieler getan hatte. Rückmeldung vom Test auf
-  dem Handy: *"fliegt seitlich, da checkt man nichts."*
-  Ein Punkt auf dem Kreis liegt R·sin(Winkel) seitlich der Mitte; damit das gleich
-  der Tippposition ist, muss `Winkel = arcsin(aim)` gelten. Seitdem liegt der
-  Einschlag exakt über dem Finger (nachgerechnet: Abweichung 0,00 px über den
-  ganzen Bereich), und die Axt fliegt **geradeaus nach oben**.
-- Die Flug-Animation setzt deshalb nur noch zwei Werte: `--flight-x` (feste
-  seitliche Position, ändert sich während des Flugs NICHT) und
-  `--flight-end-bottom` (wo der Flug endet). Die Drehung liegt bei einer
-  Umdrehung – vorher waren es 900° in 140ms, also 2,5 Umdrehungen, was keine
-  sichtbare Drehung mehr ist, sondern Matsch.
+- Der Einschlagpunkt auf dem BILDSCHIRM ist immer derselbe
+  (`IMPACT_WORLD_ANGLE_DEG`, 180° = unten an der Scheibe). Die Axt fliegt
+  senkrecht dorthin; bewegt wird nur die Scheibe darunter. `computeBoardLocalAngle()`
+  braucht deshalb nur den aktuellen Drehwinkel.
+- Die Flug-Animation setzt entsprechend nur eine Endhöhe (`--flight-end-bottom`).
+  Die Drehung liegt bei einer Umdrehung – vorher waren es 900° in 140ms, also
+  2,5 Umdrehungen, was keine sichtbare Drehung mehr ist, sondern Matsch.
 - **Das Flugziel kommt aus der GEMESSENEN Scheibenposition, nicht aus einem
   Prozentwert.** Die Animation endete früher fest bei `bottom: 68%` – ein Wert,
   der zur alten 210px-Scheibe passte. Seit die Scheibe 260px groß ist und mittig
@@ -346,18 +333,16 @@ das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
   wird in einem `useLayoutEffect` mit `ResizeObserver` auf der Bühne – bewusst
   nicht `window.resize`, weil sich die nutzbare Höhe auf dem Handy auch beim
   Ein- und Ausfahren der Browserleiste ändert. Nachgemessen: der Einschlag liegt
-  bei Mitte- UND Seitenwürfen exakt am Steck-Radius, 6px im Holz (`AXE_BITE_PX`) –
-  vorher 300px dahinter.
-- **Ein Radius, überall derselbe (`AXE_STICK_RATIO`).** Zielen rechnete mit der
-  Konstante 120, die Flugbahn mit dem gemessenen Scheiben-Radius 130. Dadurch
-  endete der Flug 10px weiter außen als die Axt danach steckte, und der
-  Späne-Burst saß neben dem Einschlag. Jetzt leiten Zielen, Flugbahn und Burst
-  alle denselben Wert aus `stickRadiusPx()` ab – gemessene Scheibengröße mal
-  Steck-Anteil. Nachgemessen: seitliche Abweichung 0px.
+  exakt am Steck-Radius, 6px im Holz (`AXE_BITE_PX`) – vorher 300px dahinter.
+- **Ein Radius, überall derselbe (`AXE_STICK_RATIO`).** Flugbahn und Späne-Burst
+  müssen denselben Radius benutzen wie die steckenden Äxte. Eine frühere Fassung
+  rechnete mit dem gemessenen Scheiben-Radius (130) statt dem Steck-Radius (120):
+  der Flug endete 10px weiter außen als die Axt danach steckte, und der Burst saß
+  daneben. Alle leiten den Wert jetzt aus `stickRadiusPx()` ab.
 - **Der Späne-Burst sitzt am echten Treffpunkt.** Er hing vorher fest unten in
   der Mitte der Scheiben-Zone; bei einem Wurf an den Rand lagen Späne und
-  Einschlag sichtbar auseinander. Jetzt nutzt er dieselben Koordinaten wie der
-  Flug (`--flight-x` / `--flight-end-bottom`).
+  Einschlag sichtbar auseinander (das fiel noch zur Zeit der Ziel-Mechanik auf).
+  Jetzt nutzt er dieselben Koordinaten wie der Flug.
 - **Hit-Stop beim Treffer** (`HIT_STOP_MS`, 55ms): die Drehung steht einen
   Sekundenbruchteil still und die Scheibe zuckt zusammen (`punch()` auf dem
   Handle, damit kein React-Re-Render nötig ist). Der klassische Kniff aus
@@ -568,6 +553,12 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         jetzt am Ende nach unten statt gleichmäßig zu verpuffen.
       - Dabei gefunden: Zielen und Flugbahn benutzten unterschiedliche Radien
         (120 gegen gemessene 130) – behoben über `AXE_STICK_RATIO`.
+- [x] **Ziel-Mechanik wieder entfernt** – auf Wunsch zurück zum Vorbild: egal wo
+      man tippt, die Axt fliegt immer geradeaus an dieselbe Stelle. Der einzige
+      Skill ist wieder das Timing. Damit fallen `aimToImpactWorldAngle()`, der
+      `aim`-Parameter und `FlyingAxe.impactWorldAngleDeg` weg; der Tap-Puffer ist
+      wieder ein einfaches Flag. Nachgemessen: Tippen ganz links und in der Mitte
+      ergeben identische Flugbahnen (`flightX` beide 0).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

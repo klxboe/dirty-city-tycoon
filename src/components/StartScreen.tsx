@@ -55,7 +55,7 @@ export function StartScreen({
             <li>
               <span className="start__rules-icon">👆</span>
               <span>
-                Tippen wirft eine Axt. <strong>Wo</strong> du tippst – links, Mitte, rechts – dahin fliegt sie.
+                Tippen wirft eine Axt – immer geradeaus. Es zählt nur, <strong>wann</strong> du tippst.
               </span>
             </li>
             <li>

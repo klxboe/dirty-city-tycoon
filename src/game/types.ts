@@ -21,12 +21,6 @@ export type ThrowOutcome = 'stuck' | 'collided';
 
 export interface FlyingAxe {
   startedAt: number;
-  /**
-   * Welt-Winkel, an dem diese Axt einschlägt – ergibt sich daraus, wohin der Spieler
-   * getippt hat. Bestimmt sowohl die Trefferauswertung als auch die Flugrichtung
-   * der Animation.
-   */
-  impactWorldAngleDeg: number;
 }
 
 /**

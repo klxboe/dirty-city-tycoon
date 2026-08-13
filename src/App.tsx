@@ -44,9 +44,9 @@ interface BoardGeometry {
 /**
  * Radius in Bildschirm-Pixeln, auf dem die Äxte tatsächlich stecken.
  *
- * Zielen, Flugbahn und Späne-Burst müssen ALLE diesen Wert benutzen. Vorher rechnete
- * das Zielen mit der Konstante 120, die Flugbahn dagegen mit dem gemessenen
- * Scheiben-Radius 130 – dadurch endete der Flug 10px weiter außen als die Axt danach
+ * Flugbahn und Späne-Burst müssen denselben Wert benutzen wie die steckenden Äxte.
+ * Eine frühere Fassung rechnete mit dem gemessenen Scheiben-Radius (130) statt dem
+ * Steck-Radius (120) – dadurch endete der Flug 10px weiter außen als die Axt danach
  * steckte, und der Späne-Burst saß sichtbar neben dem Einschlag.
  */
 function stickRadiusPx(geom: BoardGeometry | null): number {
@@ -82,13 +82,6 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
   const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
-  /** Winkel des zuletzt geworfenen Wurfs – überlebt das Landen, damit der Späne-Burst weiß, wo er hingehört. */
-  const lastImpactAngleRef = useRef(180);
-
-  useEffect(() => {
-    if (game.flyingAxe) lastImpactAngleRef.current = game.flyingAxe.impactWorldAngleDeg;
-  }, [game.flyingAxe]);
-
   /*
    * Scheibenposition messen, sobald die Bühne steht – und bei jeder Größenänderung neu.
    * `useLayoutEffect`, damit der Wert vor dem ersten Zeichnen da ist und der allererste
@@ -173,17 +166,15 @@ function App() {
     prevCoinsRef.current = game.save.coins;
   }, [game.save.coins]);
 
-  const hint = game.phase === 'ready' ? 'Links, Mitte oder rechts tippen – dahin fliegt die Axt' : '';
+  const hint = game.phase === 'ready' ? 'Tippen zum Werfen – triff die Lücke' : '';
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = () => {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
 
-    // Zielen: horizontaler Abstand der Tippposition zur Scheibenmitte, normiert auf den
-    // STECK-Radius (nicht den Scheiben-Radius – siehe stickRadiusPx). -1 = linker Rand,
-    // 0 = Mitte, +1 = rechter Rand. Werte darüber hinaus schneidet die Engine ab, damit
-    // auch ein Tap weit neben der Scheibe noch funktioniert.
-    const centerX = boardHandleRef.current?.getCenterX() ?? event.clientX;
-    game.throwAxe((event.clientX - centerX) / stickRadiusPx(boardGeom));
+    // WO man tippt, spielt keine Rolle – die Axt geht immer geradeaus nach oben,
+    // wie beim Vorbild "Knife Hit". Es gab zwischendurch eine Ziel-Mechanik; die hat
+    // das Spiel unnötig kompliziert gemacht und wurde wieder entfernt.
+    game.throwAxe();
   };
 
   const startPlaying = () => {
@@ -193,33 +184,20 @@ function App() {
   };
 
   /*
-   * Flugbahn der Axt.
+   * Flugbahn der Axt: immer senkrecht nach oben durch die Scheibenmitte, bis zum
+   * tiefsten Punkt des Steck-Radius. Es gibt keine Richtungsvariante mehr – der
+   * Einschlagpunkt ist auf dem Bildschirm immer derselbe, nur die Scheibe dreht
+   * sich darunter weg.
    *
-   * Weltwinkel: 0° = oben, im Uhrzeigersinn -> ein Punkt auf dem Kreis liegt
-   * (R·sin a) seitlich und (R·cos a) über der Scheibenmitte.
-   *
-   * Die Axt fliegt GERADEAUS NACH OBEN und endet GENAU am Einschlagpunkt:
-   * `flightX` ist ihre feste seitliche Lage (gleich der Tippposition, dafür sorgt
-   * die Arkussinus-Zuordnung in engine.ts), `flightEndBottom` der Abstand des
-   * Einschlagpunkts vom unteren Bühnenrand.
-   *
-   * Beides wird aus der GEMESSENEN Scheibenposition gerechnet, nicht aus festen
-   * Prozentwerten. Eine frühere Fassung ließ die Animation bei `bottom: 68%` enden –
-   * ein Wert, der zur alten, kleineren Scheibe passte. Seit die Scheibe größer ist
-   * und mittig in einer flexiblen Zone sitzt, hing ihre Lage von der Bildschirmhöhe
-   * ab, und die Axt flog rund 300px zu weit, also quer durch die Scheibe hindurch.
+   * Die Endhöhe wird aus der GEMESSENEN Scheibenposition gerechnet, nicht aus einem
+   * festen Prozentwert: die Scheibe sitzt mittig in einer flexiblen Zone, ihre Lage
+   * hängt also von der Bildschirmhöhe ab. Eine frühere Fassung endete fest bei
+   * `bottom: 68%` und die Axt flog rund 300px zu weit, quer durch die Scheibe.
    */
-  // Beim Treffer ist `flyingAxe` schon wieder null – für den Späne-Burst brauchen wir
-  // den Winkel des GERADE gelandeten Wurfs, sonst platzt er immer unten in der Mitte.
-  const impactAngleDeg = game.flyingAxe?.impactWorldAngleDeg ?? lastImpactAngleRef.current;
-  const flightAngleRad = (impactAngleDeg * Math.PI) / 180;
-  // Steck-Radius, nicht Scheiben-Radius: dort landen die Äxte tatsächlich.
-  const stickRadius = stickRadiusPx(boardGeom);
-  const flightX = (boardGeom?.centerX ?? 0) + stickRadius * Math.sin(flightAngleRad);
-  const impactY = (boardGeom?.centerY ?? 0) - stickRadius * Math.cos(flightAngleRad);
+  const flightX = boardGeom?.centerX ?? 0;
+  const impactY = (boardGeom?.centerY ?? 0) + stickRadiusPx(boardGeom);
   // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
-  // daher die Differenz. AXE_BITE_PX kommt DAZU (nicht weg), damit die Axt ein Stück
-  // ins Holz fährt, statt davor stehen zu bleiben.
+  // daher die Differenz. AXE_BITE_PX kommt DAZU, damit die Axt ins Holz fährt.
   const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_BITE_PX;
 
   const overlayOpen = shopOpen || settingsOpen;

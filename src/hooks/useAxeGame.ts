@@ -6,7 +6,7 @@
 // damit die Drehung flüssig bleibt und nicht 60x/Sekunde die ganze App neu rendert.
 // Dieser Hook fragt den aktuellen Winkel nur bei Bedarf über `getBoardAngleDeg` ab.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { aimToImpactWorldAngle, collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
+import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
 import {
   blockCompletionBonus,
   blockStartIndex,
@@ -55,10 +55,10 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   });
 
   /**
-   * Tippt man, während schon eine Axt fliegt, geht der Tap NICHT verloren, sondern wird hier
-   * (mitsamt der Zielrichtung) gemerkt und feuert automatisch, sobald die aktuelle Axt
-   * gelandet ist (siehe Nachzieh-Effekt unten). Ohne das fühlte sich schnelles Antippen
-   * "kaputt" an, weil Taps mitten im kurzen Flug (140ms) einfach ignoriert wurden.
+   * Tippt man, während schon eine Axt fliegt, geht der Tap NICHT verloren, sondern wird
+   * hier gemerkt und feuert automatisch, sobald die aktuelle Axt gelandet ist (siehe
+   * Nachzieh-Effekt unten). Ohne das fühlte sich schnelles Antippen "kaputt" an, weil
+   * Taps mitten im kurzen Flug einfach verschluckt wurden.
    *
    * WICHTIG: Dieser Puffer darf nur in Effekten/Event-Handlern gelesen und geleert werden,
    * NIEMALS in einer setState-Updater-Funktion. React ruft Updater im StrictMode (Dev) zur
@@ -67,26 +67,25 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    * Wurf ging dadurch stillschweigend verloren (in genau diese Falle ist eine frühere
    * Version gelaufen: Doppel-Tippen löste nur einen einzigen Wurf aus).
    */
-  const pendingAimRef = useRef<number | null>(null);
+  const pendingThrowRef = useRef(false);
 
   /**
-   * Antippen wirft sofort eine Axt. `aim` ist die horizontale Tippposition relativ zur
-   * Scheibenmitte (-1 = linker Rand, 0 = Mitte, +1 = rechter Rand) und bestimmt, wo die
-   * Axt einschlägt.
+   * Antippen wirft sofort eine Axt – geradeaus nach oben. WO man tippt, spielt keine
+   * Rolle (wie beim Vorbild "Knife Hit"); der einzige Skill ist das Timing.
    */
-  const throwAxe = useCallback((aim: number) => {
+  const throwAxe = useCallback(() => {
     setState((prev) => {
       // Nach Level-Ende / Game Over wird nur noch über die Modal-Buttons weitergemacht.
       if (prev.phase === 'levelComplete' || prev.phase === 'gameOver') return prev;
 
       if (prev.phase !== 'ready') {
-        pendingAimRef.current = aim;
+        pendingThrowRef.current = true;
         return prev;
       }
       return {
         ...prev,
         phase: 'flying',
-        flyingAxe: { startedAt: performance.now(), impactWorldAngleDeg: aimToImpactWorldAngle(aim) },
+        flyingAxe: { startedAt: performance.now() },
         lastOutcome: null,
       };
     });
@@ -104,9 +103,9 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
         const level = LEVELS[prev.levelIndex];
 
-        // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung (sie dreht sich während des
-        // Flugs weiter) und der Zielrichtung, mit der diese Axt geworfen wurde.
-        const localAngle = computeBoardLocalAngle(getBoardAngleDeg(), prev.flyingAxe.impactWorldAngleDeg);
+        // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
+        // des Flugs weiter, genau darin liegt das Timing-Spiel.
+        const localAngle = computeBoardLocalAngle(getBoardAngleDeg());
 
         // Eigene Axt getroffen -> Lauf vorbei. Die Münzen dieses Levels sind futsch.
         if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
@@ -157,10 +156,9 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   // Läuft zuverlässig erneut, weil die Phase dabei immer 'flying' -> 'ready' -> 'flying' wechselt.
   useEffect(() => {
     if (state.phase !== 'ready') return;
-    const aim = pendingAimRef.current;
-    if (aim === null) return;
-    pendingAimRef.current = null;
-    throwAxe(aim);
+    if (!pendingThrowRef.current) return;
+    pendingThrowRef.current = false;
+    throwAxe();
   }, [state.phase, throwAxe]);
 
   // Belohnung gutschreiben, sobald ein Level geschafft ist. Läuft bewusst nur bei
@@ -201,7 +199,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, [state.phase]);
 
   const goToLevel = useCallback((levelIndex: number) => {
-    pendingAimRef.current = null;
+    pendingThrowRef.current = false;
     setState((prev) => {
       const target = Math.max(0, Math.min(levelIndex, LEVELS.length - 1));
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
@@ -214,7 +212,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const restartRun = useCallback(() => {
     setState((prev) => {
       const target = blockStartIndex(prev.levelIndex);
-      pendingAimRef.current = null;
+      pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);
       return { ...createLevelState(target), streak: 0, save: nextSave };
@@ -224,7 +222,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const nextLevel = useCallback(() => {
     setState((prev) => {
       const target = Math.min(prev.levelIndex + 1, LEVELS.length - 1);
-      pendingAimRef.current = null;
+      pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
       return { ...createLevelState(target), streak: prev.streak, save: nextSave };
@@ -286,7 +284,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 
   /** Kompletter Neuanfang: Münzen, Skins und Fortschritt weg. Nur über die Einstellungen. */
   const resetProgress = useCallback(() => {
-    pendingAimRef.current = null;
+    pendingThrowRef.current = false;
     setState(() => {
       const fresh = loadSaveFresh();
       saveSave(fresh);
