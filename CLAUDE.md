@@ -525,6 +525,20 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 
 ## Offene To-dos
 
+- **ZUERST: Der Axt-Flug endet nicht an der Scheibe.** Die Axt fliegt sichtbar
+  durch die Scheibe hindurch statt an ihrem Rand steckenzubleiben – der Flug
+  endet rund 300px ZU WEIT OBEN. Nachgemessen bei 1316x916:
+  unterer Scheibenrand y=673, Scheibenmitte y=489, Flugende y=371.
+  Ursache: die Endhöhe steht als feste `bottom: 68%` in der `axe-fly`-Animation
+  (`App.css`). Der Wert war für die alte 210px-Scheibe getunt; seit die Scheibe
+  260px groß ist und mittig in einer flexiblen Zone sitzt (`.stage__board-zone`
+  mit `flex: 1`), stimmt er nicht mehr – und er kann gar nicht stimmen, weil die
+  Scheibenposition jetzt von der Bildschirmhöhe abhängt.
+  Lösung: das Flugende aus der TATSÄCHLICHEN Scheibenposition berechnen statt
+  aus einem Prozentwert. `TargetBoardHandle` liefert dafür schon `getCenterX()`;
+  analog eine Möglichkeit ergänzen, die Mitte/den Radius in Bildschirm-
+  koordinaten zu holen, und daraus in `App.tsx` das Flugziel setzen.
+
 - Selbst durchspielen und Feedback zum Balancing geben – die Werte sind
   Schätzungen. Konkret unklar:
   - **Münz-Tempo.** ~15-25 Münzen pro Level plus Boni. Der erste kaufbare Skin
