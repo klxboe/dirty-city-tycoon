@@ -189,6 +189,34 @@
   box-shadow: 0 1px 0 var(--color-border);
 }
 
+.shop__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+/* Noch nicht erspielte Boss-Beute: sichtbar, aber deutlich zurückgenommen. */
+.shop-card--locked {
+  opacity: 0.5;
+}
+
+.shop-card--locked .shop-card__preview {
+  filter: grayscale(1);
+}
+
+.shop-card__locked {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .shop-card__badge {
   flex-shrink: 0;
   padding: 5px 10px;

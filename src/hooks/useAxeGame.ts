@@ -8,17 +8,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { aimToImpactWorldAngle, collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
 import {
+  blockCompletionBonus,
   blockStartIndex,
+  bossFruitForLevel,
+  BOSS_REPEAT_BONUS,
   COINS_PER_APPLE,
   FLIGHT_DURATION_MS,
   LEVELS,
+  LEVELS_PER_BLOCK,
   levelCompletionBonus,
+  PERFECT_APPLE_BONUS,
+  streakMultiplier,
 } from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { getSkin, isFreeSkin } from '../game/shop';
-import type { GameState, StuckAxe } from '../game/types';
+import { setMuted } from '../game/sound';
+import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
-function createLevelState(levelIndex: number): Omit<GameState, 'save'> {
+function createLevelState(levelIndex: number): Omit<GameState, 'save' | 'streak'> {
   const level = LEVELS[levelIndex];
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
@@ -34,20 +41,24 @@ function createLevelState(levelIndex: number): Omit<GameState, 'save'> {
     stuckAxes: preplacedAxes,
     apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
     applesCollectedThisRun: 0,
-    coinsEarnedThisLevel: 0,
+    reward: null,
     flyingAxe: null,
     lastOutcome: null,
   };
 }
 
 export function useAxeGame(getBoardAngleDeg: () => number) {
-  const [state, setState] = useState<GameState>(() => ({ ...createLevelState(0), save: loadSave() }));
+  const [state, setState] = useState<GameState>(() => {
+    const save = loadSave();
+    setMuted(!save.soundOn);
+    return { ...createLevelState(Math.min(save.currentLevel, LEVELS.length - 1)), streak: save.streak, save };
+  });
+
   /**
    * Tippt man, während schon eine Axt fliegt, geht der Tap NICHT verloren, sondern wird hier
    * (mitsamt der Zielrichtung) gemerkt und feuert automatisch, sobald die aktuelle Axt
    * gelandet ist (siehe Nachzieh-Effekt unten). Ohne das fühlte sich schnelles Antippen
-   * "kaputt" an, weil Taps mitten im kurzen Flug (140ms) einfach ignoriert wurden, ohne dass
-   * etwas passierte. `null` = kein gepufferter Tap.
+   * "kaputt" an, weil Taps mitten im kurzen Flug (140ms) einfach ignoriert wurden.
    *
    * WICHTIG: Dieser Puffer darf nur in Effekten/Event-Handlern gelesen und geleert werden,
    * NIEMALS in einer setState-Updater-Funktion. React ruft Updater im StrictMode (Dev) zur
@@ -97,7 +108,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         // Flugs weiter) und der Zielrichtung, mit der diese Axt geworfen wurde.
         const localAngle = computeBoardLocalAngle(getBoardAngleDeg(), prev.flyingAxe.impactWorldAngleDeg);
 
-        // Eigene Axt getroffen -> Lauf vorbei. Die Münzen dieses Laufs sind futsch.
+        // Eigene Axt getroffen -> Lauf vorbei. Die Münzen dieses Levels sind futsch.
         if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
           return {
             ...prev,
@@ -123,9 +134,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 
         const axesThrown = prev.axesThrown + 1;
         const levelDone = axesThrown >= level.axeCount;
-        const coinsEarnedThisLevel = levelDone
-          ? applesCollectedThisRun * COINS_PER_APPLE + levelCompletionBonus(prev.levelIndex)
-          : 0;
 
         return {
           ...prev,
@@ -137,7 +145,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
           stuckAxes,
           apples,
           applesCollectedThisRun,
-          coinsEarnedThisLevel,
+          reward: levelDone ? computeReward(prev.levelIndex, applesCollectedThisRun, prev.streak, prev.save) : null,
         };
       });
     }, FLIGHT_DURATION_MS);
@@ -147,8 +155,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 
   // Zieht einen während des Fluges gepufferten Tap nach, sobald wieder geworfen werden darf.
   // Läuft zuverlässig erneut, weil die Phase dabei immer 'flying' -> 'ready' -> 'flying' wechselt.
-  // Nach Level-Ende oder Game Over greift der Effekt nicht (Phase ist dann nicht 'ready'), ein
-  // dort noch gepufferter Tap wird beim nächsten Level-Start verworfen.
   useEffect(() => {
     if (state.phase !== 'ready') return;
     const aim = pendingAimRef.current;
@@ -157,47 +163,79 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     throwAxe(aim);
   }, [state.phase, throwAxe]);
 
-  // Münzen und "bestes Level" gutschreiben, sobald ein Level geschafft ist.
-  // Läuft bewusst nur bei 'levelComplete' – ein Game Over schreibt nichts gut.
+  // Belohnung gutschreiben, sobald ein Level geschafft ist. Läuft bewusst nur bei
+  // 'levelComplete' – ein Game Over schreibt nichts gut.
   useEffect(() => {
     if (state.phase !== 'levelComplete') return;
     setState((prev) => {
-      if (prev.phase !== 'levelComplete') return prev;
+      if (prev.phase !== 'levelComplete' || !prev.reward) return prev;
+      const streak = prev.streak + 1;
       const nextSave: SaveData = {
         ...prev.save,
-        coins: prev.save.coins + prev.coinsEarnedThisLevel,
+        coins: prev.save.coins + prev.reward.total,
         bestLevel: Math.max(prev.save.bestLevel, prev.levelIndex + 2),
+        streak,
+        ownedSkins: prev.reward.unlockedAxeSkinId
+          ? [...prev.save.ownedSkins, prev.reward.unlockedAxeSkinId]
+          : prev.save.ownedSkins,
       };
       saveSave(nextSave);
-      return { ...prev, save: nextSave };
+      return { ...prev, save: nextSave, streak };
     });
     // Absichtlich nur an der Phase hängen: der Effekt soll genau einmal pro Level-Abschluss
     // laufen, nicht erneut, wenn sich der Spielstand danach durch einen Shop-Kauf ändert.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
-  /**
-   * Nach einem Game Over: Neustart am Anfang des aktuellen 10er-Blocks (nicht bei Level 1).
-   * Münzen und Skins bleiben erhalten.
-   */
-  const restartRun = useCallback(() => {
+  // Bei Game Over die Serie reißen lassen und den Lauf-Stand auf den Blockanfang setzen,
+  // damit auch ein Schließen der App genau dort wieder aufsetzt.
+  useEffect(() => {
+    if (state.phase !== 'gameOver') return;
+    setState((prev) => {
+      if (prev.phase !== 'gameOver') return prev;
+      const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: blockStartIndex(prev.levelIndex) };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave, streak: 0 };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase]);
+
+  const goToLevel = useCallback((levelIndex: number) => {
     pendingAimRef.current = null;
-    setState((prev) => ({ ...createLevelState(blockStartIndex(prev.levelIndex)), save: prev.save }));
+    setState((prev) => {
+      const target = Math.max(0, Math.min(levelIndex, LEVELS.length - 1));
+      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      saveSave(nextSave);
+      return { ...createLevelState(target), streak: prev.streak, save: nextSave };
+    });
+  }, []);
+
+  /** Nach einem Game Over: Neustart am Anfang des aktuellen 10er-Blocks. Münzen bleiben. */
+  const restartRun = useCallback(() => {
+    setState((prev) => {
+      const target = blockStartIndex(prev.levelIndex);
+      pendingAimRef.current = null;
+      const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
+      saveSave(nextSave);
+      return { ...createLevelState(target), streak: 0, save: nextSave };
+    });
   }, []);
 
   const nextLevel = useCallback(() => {
-    pendingAimRef.current = null;
-    setState((prev) => ({
-      ...createLevelState(Math.min(prev.levelIndex + 1, LEVELS.length - 1)),
-      save: prev.save,
-    }));
+    setState((prev) => {
+      const target = Math.min(prev.levelIndex + 1, LEVELS.length - 1);
+      pendingAimRef.current = null;
+      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      saveSave(nextSave);
+      return { ...createLevelState(target), streak: prev.streak, save: nextSave };
+    });
   }, []);
 
   /** Skin kaufen, falls genug Münzen da sind. Rüstet ihn direkt aus. */
   const buySkin = useCallback((skinId: string) => {
     setState((prev) => {
       const skin = getSkin(skinId);
-      if (!skin) return prev;
+      if (!skin || skin.source !== 'shop') return prev;
       if (prev.save.ownedSkins.includes(skinId) || isFreeSkin(skinId)) return prev;
       if (prev.save.coins < skin.price) return prev;
 
@@ -228,8 +266,38 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
+  const setSoundOn = useCallback((soundOn: boolean) => {
+    setMuted(!soundOn);
+    setState((prev) => {
+      const nextSave: SaveData = { ...prev.save, soundOn };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
+  const markTutorialSeen = useCallback(() => {
+    setState((prev) => {
+      if (prev.save.tutorialSeen) return prev;
+      const nextSave: SaveData = { ...prev.save, tutorialSeen: true };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
+  /** Kompletter Neuanfang: Münzen, Skins und Fortschritt weg. Nur über die Einstellungen. */
+  const resetProgress = useCallback(() => {
+    pendingAimRef.current = null;
+    setState(() => {
+      const fresh = loadSaveFresh();
+      saveSave(fresh);
+      setMuted(!fresh.soundOn);
+      return { ...createLevelState(0), streak: 0, save: fresh };
+    });
+  }, []);
+
   const level = LEVELS[state.levelIndex];
   const isLastLevel = state.levelIndex >= LEVELS.length - 1;
+  const bossFruit = bossFruitForLevel(state.levelIndex);
 
   return {
     ...state,
@@ -237,14 +305,78 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     isLastLevel,
     /** Erster Level-Index des aktuellen 10er-Blocks – dorthin geht es nach einem Game Over. */
     blockStart: blockStartIndex(state.levelIndex),
+    levelsPerBlock: LEVELS_PER_BLOCK,
     boardSpeedDegPerSec: level.boardSpeedDegPerSec,
     spinPattern: level.spinPattern,
     axeCount: level.axeCount,
+    appleCount: level.appleAngles.length,
     axesRemaining: level.axeCount - state.axesThrown,
+    bossFruit,
+    /** Im Boss-Level zeigt die Scheibe die Frucht statt des ausgerüsteten Designs. */
+    activeBoardSkin: bossFruit ? bossFruit.boardSkinId : state.save.equippedBoardSkin,
     throwAxe,
     restartRun,
     nextLevel,
+    goToLevel,
     buySkin,
     equipSkin,
+    setSoundOn,
+    markTutorialSeen,
+    resetProgress,
+  };
+}
+
+/** Frischer Spielstand für "Fortschritt zurücksetzen". */
+function loadSaveFresh(): SaveData {
+  return {
+    coins: 0,
+    ownedSkins: [],
+    equippedAxeSkin: 'axe-standard',
+    equippedBoardSkin: 'board-oak',
+    bestLevel: 1,
+    currentLevel: 0,
+    streak: 0,
+    soundOn: true,
+    tutorialSeen: true,
+  };
+}
+
+/**
+ * Rechnet die Belohnung eines geschafften Levels aus. Reine Funktion, damit sie
+ * gefahrlos in der setState-Updater-Funktion laufen kann (StrictMode-Doppelaufruf).
+ */
+function computeReward(levelIndex: number, applesCollected: number, streak: number, save: SaveData): LevelReward {
+  const level = LEVELS[levelIndex];
+  const boss = bossFruitForLevel(levelIndex);
+
+  const apples = applesCollected * COINS_PER_APPLE;
+  const base = levelCompletionBonus(levelIndex);
+  const perfect = applesCollected === level.appleAngles.length && applesCollected > 0 ? PERFECT_APPLE_BONUS : 0;
+  const isBlockEnd = (levelIndex + 1) % LEVELS_PER_BLOCK === 0;
+  const block = isBlockEnd ? blockCompletionBonus(levelIndex) : 0;
+
+  // Boss: entweder die Frucht-Axt freischalten oder – falls schon vorhanden – Münzen.
+  let unlockedAxeSkinId: string | undefined;
+  let bossCoins = 0;
+  if (boss) {
+    if (save.ownedSkins.includes(boss.axeSkinId)) {
+      bossCoins = BOSS_REPEAT_BONUS;
+    } else {
+      unlockedAxeSkinId = boss.axeSkinId;
+    }
+  }
+
+  const multiplier = streakMultiplier(streak);
+  const raw = apples + base + perfect + block + bossCoins;
+
+  return {
+    apples,
+    base: base + bossCoins,
+    perfect,
+    block,
+    streakMultiplier: multiplier,
+    total: Math.round(raw * multiplier),
+    bossFruitId: boss?.id,
+    unlockedAxeSkinId,
   };
 }

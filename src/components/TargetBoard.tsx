@@ -1,7 +1,8 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
+import { boardStyleVars } from '../game/shop';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
 import './TargetBoard.css';
 
@@ -30,6 +31,21 @@ interface TargetBoardProps {
 
 /** Anzahl der radialen Segmente auf der Scheibe (rein optisch, wie Stamm-Spalten). */
 const WEDGE_COUNT = 12;
+
+/** Wie lange ein abgeworfener Apfel sichtbar herunterfällt (ms). Muss zur CSS-Animation passen. */
+const APPLE_FALL_MS = 900;
+
+/**
+ * Ein Apfel, der gerade abfällt. Die Position wird EINMAL beim Abwerfen in
+ * Bildschirm-Koordinaten (relativ zur Scheibenmitte) festgehalten. Würde er stattdessen
+ * im rotierenden Brett hängen bleiben, würde er beim Fallen mitkreiseln statt nach unten
+ * zu fallen – deshalb liegt er in einer eigenen, nicht rotierenden Ebene.
+ */
+interface FallingApple {
+  key: number;
+  x: number;
+  y: number;
+}
 
 /** Wie lange ein voller Puls-Zyklus dauert (Sek.) bzw. wie lange bis zum Richtungswechsel. */
 const PULSE_PERIOD_SEC = 2.6;
@@ -85,6 +101,10 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
   /** Laufzeit seit Level-Start (Sek.), Basis für Puls und Richtungswechsel. */
   const elapsedRef = useRef(0);
 
+  const [fallingApples, setFallingApples] = useState<FallingApple[]>([]);
+  const collectedIdsRef = useRef<Set<number>>(new Set());
+  const fallKeyRef = useRef(0);
+
   speedRef.current = speedDegPerSec;
   patternRef.current = spinPattern;
   pausedRef.current = paused;
@@ -94,6 +114,42 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
   useEffect(() => {
     elapsedRef.current = 0;
   }, [spinPattern, speedDegPerSec]);
+
+  // Neu abgeworfene Äpfel erkennen und an ihrer aktuellen Bildschirmposition fallen lassen.
+  useEffect(() => {
+    const collected = collectedIdsRef.current;
+    const freshlyCollected = apples.filter((apple) => apple.collected && !collected.has(apple.id));
+
+    // Level-Wechsel: die Merkliste enthält IDs, die es nicht mehr gibt -> zurücksetzen.
+    const stillPresent = new Set(apples.map((a) => a.id));
+    collected.forEach((id) => {
+      if (!stillPresent.has(id)) collected.delete(id);
+    });
+    apples.forEach((apple) => {
+      if (!apple.collected) collected.delete(apple.id);
+    });
+
+    if (freshlyCollected.length === 0) return;
+
+    const neu = freshlyCollected.map((apple) => {
+      collected.add(apple.id);
+      // Weltwinkel des Apfels im Moment des Abwurfs -> Position relativ zur Scheibenmitte.
+      const worldDeg = angleRef.current + apple.boardLocalAngleDeg;
+      const rad = (worldDeg * Math.PI) / 180;
+      return {
+        key: fallKeyRef.current++,
+        x: APPLE_RADIUS * Math.sin(rad),
+        y: -APPLE_RADIUS * Math.cos(rad),
+      };
+    });
+
+    setFallingApples((prev) => [...prev, ...neu]);
+    const keys = new Set(neu.map((a) => a.key));
+    const timeout = setTimeout(() => {
+      setFallingApples((prev) => prev.filter((a) => !keys.has(a.key)));
+    }, APPLE_FALL_MS);
+    return () => clearTimeout(timeout);
+  }, [apples]);
 
   useImperativeHandle(ref, () => ({
     getAngleDeg: () => angleRef.current,
@@ -110,7 +166,13 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
     let lastTime = performance.now();
 
     const tick = (now: number) => {
-      const deltaSeconds = (now - lastTime) / 1000;
+      // Zeitschritt deckeln. Ohne das springt die Scheibe nach jeder Pause im
+      // Frame-Takt schlagartig weiter: der Browser hält requestAnimationFrame an,
+      // solange der Tab im Hintergrund ist (auf dem Handy: sobald man die App
+      // wegwischt). Beim Zurückkommen wäre der erste Zeitschritt die GESAMTE
+      // Pausendauer – die Scheibe würde um hunderte Grad teleportieren, mitten in
+      // ein Spiel, in dem die genaue Position über Sieg und Niederlage entscheidet.
+      const deltaSeconds = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       if (!pausedRef.current) {
@@ -131,7 +193,25 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
 
   return (
     <div className="target-mount">
-      <div ref={boardElRef} className={`target-board board-skin board-skin--${boardSkin}`}>
+      {/* Nicht rotierende Ebene für abgeworfene Äpfel – sie sollen senkrecht fallen,
+          nicht mit der Scheibe mitkreiseln. */}
+      <div className="target-mount__falling">
+        {fallingApples.map((apple) => (
+          <span
+            key={apple.key}
+            className="falling-apple"
+            style={{ left: `calc(50% + ${apple.x}px)`, top: `calc(50% + ${apple.y}px)` }}
+          >
+            <Apple size={30} />
+          </span>
+        ))}
+      </div>
+
+      <div
+        ref={boardElRef}
+        className="target-board"
+        style={boardStyleVars(boardSkin) as React.CSSProperties}
+      >
         {/* Holzfläche mit radialen Segmenten – wie ein aufgeschnittener Stamm. */}
         <div className="target-board__face" />
         <div className="target-board__wedges">

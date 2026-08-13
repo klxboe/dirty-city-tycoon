@@ -5,10 +5,20 @@ import { HUD } from './components/HUD';
 import { BOARD_RADIUS, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { GameOverModal } from './components/GameOverModal';
+import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
+import { StartScreen } from './components/StartScreen';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS, LEVELS } from './game/constants';
-import { playAppleSound, playBreakSound, playHitSound, playMissSound, unlockAudio } from './game/sound';
+import { FLIGHT_DURATION_MS } from './game/constants';
+import {
+  playAppleSound,
+  playBossSound,
+  playBreakSound,
+  playHitSound,
+  playMissSound,
+  unlockAudio,
+  vibrate,
+} from './game/sound';
 import type { ThrowOutcome } from './game/types';
 import './App.css';
 
@@ -24,6 +34,9 @@ const DUST_MOTES = [
   { left: '92%', delay: '3.4s', duration: '9.5s' },
 ];
 
+/** Welcher Bildschirm gerade oben liegt. Rein visuell – der Spielzustand lebt in useAxeGame. */
+type Screen = 'start' | 'game';
+
 function App() {
   const boardHandleRef = useRef<TargetBoardHandle>(null);
   const getBoardAngleDeg = useCallback(() => boardHandleRef.current?.getAngleDeg() ?? 0, []);
@@ -35,11 +48,12 @@ function App() {
   const prevApplesRef = useRef(game.applesCollectedThisRun);
   const prevCoinsRef = useRef(game.save.coins);
   const [burstId, setBurstId] = useState(0);
-  const [appleFlightId, setAppleFlightId] = useState(0);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [screen, setScreen] = useState<Screen>('start');
 
-  // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle bei jedem sauberen Treffer.
+  // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle + kurzer Rums bei jedem Treffer.
   useEffect(() => {
     if (game.hits > prevHitsRef.current) {
       const el = stageRef.current;
@@ -49,6 +63,7 @@ function App() {
         el.classList.add('stage--shake');
       }
       setBurstId((id) => id + 1);
+      vibrate(18);
     }
     prevHitsRef.current = game.hits;
   }, [game.hits]);
@@ -57,26 +72,28 @@ function App() {
   useEffect(() => {
     if (game.lastOutcome && game.lastOutcome !== prevOutcomeRef.current) {
       if (game.phase === 'levelComplete' && game.lastOutcome === 'stuck') {
-        playBreakSound();
+        if (game.bossFruit) playBossSound();
+        else playBreakSound();
       } else if (game.lastOutcome === 'stuck') {
         playHitSound();
       } else {
         playMissSound();
+        vibrate([40, 60, 90]); // Game Over darf sich anders anfühlen als ein Treffer
       }
     }
     prevOutcomeRef.current = game.lastOutcome;
-  }, [game.lastOutcome, game.phase]);
+  }, [game.lastOutcome, game.phase, game.bossFruit]);
 
-  // Eingesammelter Apfel: Ton + der Apfel fliegt sichtbar Richtung Münz-Anzeige.
+  // Eingesammelter Apfel: Ton. Das Fallen zeigt TargetBoard selbst an.
   useEffect(() => {
     if (game.applesCollectedThisRun > prevApplesRef.current) {
       playAppleSound();
-      setAppleFlightId((id) => id + 1);
+      vibrate(12);
     }
     prevApplesRef.current = game.applesCollectedThisRun;
   }, [game.applesCollectedThisRun]);
 
-  // Münz-Pille aufblitzen lassen, sobald sich der Kontostand erhöht.
+  // Münz-Anzeige aufblitzen lassen, sobald sich der Kontostand erhöht.
   useEffect(() => {
     if (game.save.coins > prevCoinsRef.current) {
       setCoinsFlash(true);
@@ -99,6 +116,12 @@ function App() {
     game.throwAxe((event.clientX - centerX) / BOARD_RADIUS);
   };
 
+  const startPlaying = () => {
+    unlockAudio();
+    game.markTutorialSeen();
+    setScreen('game');
+  };
+
   // Flugziel der Axt in Pixeln, relativ zum Einschlag eines Mittel-Wurfs (unten an der Scheibe).
   // Weltwinkel: 0° = oben, im Uhrzeigersinn -> Punkt auf dem Kreis ist (R·sin a) nach rechts
   // und (R·cos a) nach oben, gemessen von der Scheibenmitte.
@@ -106,7 +129,41 @@ function App() {
   const flightDx = BOARD_RADIUS * Math.sin(flightAngleRad);
   const flightDy = BOARD_RADIUS * (Math.cos(flightAngleRad) + 1);
 
-  const appleCount = LEVELS[game.levelIndex].appleAngles.length;
+  const overlayOpen = shopOpen || settingsOpen;
+
+  if (screen === 'start') {
+    return (
+      <div className="app">
+        <StartScreen
+          continueLevel={game.levelIndex + 1}
+          bestLevel={game.save.bestLevel}
+          coins={game.save.coins}
+          axeSkin={game.save.equippedAxeSkin}
+          showTutorial={!game.save.tutorialSeen}
+          onPlay={startPlaying}
+          onRestartFromOne={() => {
+            game.goToLevel(0);
+            startPlaying();
+          }}
+          onOpenShop={() => setShopOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+
+        {shopOpen && (
+          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onClose={() => setShopOpen(false)} />
+        )}
+        {settingsOpen && (
+          <SettingsModal
+            soundOn={game.save.soundOn}
+            bestLevel={game.save.bestLevel}
+            onToggleSound={game.setSoundOn}
+            onResetProgress={game.resetProgress}
+            onClose={() => setSettingsOpen(false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -115,10 +172,12 @@ function App() {
         levelInBlock={game.levelIndex - game.blockStart}
         coins={game.save.coins}
         coinsFlash={coinsFlash}
+        streak={game.streak}
+        isBoss={!!game.bossFruit}
         onOpenShop={() => setShopOpen(true)}
       />
 
-      <div ref={stageRef} className="stage" onPointerDown={handlePointerDown}>
+      <div ref={stageRef} className={`stage ${game.bossFruit ? 'stage--boss' : ''}`} onPointerDown={handlePointerDown}>
         <AxeInventory total={game.axeCount} thrown={game.axesThrown} skin={game.save.equippedAxeSkin} />
 
         <div className="stage__dust">
@@ -127,15 +186,23 @@ function App() {
           ))}
         </div>
 
+        {/* Boss-Level bekommen ein eigenes Schild, damit der Moment klar erkennbar ist. */}
+        {game.bossFruit && (
+          <div className="stage__boss-tag">
+            <span className="stage__boss-tag-label">Boss</span>
+            <span className="stage__boss-tag-name">{game.bossFruit.name}</span>
+          </div>
+        )}
+
         <div className="stage__board-zone">
           <TargetBoard
             ref={boardHandleRef}
             speedDegPerSec={game.boardSpeedDegPerSec}
             spinPattern={game.spinPattern}
-            paused={game.phase === 'levelComplete' || game.phase === 'gameOver' || shopOpen}
+            paused={game.phase === 'levelComplete' || game.phase === 'gameOver' || overlayOpen}
             stuckAxes={game.stuckAxes}
             apples={game.apples}
-            boardSkin={game.save.equippedBoardSkin}
+            boardSkin={game.activeBoardSkin}
             axeSkin={game.save.equippedAxeSkin}
             broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}
           />
@@ -152,9 +219,6 @@ function App() {
               ))}
             </div>
           )}
-
-          {/* Eingesammelter Apfel fliegt hoch Richtung Münz-Anzeige und wird zur Münze. */}
-          {appleFlightId > 0 && <span key={appleFlightId} className="apple-to-coin" />}
         </div>
 
         {game.phase === 'flying' && game.flyingAxe && (
@@ -187,20 +251,34 @@ function App() {
         <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onClose={() => setShopOpen(false)} />
       )}
 
-      {!shopOpen && game.phase === 'levelComplete' && (
+      {settingsOpen && (
+        <SettingsModal
+          soundOn={game.save.soundOn}
+          bestLevel={game.save.bestLevel}
+          onToggleSound={game.setSoundOn}
+          onResetProgress={() => {
+            game.resetProgress();
+            setScreen('start');
+          }}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
+
+      {!overlayOpen && game.phase === 'levelComplete' && game.reward && (
         <LevelCompleteModal
           level={game.levelIndex + 1}
           applesCollected={game.applesCollectedThisRun}
-          appleCount={appleCount}
-          coinsEarned={game.coinsEarnedThisLevel}
+          appleCount={game.appleCount}
+          reward={game.reward}
           totalCoins={game.save.coins}
+          streak={game.streak}
           isLastLevel={game.isLastLevel}
           onNext={game.nextLevel}
           onOpenShop={() => setShopOpen(true)}
         />
       )}
 
-      {!shopOpen && game.phase === 'gameOver' && (
+      {!overlayOpen && game.phase === 'gameOver' && (
         <GameOverModal
           level={game.levelIndex + 1}
           restartLevel={game.blockStart + 1}

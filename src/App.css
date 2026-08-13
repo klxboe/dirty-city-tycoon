@@ -103,12 +103,21 @@
   pointer-events: none;
 }
 
+/*
+ * Die Scheibe sitzt bewusst im oberen Drittel, aber nicht ganz oben: eine frühere
+ * Fassung ließ zwischen Scheibe und Wurfzone rund die halbe Bildschirmhöhe leer.
+ * `flex: 1` auf der Zone plus zentrierter Inhalt verteilt den Rest gleichmäßig auf
+ * beide Seiten, statt ihn komplett unter der Scheibe zu sammeln.
+ */
 .stage__board-zone {
   position: relative;
   z-index: 1;
+  flex: 1;
+  min-height: 0;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
 }
 
 .stage__thrower-zone {
@@ -294,34 +303,82 @@
   }
 }
 
-/* ---- Eingesammelter Apfel fliegt zur Münz-Anzeige und wird dabei zur Münze ---- */
-.apple-to-coin {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
-  border-radius: 50%;
-  z-index: 3;
-  pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, #ff8f88, #e6433a 60%, #9c2620 100%);
-  animation: apple-to-coin-fly 0.75s cubic-bezier(0.4, 0, 0.3, 1) forwards;
+
+/* ---- Boss-Level: eigenes Schild oben in der Bühne ---- */
+.stage--boss::before {
+  /* rötlicher Lichtkegel statt des warmen – signalisiert "hier ist etwas anders" */
+  background: radial-gradient(ellipse 58% 42% at 50% 30%, rgba(255, 70, 90, 0.22), transparent 70%);
 }
 
-@keyframes apple-to-coin-fly {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 1;
-    background: radial-gradient(circle at 35% 30%, #ff8f88, #e6433a 60%, #9c2620 100%);
-  }
-  55% {
-    background: radial-gradient(circle at 35% 30%, #fff3b8, #ffce3d 60%, #d99a00 100%);
-  }
+.stage__boss-tag {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(20, 8, 10, 0.75);
+  border: 1px solid rgba(255, 70, 90, 0.5);
+  pointer-events: none;
+  animation: boss-tag-pulse 2s ease-in-out infinite;
+}
+
+.stage__boss-tag-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-danger);
+}
+
+.stage__boss-tag-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+@keyframes boss-tag-pulse {
+  0%,
   100% {
-    /* grob zur Münz-Pille oben rechts */
-    transform: translate(90px, -230px) scale(0.45);
-    opacity: 0;
-    background: radial-gradient(circle at 35% 30%, #fff3b8, #ffce3d 60%, #d99a00 100%);
+    box-shadow: 0 0 0 0 rgba(255, 70, 90, 0);
+  }
+  50% {
+    box-shadow: 0 0 18px 2px rgba(255, 70, 90, 0.35);
+  }
+}
+
+/*
+ * Rücksicht auf "Bewegung reduzieren" (Systemeinstellung). Der Screen-Shake und die
+ * schnellen Partikel sind genau die Art Effekt, die bei Bewegungsempfindlichkeit
+ * unangenehm wird – Spielmechanik-relevante Animationen (Axt-Flug, Scheibendrehung)
+ * bleiben bewusst erhalten, ohne sie wäre das Spiel nicht spielbar.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .stage--shake {
+    animation: none;
+  }
+
+  .stage::before,
+  .stage__dust,
+  .stage__boss-tag {
+    animation: none;
+  }
+
+  .stage__dust {
+    display: none;
+  }
+
+  .hit-effect__chip,
+  .hit-effect__shockwave {
+    animation-duration: 0.2s;
+  }
+
+  .stage__ready-axe {
+    animation: none;
   }
 }

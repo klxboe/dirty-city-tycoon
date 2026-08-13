@@ -3,9 +3,25 @@
 // die Web Audio API unterstützt; sonst passiert einfach nichts.
 
 let audioContext: AudioContext | null = null;
+let muted = false;
+
+/** Ton global an/aus. Wird aus dem gespeicherten Spielstand gesetzt. */
+export function setMuted(value: boolean): void {
+  muted = value;
+}
+
+/**
+ * Kurzes haptisches Feedback, wo das Gerät es unterstützt (Android/Chrome; iOS-Safari
+ * kennt navigator.vibrate nicht und ignoriert das hier stillschweigend). Läuft über
+ * denselben Stummschalter wie der Ton, damit ein "alles aus" wirklich alles ausschaltet.
+ */
+export function vibrate(pattern: number | number[]): void {
+  if (muted) return;
+  navigator.vibrate?.(pattern);
+}
 
 function getContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined' || muted) return null;
   const AudioContextClass = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextClass) return null;
 
@@ -21,6 +37,17 @@ function getContext(): AudioContext | null {
 /** Muss innerhalb einer echten Nutzer-Interaktion (z.B. Tap) aufgerufen werden, sonst blockt der Browser Audio. */
 export function unlockAudio(): void {
   getContext();
+}
+
+/** Boss besiegt: aufsteigende Fanfare. */
+export function playBossSound(): void {
+  const ctx = getContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  [392, 523.25, 659.25, 783.99].forEach((freq, i) => {
+    playTone(ctx, freq, now + i * 0.09, 0.3, 'triangle', 0.15);
+  });
+  playNoiseBurst(ctx, now + 0.36, 0.3, 2400, 0.12);
 }
 
 function playTone(ctx: AudioContext, freq: number, startTime: number, duration: number, type: OscillatorType, volume: number): void {

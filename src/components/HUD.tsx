@@ -9,6 +9,10 @@ interface HUDProps {
   coins: number;
   /** Läuft kurz eine Aufblink-Animation, wenn gerade Münzen dazugekommen sind. */
   coinsFlash: boolean;
+  /** Level in Folge ohne Game Over. Ab 5 gibt es dafür einen Münz-Multiplikator. */
+  streak: number;
+  /** Boss-Level: die Levelnummer wird hervorgehoben. */
+  isBoss: boolean;
   onOpenShop: () => void;
 }
 
@@ -20,12 +24,14 @@ interface HUDProps {
  * wie weit ein Game Over zurückwerfen würde. Der Stern am Ende markiert den
  * Block-Abschluss.
  */
-export function HUD({ level, levelInBlock, coins, coinsFlash, onOpenShop }: HUDProps) {
+export function HUD({ level, levelInBlock, coins, coinsFlash, streak, isBoss, onOpenShop }: HUDProps) {
   return (
     <header className="hud">
-      <div className="hud__level">
+      <div className={`hud__level ${isBoss ? 'hud__level--boss' : ''}`}>
         <span className="hud__level-number">{level}</span>
-        <span className="hud__level-label">Level</span>
+        <span className="hud__level-label">{isBoss ? 'Boss' : 'Level'}</span>
+        {/* Serie erst ab dem ersten wirksamen Multiplikator zeigen – vorher wäre sie nur Zahlensalat. */}
+        {streak >= 5 && <span className="hud__streak">🔥 {streak}</span>}
       </div>
 
       <div className="hud__progress" aria-label={`Level ${levelInBlock + 1} von ${LEVELS_PER_BLOCK} im Block`}>

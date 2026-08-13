@@ -41,18 +41,29 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Level-System
 
-- **100 Level** = 20 Schwierigkeitsstufen × 5 Varianten pro Stufe, PER FORMEL
-  erzeugt (`generateLevel()` in `constants.ts`), nicht von Hand aufgeschrieben
-  (bei 100 Stück unübersichtlich). Die Stufe bestimmt Axt-Anzahl, Anzahl
-  Hindernisse und Äpfel; innerhalb einer Stufe variieren die Platzierung von
-  Äpfeln/vorplatzierten Äxten und das Dreh-Muster – für 5 spürbar
-  unterschiedliche Level pro Stufe. Level haben KEINE Namen mehr (auf Wunsch
-  entfernt), nur die Nummer 1-100.
+- **100 Level**, PER FORMEL aus der Levelnummer erzeugt (`generateLevel()` in
+  `constants.ts`), nicht von Hand aufgeschrieben (bei 100 Stück unübersichtlich).
+  Level haben KEINE Namen, nur die Nummer 1-100.
+- **Die Schwierigkeits-Kurve hängt an der LEVELNUMMER, nicht an "Stufen zu je 5".**
+  Das war eine bewusste Korrektur: die erste Fassung änderte in den ersten 16
+  Leveln praktisch nichts (immer 5 Äxte, 2 Äpfel, keine Hindernisse, gleichmäßige
+  Drehung, +1,4°/Sek. pro Level – das merkt niemand). Das erste Hindernis kam in
+  Level 31, der erste Richtungswechsel in Level 38. Wer nach fünf Minuten
+  aufhörte, hatte vom Spiel nichts gesehen. Jetzt kommt jede Zutat in den ersten
+  ~15 Leveln mindestens einmal vor, danach wird nur noch nachgeschärft:
+  | ab Level | Änderung |
+  |---|---|
+  | 3 | Pulsieren kommt dazu, erstes Hindernis (`obstacleCountFor`) |
+  | 8 | Richtungswechsel kommt dazu |
+  | 11 | 6 Äxte |
+  | 14 | 2 Hindernisse |
+  | 21 | 7 Äxte |
+  | 26 | 3 Hindernisse, 3 Äpfel |
+  | 31 | 8 Äxte |
+  | 51 | 4 Äpfel |
 - **Dreh-Muster** (`spinPattern`) sorgen für Abwechslung, ohne an den
   Grundwerten zu drehen: `steady` (gleichmäßig), `pulse` (Tempo schwankt weich)
-  und `reverse` (Scheibe dreht periodisch die Richtung um). Stufe 1-3 laufen
-  bewusst nur `steady`, damit man die Grundmechanik lernt; ab Stufe 4 kommt
-  `pulse` dazu, ab Stufe 8 auch `reverse`.
+  und `reverse` (Scheibe dreht periodisch die Richtung um).
   WICHTIG: Kein Muster darf die Geschwindigkeit auf ~0 bringen. Steht die
   Scheibe kurz still, landen zwei schnell geworfene Äxte an derselben Stelle –
   mit der Game-Over-Regel wäre das ein unfairer Instant-Tod. Deshalb sinkt der
@@ -63,14 +74,16 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   126°/Sek., Level 100 = 199°/Sek. Je schneller die Scheibe, desto kürzer das
   Zeitfenster, in dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt –
   genau das macht das gezielte Apfel-Sammeln nach hinten raus schwerer.
-- Jedes Level hat eine feste Axt-Anzahl (steigt von 5 auf 8 über die Stufen),
-  unten als Reihe von Axt-Icons sichtbar – geworfene Äxte werden dort grau.
+- Jedes Level hat eine feste Axt-Anzahl (5-8, siehe Tabelle oben), am linken
+  Bühnenrand als senkrechte Reihe sichtbar – geworfene Äxte werden dort grau.
 - Am Brett hängen Äpfel (feste Positionen pro Level, AUSSERHALB des Randes an
   einem kleinen Stiel, nicht auf dem Holz). Trifft eine erfolgreich steckende
-  Axt nah genug an einem Apfel, fällt er ab und bringt Münzen.
-- Ab Stufe 2 starten Level mit bereits im Brett steckenden Äxten
-  (`preplacedAxeAngles`) als Hindernisse von Anfang an, Anzahl steigt mit
-  der Stufe (max. 3).
+  Axt nah genug an einem Apfel, **fällt er sichtbar herunter** und bringt Münzen.
+  Der fallende Apfel liegt in einer eigenen, NICHT rotierenden Ebene
+  (`.target-mount__falling`) – im rotierenden Brett würde er beim Fallen
+  mitkreiseln statt nach unten zu fallen.
+- Level starten je nach Nummer mit bereits im Brett steckenden Äxten
+  (`preplacedAxeAngles`) als Hindernisse (max. 3).
 - Ein Level endet auf zwei Arten: alle Äxte sauber verworfen → geschafft, ODER
   eine Axt trifft eine steckende Axt → Game Over (`GameOverModal.tsx`).
 - Ergebnis-Screen nach geschafftem Level zeigt eingesammelte Äpfel und die
@@ -78,6 +91,19 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   "Weiter zu Level N+1" plus "Werkstatt öffnen". Level 100 geschafft:
   Glückwunsch-Badge "Alle Level gemeistert!" statt Weiter-Button.
 
+### Boss-Level
+
+- **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
+  `constants.ts`). Statt Holz ist die Zielscheibe dann eine aufgeschnittene
+  Frucht – Wassermelone, Orange, Kiwi, Drachenfrucht, Ananas, Zitrone,
+  Blaubeere, Granatapfel, Kokosnuss, Traube (`BOSS_FRUITS` in `shop.ts`).
+  Die Liste wiederholt sich, Level 5-50 decken alle zehn ab.
+- Boss-Level sind eine Prüfung: eine Axt mehr und +12°/Sek. Tempo. Das
+  Frucht-Design überschreibt für dieses Level das ausgerüstete Scheiben-Design.
+- **Belohnung:** die passende Frucht-Axt, geschenkt. Hat man sie schon (ab der
+  zweiten Runde durch die Liste), gibt es stattdessen Münzen
+  (`BOSS_REPEAT_BONUS`). Die Frucht-Äxte sind NICHT käuflich – sie stehen im
+  Shop unter "Beute" und zeigen dort, welches Boss-Level sie freischaltet.
 ### Münzen, Läufe und die Werkstatt (Shop)
 
 - **Die 100 Level sind in 10er-Blöcke gruppiert** (`LEVELS_PER_BLOCK`,
@@ -88,20 +114,51 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   gespeichert. Die Punktreihe im HUD zeigt die Position im aktuellen Block.
 - **Münzen** sind die einzige Währung (früher waren es Äpfel; alte Spielstände
   werden beim ersten Start umgerechnet, siehe `loadSave()` in `storage.ts`).
-  Es gibt sie NUR beim Abschluss eines Levels:
-  `gesammelte Äpfel × COINS_PER_APPLE (5) + levelCompletionBonus(levelIndex)`
-  (10 + Levelnummer). Ein Game Over schreibt nichts gut – deshalb lohnt sich
-  vorsichtiges Zielen statt Spammen.
-- **Werkstatt** (`Shop.tsx`, erreichbar über die Münz-Pille im HUD und über
-  beide Modals): rein kosmetische Axt- und Scheiben-Designs. Kaufen zieht die
-  Münzen ab und rüstet den Skin direkt aus; bereits gekaufte lassen sich frei
-  wechseln. Definitionen und Preise stehen in `game/shop.ts`.
-  **Kein Skin verändert das Balancing** – nur Farben und Glanz.
-  Neuen Skin anlegen = Eintrag in `shop.ts` + Farbwerte in `Axe.tsx`
-  (`AXE_STYLES`) bzw. `TargetBoard.css` (`.board-skin--<id>`).
-- Gespeichert wird alles zusammen als JSON unter `axe-throw-save-v2`:
-  Münzen, gekaufte Skins, ausgerüstete Skins, Bestmarke. Der Level-Fortschritt
-  eines laufenden Durchgangs ist bewusst NICHT dabei.
+  Es gibt sie NUR beim Abschluss eines Levels – ein Game Over schreibt nichts
+  gut, deshalb lohnt sich vorsichtiges Zielen statt Spammen. Die Rechnung steht
+  in `computeReward()` (`useAxeGame.ts`) und wird im Ergebnis-Screen
+  aufgeschlüsselt, damit sichtbar ist, WOFÜR es Münzen gab:
+  | Posten | Wert |
+  |---|---|
+  | Äpfel | je 5 (`COINS_PER_APPLE`) |
+  | Level geschafft | 10 + Levelnummer |
+  | Alle Äpfel erwischt | +25 (`PERFECT_APPLE_BONUS`) |
+  | 10er-Block geschafft | 100 × Blocknummer |
+  | Boss schon besiegt | +150 statt neuer Axt |
+  | **Serie** | ×1,25 je 5 Level ohne Game Over, max ×2 |
+- **Die Serie** (`streak`) ist der Grund, nicht zu sterben: sie zählt Level ohne
+  Game Over und multipliziert alle Münzen. Ein Game Over setzt sie auf 0. Im HUD
+  taucht sie erst ab 5 auf – vorher wäre sie nur eine Zahl ohne Wirkung.
+- **Werkstatt** (`Shop.tsx`, erreichbar über den Münzstand im HUD, den
+  Startbildschirm und beide Modals): rein kosmetische Designs in drei Reitern –
+  Äxte, Scheiben, Beute (die Boss-Äxte). Kaufen zieht die Münzen ab und rüstet
+  direkt aus; Gekauftes lässt sich frei wechseln.
+  **Kein Design verändert das Balancing** – nur Farben und Glanz.
+- **Farbwerte stehen als DATEN in `game/shop.ts`** (`BOARD_STYLES`, `AXE_STYLES`),
+  nicht im CSS. `TargetBoard` und die Shop-Vorschau setzen sie über
+  `boardStyleVars()` als CSS-Variablen inline. Ein neues Design braucht deshalb
+  nur einen Eintrag in `shop.ts` – vorher brauchte es zusätzlich einen CSS-Block
+  je Skin, was mit den zehn Boss-Früchten unhaltbar geworden wäre.
+- Gespeichert wird alles zusammen als JSON unter `axe-throw-save-v2`: Münzen,
+  besessene und ausgerüstete Designs, Bestmarke, **aktuelles Level, Serie,
+  Ton-Einstellung** und ob die Einstiegs-Erklärung schon lief. Dass der
+  Lauf-Fortschritt mitgespeichert wird, ist wichtig fürs Handy: ohne das fing
+  man nach jedem App-Wechsel wieder bei Level 1 an.
+
+### Startbildschirm und Einstellungen
+
+- `StartScreen.tsx` ist der erste Bildschirm: Titel, Bestmarke, Münzstand und
+  je nach Stand "Los geht's" oder "Weiter – Level N" (plus "Von Level 1
+  starten"). Beim allerersten Start stehen dort zusätzlich die vier Regeln –
+  danach nie wieder (`tutorialSeen` im Spielstand).
+- `SettingsModal.tsx`: Ton/Vibration an-aus und "Fortschritt zurücksetzen"
+  (mit Rückfrage, weil es alles löscht).
+- **Vibration** (`vibrate()` in `sound.ts`) bei Treffer, Apfel und Game Over.
+  Läuft über denselben Schalter wie der Ton. iOS-Safari kennt
+  `navigator.vibrate` nicht und ignoriert das stillschweigend.
+- **`prefers-reduced-motion`** schaltet Screen-Shake, Staub und Puls-Effekte ab
+  (siehe Ende von `App.css`). Spielmechanik-Animationen wie Axt-Flug und
+  Scheibendrehung bleiben bewusst – ohne sie wäre das Spiel nicht spielbar.
 
 ## Tech-Stack
 
@@ -122,19 +179,23 @@ src/
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
                    normalizeAngle, angularDistance, aimToImpactWorldAngle,
                    computeBoardLocalAngle, collidesWithStuckAxe, findHitApple
-    shop.ts       Skin-Definitionen und Preise (Äxte + Scheiben), rein kosmetisch
-    storage.ts    Spielstand laden/speichern (Münzen, Skins, Bestmarke) inkl.
-                   Migration des alten Apfel-Zählers
+    shop.ts       Designs als DATEN: Äxte, Scheiben, Boss-Früchte, Preise und
+                   alle Farbwerte (BOARD_STYLES/AXE_STYLES). Rein kosmetisch.
+    storage.ts    Spielstand laden/speichern (Münzen, Designs, Bestmarke,
+                   Lauf-Fortschritt, Einstellungen) inkl. Migration des alten
+                   Apfel-Zählers
     sound.ts      Soundeffekte per Web Audio API SELBST ERZEUGT (Oszillatoren +
                    Rausch-Bursts) – keine externen Audio-Dateien, keine
                    Lizenzfragen. playHitSound/playMissSound/playAppleSound/
-                   playBreakSound. unlockAudio() muss innerhalb einer echten
-                   Nutzer-Interaktion aufgerufen werden (Browser-Autoplay-Regel).
+                   playBreakSound/playBossSound + vibrate(). unlockAudio() muss
+                   innerhalb einer echten Nutzer-Interaktion aufgerufen werden
+                   (Browser-Autoplay-Regel). setMuted() schaltet beides ab.
   hooks/
     useAxeGame.ts  Verbindet engine.ts mit React: Werfen per Antippen,
                     Zustandsmaschine ready -> flying -> ready, nach der letzten
                     Axt -> levelComplete, bei Kollision -> gameOver.
-                    Auch Münz-Gutschrift und Shop-Käufe.
+                    Auch Belohnungs-Rechnung (computeReward), Serie,
+                    Boss-Freischaltung, Shop-Käufe und Einstellungen.
     useCountUp.ts  Zählt eine Zahl per rAF hoch (Belohnungs-Anzeige)
   components/
     Axe.tsx              Die Axt-Form (SVG) mit Skin-Varianten (AXE_STYLES)
@@ -189,6 +250,15 @@ Jetzt: `TargetBoard` hält den Winkel in einer Ref und exposed ihn per
 fragt den Winkel nur beim Wurf-Auflösen einmalig ab. Andere State-Änderungen
 (Treffer, Level-Wechsel) lösen weiterhin normale React-Re-Renders aus – das
 ist unkritisch, weil die selten passieren (nicht 60x/Sek.).
+
+**Zeitschritt-Deckel (wichtig!):** Der rAF-Loop deckelt `deltaSeconds` bei 0.05s.
+Der Browser hält `requestAnimationFrame` an, solange der Tab im Hintergrund ist –
+auf dem Handy also, sobald man die App wegwischt. Ohne den Deckel wäre der erste
+Zeitschritt nach der Rückkehr die GESAMTE Pausendauer, und die Scheibe würde um
+hunderte Grad weiterspringen, mitten in einem Spiel, in dem die genaue Position
+über Sieg und Niederlage entscheidet. (Fiel beim Testen auf, weil ein
+Hintergrund-Tab die Scheibe komplett einfriert – nützlich zu wissen, wenn man
+das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
 
 ### Die Winkel-Logik (der kniffligste Teil, kurz erklärt)
 
@@ -345,6 +415,33 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       - **Axt-Vorrat** wandert an den linken Bühnenrand.
       - Kette über der Scheibe und die Efeu-Ranken (`VineDecoration.tsx`)
         entfernt – passten nicht mehr zum aufgeräumten Look.
+- [x] Großes Erlebnis-Paket nach einer Bestandsaufnahme des Spielgefühls. Der
+      Auslöser war eine Messung: die ersten 16 Level unterschieden sich in
+      NICHTS außer +1,4°/Sek. Tempo, das erste Hindernis kam in Level 31.
+      - **Schwierigkeits-Kurve nach vorne gezogen** (siehe Tabelle im
+        Level-System oben) – jede Zutat kommt jetzt in den ersten ~15 Leveln
+        mindestens einmal vor.
+      - **Boss-Level alle 5 Level** mit zehn Frucht-Zielscheiben und der
+        passenden Frucht-Axt als Beute (siehe eigener Abschnitt oben).
+      - **Äpfel fallen** jetzt sichtbar herunter, statt zu verschwinden.
+      - **Startbildschirm** mit Weiterspielen/Werkstatt/Einstellungen, beim
+        ersten Start mit den vier Regeln.
+      - **Lauf-Fortschritt wird gespeichert** – App wegwischen verliert den
+        Durchgang nicht mehr.
+      - **Einstellungen**: Ton/Vibration aus, Fortschritt zurücksetzen.
+      - **Serie, Perfekt-Bonus, Block-Bonus** als Gründe, sauber zu spielen;
+        der Ergebnis-Screen schlüsselt auf, wofür es Münzen gab.
+      - **Vibration** bei Treffer/Apfel/Game Over, **`prefers-reduced-motion`**
+        schaltet Shake und Deko-Animationen ab.
+      - **Shop erweitert** auf 7 Äxte + 5 Scheiben + 10 Boss-Äxte, mit
+        Beute-Reiter. Farbwerte sind dafür von CSS nach `shop.ts` gewandert.
+      - **Leerraum geschlossen**: die Scheibe sitzt jetzt in einer flexiblen
+        Zone, vorher war rund die halbe Bildschirmhöhe leer.
+      - Dabei gefunden und behoben: die Scheibe sprang nach jeder Pause
+        schlagartig weiter (siehe Zeitschritt-Deckel unten).
+      Durchgetestet: Einstieg als frischer Spieler, Boss-Level 5 samt
+      freigeschalteter Wassermelone-Axt, Münz-Rechnung inkl. Serien-Faktor,
+      Beute-Reiter im Shop, fallender Apfel, Speichern und Fortsetzen.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
 - [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
@@ -352,14 +449,17 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 ## Offene To-dos
 
 - Selbst durchspielen und Feedback zum Balancing geben – die Werte sind
-  Schätzungen. Offene Frage: **Münz-Tempo.** Aktuell ~15-25 Münzen pro Level,
-  der erste Skin (150) kommt also nach ~7-10 Leveln, der teuerste (2000) sehr
-  viel später. Zu schnell, zu langsam?
-- Apfel-Ausbeute prüfen: mit `APPLE_HIT_TOLERANCE_DEG = 24` erwischt man pro
-  Level oft nur 1 von 2 Äpfeln. Da Äpfel jetzt Münzen bringen, wirkt das direkt
-  aufs Tempo der Shop-Progression.
-- Mehr Shop-Inhalte denkbar, wenn die Struktur gefällt (z.B. Spuren/Trails der
-  Axt, Hintergrund-Kulissen, Sound-Sets).
+  Schätzungen. Konkret unklar:
+  - **Münz-Tempo.** ~15-25 Münzen pro Level plus Boni. Der erste kaufbare Skin
+    (150) kommt nach ~7-10 Leveln, der teuerste (5000) sehr viel später.
+  - **Sind Boss-Level hart genug?** Aktuell +1 Axt und +12°/Sek. Sie sollen sich
+    wie eine Prüfung anfühlen, nicht wie ein normales Level mit anderer Farbe.
+  - **Apfel-Ausbeute:** mit `APPLE_HIT_TOLERANCE_DEG = 24` erwischt man oft nur
+    1 von 2 Äpfeln – der Perfekt-Bonus ist dadurch selten.
+- Mehr Shop-Inhalte denkbar (Spuren/Trails der Axt, Hintergrund-Kulissen,
+  Sound-Sets) – die Struktur trägt das jetzt, Farben sind reine Daten.
+- Idee für später: Level-Auswahl statt nur "weiter" – die Bestmarke ist da, ein
+  Sprung in einen früheren Block wäre wenig Aufwand.
 
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 

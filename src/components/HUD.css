@@ -25,6 +25,21 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
+.hud__level--boss .hud__level-number,
+.hud__level--boss .hud__level-label {
+  color: var(--color-danger);
+}
+
+/* Serien-Zähler: nur sichtbar, wenn er auch etwas bringt (ab 5). */
+.hud__streak {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-money);
+  white-space: nowrap;
+}
+
 .hud__level-label {
   margin-top: 3px;
   padding-top: 3px;

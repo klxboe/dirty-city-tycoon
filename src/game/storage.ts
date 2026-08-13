@@ -8,12 +8,24 @@ import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
 
 export interface SaveData {
   coins: number;
-  /** IDs gekaufter Skins. Gratis-Skins stehen hier nicht drin, die gehören immer. */
+  /** IDs gekaufter bzw. erspielter Skins. Gratis-Shop-Skins stehen hier nicht drin. */
   ownedSkins: string[];
   equippedAxeSkin: string;
   equippedBoardSkin: string;
   /** Höchstes je erreichtes Level, nur als Anzeige/Motivation. */
   bestLevel: number;
+  /**
+   * Level, bei dem der laufende Durchgang gerade steht (0-basiert). Wird mitgespeichert,
+   * damit ein weggewischtes Handy-Fenster den Lauf nicht wegwirft – ohne das fing man
+   * nach jedem App-Wechsel wieder bei Level 1 an.
+   */
+  currentLevel: number;
+  /** Serie geschaffter Level ohne Game Over (Münz-Multiplikator). */
+  streak: number;
+  /** Ton an/aus. */
+  soundOn: boolean;
+  /** Wurde die Einstiegs-Erklärung schon gezeigt? */
+  tutorialSeen: boolean;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -22,6 +34,10 @@ const EMPTY_SAVE: SaveData = {
   equippedAxeSkin: DEFAULT_AXE_SKIN,
   equippedBoardSkin: DEFAULT_BOARD_SKIN,
   bestLevel: 1,
+  currentLevel: 0,
+  streak: 0,
+  soundOn: true,
+  tutorialSeen: false,
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -48,6 +64,10 @@ export function loadSave(): SaveData {
         equippedAxeSkin: typeof parsed.equippedAxeSkin === 'string' ? parsed.equippedAxeSkin : DEFAULT_AXE_SKIN,
         equippedBoardSkin: typeof parsed.equippedBoardSkin === 'string' ? parsed.equippedBoardSkin : DEFAULT_BOARD_SKIN,
         bestLevel: Math.max(1, Math.floor(toFiniteNumber(parsed.bestLevel, 1))),
+        currentLevel: Math.max(0, Math.floor(toFiniteNumber(parsed.currentLevel, 0))),
+        streak: Math.max(0, Math.floor(toFiniteNumber(parsed.streak, 0))),
+        soundOn: parsed.soundOn !== false,
+        tutorialSeen: parsed.tutorialSeen === true,
       };
     }
 

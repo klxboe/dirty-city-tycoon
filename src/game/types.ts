@@ -46,6 +46,8 @@ export interface LevelConfig {
   appleAngles: number[];
   /** Äxte, die schon zu Levelbeginn im Brett stecken (Hindernisse). Optional. */
   preplacedAxeAngles?: number[];
+  /** Gesetzt bei Boss-Leveln: welche Frucht die Zielscheibe ist (siehe shop.ts). */
+  bossFruitId?: string;
 }
 
 export interface GameState {
@@ -57,10 +59,32 @@ export interface GameState {
   apples: Apple[];
   /** In diesem Level gesammelte Äpfel. Bei Game Over verfallen sie. */
   applesCollectedThisRun: number;
-  /** Münzen aus dem gerade abgeschlossenen Level (Äpfel + Abschluss-Bonus), für den Ergebnis-Screen. */
-  coinsEarnedThisLevel: number;
+  /** Münzen aus dem gerade abgeschlossenen Level, aufgeschlüsselt für den Ergebnis-Screen. */
+  reward: LevelReward | null;
+  /** Level in Folge ohne Game Over. Treibt den Münz-Multiplikator. */
+  streak: number;
   flyingAxe: FlyingAxe | null;
   lastOutcome: ThrowOutcome | null;
   /** Dauerhafter Spielstand: Münzen, Skins, bestes Level. */
   save: SaveData;
+}
+
+/** Aufschlüsselung der Belohnung eines geschafften Levels – so kann der Ergebnis-Screen zeigen, WOFÜR es Münzen gab. */
+export interface LevelReward {
+  /** Münzen für eingesammelte Äpfel. */
+  apples: number;
+  /** Grundbetrag fürs Schaffen des Levels. */
+  base: number;
+  /** Zusatz, wenn ALLE Äpfel des Levels eingesammelt wurden. */
+  perfect: number;
+  /** Zusatz für den Abschluss eines 10er-Blocks. */
+  block: number;
+  /** Multiplikator aus der Serie (1.0 = keine Serie). */
+  streakMultiplier: number;
+  /** Endsumme nach Multiplikator – das, was gutgeschrieben wurde. */
+  total: number;
+  /** Bei Boss-Leveln: welche Frucht besiegt wurde. */
+  bossFruitId?: string;
+  /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */
+  unlockedAxeSkinId?: string;
 }

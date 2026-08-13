@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { DEFAULT_AXE_SKIN } from '../game/shop';
+import { DEFAULT_AXE_SKIN, getAxeStyle } from '../game/shop';
 
 interface AxeProps {
   size?: number;
@@ -7,55 +7,6 @@ interface AxeProps {
   /** Skin-ID aus shop.ts. Ändert nur Farben/Glanz, nie die Form oder das Balancing. */
   skin?: string;
 }
-
-interface AxeStyle {
-  /** Klinge: Glanzkante -> Fläche -> Schattenseite. */
-  steel: [string, string, string];
-  /** Griff: hell -> dunkel. */
-  wood: [string, string];
-  /** Farbe der Wicklungs-Ringe am Griff. */
-  wrap: string;
-  /** Kontur, hebt die Silhouette vom dunklen Hintergrund ab. */
-  outline: string;
-  /** Optionaler farbiger Schein um die Klinge (z.B. Glut, Frost). */
-  glow?: string;
-}
-
-const AXE_STYLES: Record<string, AxeStyle> = {
-  'axe-standard': {
-    steel: ['#ffffff', '#dbe4ec', '#9aa6b2'],
-    wood: ['#a5713c', '#6b4420'],
-    wrap: '#4a2c14',
-    outline: '#141820',
-  },
-  'axe-bronze': {
-    steel: ['#ffeec2', '#e0a959', '#9d5f24'],
-    wood: ['#6b4a30', '#3a2417'],
-    wrap: '#241509',
-    outline: '#140d06',
-  },
-  'axe-frost': {
-    steel: ['#ffffff', '#bfe7f8', '#5b9dc4'],
-    wood: ['#8fa8b5', '#4a5c68'],
-    wrap: '#2c3f49',
-    outline: '#0e1d26',
-    glow: 'rgba(130, 215, 255, 0.9)',
-  },
-  'axe-ember': {
-    steel: ['#fff4d0', '#ff9a4d', '#b23412'],
-    wood: ['#4a3a33', '#1e1512'],
-    wrap: '#150e0b',
-    outline: '#180a04',
-    glow: 'rgba(255, 138, 61, 0.95)',
-  },
-  'axe-gold': {
-    steel: ['#fffce8', '#ffd756', '#bf8c0d'],
-    wood: ['#8a6b3a', '#4a361a'],
-    wrap: '#2f2210',
-    outline: '#17110a',
-    glow: 'rgba(255, 210, 74, 0.8)',
-  },
-};
 
 /**
  * Die Wurf-Axt. Bei Rotation 0° zeigt die Klinge nach oben (= "voran"), so wie sie in
@@ -71,7 +22,7 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
   const uid = useId().replace(/:/g, '');
   const bladeId = `axe-blade-${uid}`;
   const woodId = `axe-wood-${uid}`;
-  const style = AXE_STYLES[skin] ?? AXE_STYLES[DEFAULT_AXE_SKIN];
+  const style = getAxeStyle(skin);
 
   return (
     <svg

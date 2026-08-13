@@ -6,67 +6,11 @@
 }
 
 /*
- * Scheiben-Skins: jede Variante setzt nur diese Variablen, das restliche Layout ist
- * für alle gleich. Neuen Skin anlegen = Eintrag in shop.ts + ein Block hier.
- *
- * `.board-skin` trägt die Farbwerte und wird von ZWEI Stellen benutzt: der echten
- * Zielscheibe und der Mini-Vorschau im Shop. Deshalb stehen die Variablen hier und
- * nicht direkt auf `.target-board` – sonst hätte die Vorschau keine Farben.
+ * Die Scheiben-FARBEN stehen nicht mehr hier, sondern als Daten in game/shop.ts.
+ * TargetBoard (und die Mini-Vorschau im Shop) setzen sie als CSS-Variablen inline.
+ * So braucht ein neues Design nur einen Eintrag in shop.ts statt zusaetzlich einen
+ * CSS-Block - wichtig, seit die zehn Boss-Fruechte dazugekommen sind.
  */
-.board-skin {
-  /* Äußerer Rand der Scheibe (Rinde/Metall). */
-  --board-rim: linear-gradient(150deg, #c98a45, #8a5420 55%, #5c3512);
-  /* Fläche innen: heller Kern nach außen dunkler. */
-  --board-face-inner: #ffd9a0;
-  --board-face-outer: #f0a94e;
-  /* Trennlinien der radialen Segmente. */
-  --board-wedge: rgba(255, 255, 255, 0.55);
-  --board-glow: rgba(255, 159, 28, 0.4);
-  --board-ring-light: rgba(255, 255, 255, 0.5);
-  --board-ring-accent: rgba(196, 106, 20, 0.55);
-  --board-core: radial-gradient(circle at 38% 32%, #fff1d4, #f5c98a 70%, #d99a4e 100%);
-  --board-core-edge: rgba(140, 80, 20, 0.5);
-  --board-core-glow: rgba(255, 190, 90, 0.55);
-}
-
-.board-skin--board-walnut {
-  --board-rim: linear-gradient(150deg, #a8843c, #6b4c10 55%, #40300a);
-  --board-face-inner: #c99a5e;
-  --board-face-outer: #8a5a34;
-  --board-wedge: rgba(255, 232, 190, 0.35);
-  --board-glow: rgba(201, 153, 47, 0.35);
-  --board-ring-light: rgba(255, 235, 190, 0.35);
-  --board-ring-accent: rgba(60, 38, 10, 0.55);
-  --board-core: radial-gradient(circle at 38% 32%, #ffe9b0, #c9992f 70%, #6b4c10 100%);
-  --board-core-edge: rgba(40, 26, 6, 0.6);
-  --board-core-glow: rgba(201, 153, 47, 0.5);
-}
-
-.board-skin--board-ice {
-  --board-rim: linear-gradient(150deg, #eaf7ff, #7fb4d0 55%, #3d6f8c);
-  --board-face-inner: #f2fbff;
-  --board-face-outer: #a8d8ef;
-  --board-wedge: rgba(255, 255, 255, 0.85);
-  --board-glow: rgba(140, 220, 255, 0.5);
-  --board-ring-light: rgba(255, 255, 255, 0.7);
-  --board-ring-accent: rgba(58, 166, 216, 0.5);
-  --board-core: radial-gradient(circle at 38% 32%, #ffffff, #8ed6f2 70%, #2b7fa5 100%);
-  --board-core-edge: rgba(23, 90, 120, 0.6);
-  --board-core-glow: rgba(94, 196, 234, 0.7);
-}
-
-.board-skin--board-volcano {
-  --board-rim: linear-gradient(150deg, #5c5c5c, #2e2e2e 55%, #141414);
-  --board-face-inner: #6b4a3a;
-  --board-face-outer: #33241e;
-  --board-wedge: rgba(255, 110, 40, 0.65);
-  --board-glow: rgba(255, 110, 40, 0.5);
-  --board-ring-light: rgba(255, 150, 80, 0.4);
-  --board-ring-accent: rgba(255, 110, 40, 0.5);
-  --board-core: radial-gradient(circle at 38% 32%, #ffe08a, #ff6e28 60%, #8a1c00 100%);
-  --board-core-edge: rgba(92, 20, 0, 0.7);
-  --board-core-glow: rgba(255, 110, 40, 0.85);
-}
 
 /*
  * Die Scheibe ist als Querschnitt aufgebaut, wie ein aufgeschnittener Stamm:
@@ -112,48 +56,6 @@
   background: linear-gradient(180deg, var(--board-wedge), transparent 84%);
 }
 
-.board-skin--board-walnut {
-  --board-rim: linear-gradient(155deg, #ffe9b0, #c9992f 45%, #6b4c10);
-  --board-wood-light: #8a5a34;
-  --board-wood-dark: #5d3a1f;
-  --board-grain-line: rgba(20, 10, 4, 0.22);
-  --board-inner-shadow: rgba(25, 12, 4, 0.6);
-  --board-glow: rgba(201, 153, 47, 0.4);
-  --board-ring-light: #f0dcb0;
-  --board-ring-accent: #c9992f;
-  --board-bullseye: radial-gradient(circle at 35% 30%, #ffe9b0, #c9992f 65%, #6b4c10 100%);
-  --board-bullseye-glow: rgba(201, 153, 47, 0.7);
-  --board-bullseye-edge: #4a3408;
-}
-
-.board-skin--board-ice {
-  --board-rim: linear-gradient(155deg, #ffffff, #b9dcef 45%, #5d8ba8);
-  --board-wood-light: #d8f0fb;
-  --board-wood-dark: #9cc9e0;
-  --board-grain-line: rgba(40, 90, 120, 0.18);
-  --board-inner-shadow: rgba(30, 80, 110, 0.45);
-  --board-glow: rgba(140, 220, 255, 0.55);
-  --board-ring-light: #ffffff;
-  --board-ring-accent: #3aa6d8;
-  --board-bullseye: radial-gradient(circle at 35% 30%, #ffffff, #5ec4ea 65%, #1c6d92 100%);
-  --board-bullseye-glow: rgba(94, 196, 234, 0.8);
-  --board-bullseye-edge: #175a78;
-}
-
-.board-skin--board-volcano {
-  --board-rim: linear-gradient(155deg, #8a8a8a, #4a4a4a 45%, #1c1c1c);
-  --board-wood-light: #4a3730;
-  --board-wood-dark: #241a16;
-  --board-grain-line: rgba(255, 110, 40, 0.28);
-  --board-inner-shadow: rgba(0, 0, 0, 0.7);
-  --board-glow: rgba(255, 110, 40, 0.55);
-  --board-ring-light: #d8c0b0;
-  --board-ring-accent: #ff6e28;
-  --board-bullseye: radial-gradient(circle at 35% 30%, #ffe08a, #ff6e28 60%, #8a1c00 100%);
-  --board-bullseye-glow: rgba(255, 110, 40, 0.9);
-  --board-bullseye-edge: #5c1400;
-}
-
 .target-board__ring {
   position: absolute;
   top: 50%;
@@ -197,6 +99,41 @@
   }
   50% {
     box-shadow: 0 0 30px 9px var(--board-core-glow);
+  }
+}
+
+/*
+ * Abgeworfene Äpfel: liegen in einer eigenen, NICHT rotierenden Ebene über der Scheibe.
+ * Position wird beim Abwurf einmalig gesetzt (siehe FallingApple in TargetBoard.tsx),
+ * danach fallen sie senkrecht – im rotierenden Brett würden sie stattdessen mitkreiseln.
+ */
+.target-mount__falling {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.falling-apple {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  animation: apple-fall 0.9s cubic-bezier(0.45, 0.05, 0.75, 1) forwards;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes apple-fall {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.15);
+    opacity: 1;
+  }
+  15% {
+    /* kurzer Hüpfer nach oben, als würde die Axt ihn losschlagen */
+    transform: translate(-50%, calc(-50% - 16px)) rotate(-25deg) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, calc(-50% + 190px)) rotate(190deg) scale(0.8);
+    opacity: 0;
   }
 }
 
