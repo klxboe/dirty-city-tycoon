@@ -22,11 +22,11 @@ Ein simples, süchtig machendes Arcade-Handyspiel, sehr nah am Vorbild
 - Antippen wirft sofort eine Axt (kein Halten/Laden/Timing-Fenster mehr –
   das gab es in einer früheren Version, wurde auf Wunsch entfernt, um näher
   am Vorbild zu sein).
-- **Zielen:** Wo man tippt, dahin fliegt die Axt. Die horizontale Tippposition
-  relativ zur Scheibenmitte bestimmt den Einschlagpunkt – Mitte tippen trifft
-  unten an der Scheibe, weiter links/rechts verschiebt den Einschlag um bis zu
-  `MAX_AIM_SPREAD_DEG` (75°) zur Seite. Damit ist das Spiel nicht mehr nur
-  Timing, sondern Timing + Zielen.
+- **Zielen:** Die Axt fliegt **senkrecht nach oben von der Stelle, an der man
+  tippt**, und schlägt dort ein, wo diese Linie die Scheibe schneidet. Mitte
+  tippen trifft unten an der Scheibe, ganz links/rechts trifft den linken/rechten
+  Scheibenrand. Damit ist das Spiel nicht mehr nur Timing, sondern Timing +
+  Zielen.
 - Trifft man eine Stelle, an der schon eine Axt steckt → **sofort Game Over**.
   Der Lauf endet und startet am **Anfang des aktuellen 10er-Blocks** neu (wer in
   Level 34 stirbt, macht bei 31 weiter). Münzen aus bereits abgeschlossenen
@@ -314,12 +314,26 @@ das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
 
 - Die Zielscheibe rotiert kontinuierlich (Weltwinkel, 0° = oben, im Uhrzeigersinn).
 - Der Einschlagpunkt auf dem BILDSCHIRM ergibt sich aus der Tippposition:
-  `aimToImpactWorldAngle()` rechnet die horizontale Tippposition (-1 = linker
-  Scheibenrand, 0 = Mitte, +1 = rechter Rand) in einen Weltwinkel um, ausgehend
-  von `IMPACT_WORLD_ANGLE_DEG` (180° = unten) ± `MAX_AIM_SPREAD_DEG` (75°).
-  Rechts tippen = kleinerer Winkel, links = größerer (Weltwinkel laufen im
-  Uhrzeigersinn). Die Flug-Animation nutzt denselben Winkel, um über die
-  CSS-Variablen `--flight-dx`/`--flight-dy` sichtbar dorthin zu fliegen.
+  `aimToImpactWorldAngle()` rechnet sie (-1 = linker Scheibenrand, 0 = Mitte,
+  +1 = rechter Rand) in einen Weltwinkel um. Rechts tippen = kleinerer Winkel,
+  links = größerer (Weltwinkel laufen im Uhrzeigersinn).
+
+  **Die Umrechnung ist ein Arkussinus, keine Multiplikation – das ist wichtig.**
+  Eine frühere Fassung rechnete linear (`180° - aim × 75°`). Das klingt
+  naheliegend, legt den Einschlag aber nicht senkrecht über den Finger: bei
+  halbem Ausschlag landete die Axt bei 61% des Radius statt bei 50%, zum Rand hin
+  noch weiter daneben. Die Axt musste deshalb SCHRÄG zum Ziel fliegen, und diese
+  Schräge entsprach nichts, was der Spieler getan hatte. Rückmeldung vom Test auf
+  dem Handy: *"fliegt seitlich, da checkt man nichts."*
+  Ein Punkt auf dem Kreis liegt R·sin(Winkel) seitlich der Mitte; damit das gleich
+  der Tippposition ist, muss `Winkel = arcsin(aim)` gelten. Seitdem liegt der
+  Einschlag exakt über dem Finger (nachgerechnet: Abweichung 0,00 px über den
+  ganzen Bereich), und die Axt fliegt **geradeaus nach oben**.
+- Die Flug-Animation setzt deshalb nur noch zwei Werte: `--flight-x` (feste
+  seitliche Position, ändert sich während des Flugs NICHT) und `--flight-dy`
+  (wie viel höher als der tiefste Scheibenpunkt eingeschlagen wird). Die Drehung
+  liegt bei einer Umdrehung – vorher waren es 900° in 140ms, also 2,5
+  Umdrehungen, was keine sichtbare Drehung mehr ist, sondern Matsch.
 - Eine steckende Axt merkt sich ihren Winkel im LOKALEN Koordinatensystem der
   Scheibe (`boardLocalAngleDeg = Einschlag-Weltwinkel - aktueller Weltwinkel`),
   damit sie beim Rendern korrekt "mitrotiert", wenn sich die Scheibe weiterdreht.

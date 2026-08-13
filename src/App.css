@@ -166,19 +166,25 @@
 }
 
 /*
- * Die Axt fliegt von unten-Mitte zum Einschlagpunkt. --flight-dx/--flight-dy setzt App.tsx
- * je nach Zielrichtung: (0,0) = Wurf in die Mitte (unten an der Scheibe), positives dx =
- * weiter rechts, positives dy = weiter oben am Scheibenrand.
+ * Die Axt fliegt SENKRECHT nach oben – von der Stelle, an der getippt wurde, gerade
+ * hoch bis zum Einschlagpunkt. App.tsx setzt dafür zwei Werte:
+ *   --flight-x   feste seitliche Position (0 = Mitte der Scheibe)
+ *   --flight-dy  wie viel höher als der tiefste Punkt der Scheibe eingeschlagen wird
+ *
+ * Eine frühere Fassung ließ die Axt stattdessen von unten-Mitte SCHRÄG zum Ziel
+ * fliegen. Das war für Spieler nicht lesbar – die Schräge entsprach nichts, was man
+ * getan hatte. Die Drehung lag zusätzlich bei 900° in 140ms, also 2,5 Umdrehungen:
+ * das ist keine sichtbare Drehung mehr, sondern Matsch. Jetzt eine saubere Umdrehung.
  */
 .axe-flying {
   position: absolute;
   z-index: 1;
-  left: 50%;
-  bottom: 8%;
-  --flight-dx: 0px;
+  --flight-x: 0px;
   --flight-dy: 0px;
+  left: calc(50% + var(--flight-x));
+  bottom: 8%;
   animation-name: axe-fly;
-  animation-timing-function: ease-in;
+  animation-timing-function: ease-out;
   animation-fill-mode: forwards;
   pointer-events: none;
 }
@@ -190,8 +196,7 @@
   }
   to {
     bottom: 68%;
-    transform: translateX(-50%) translate(var(--flight-dx), calc(-1 * var(--flight-dy)))
-      rotate(900deg);
+    transform: translateX(-50%) translateY(calc(-1 * var(--flight-dy))) rotate(360deg);
   }
 }
 

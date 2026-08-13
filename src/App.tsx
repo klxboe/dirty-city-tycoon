@@ -122,11 +122,16 @@ function App() {
     setScreen('game');
   };
 
-  // Flugziel der Axt in Pixeln, relativ zum Einschlag eines Mittel-Wurfs (unten an der Scheibe).
-  // Weltwinkel: 0° = oben, im Uhrzeigersinn -> Punkt auf dem Kreis ist (R·sin a) nach rechts
-  // und (R·cos a) nach oben, gemessen von der Scheibenmitte.
+  // Flugbahn der Axt. Weltwinkel: 0° = oben, im Uhrzeigersinn -> ein Punkt auf dem Kreis
+  // liegt (R·sin a) seitlich und (R·cos a) über der Scheibenmitte.
+  //
+  // Die Axt fliegt GERADEAUS NACH OBEN: `flightX` ist ihre feste seitliche Position
+  // (gleich der Tippposition, dafür sorgt die Arkussinus-Zuordnung in engine.ts),
+  // `flightDy` nur, wie viel höher als der tiefste Punkt der Scheibe sie einschlägt.
+  // Vorher wurde stattdessen seitlich verschoben – der Schrägflug war für Spieler
+  // nicht nachvollziehbar.
   const flightAngleRad = ((game.flyingAxe?.impactWorldAngleDeg ?? 180) * Math.PI) / 180;
-  const flightDx = BOARD_RADIUS * Math.sin(flightAngleRad);
+  const flightX = BOARD_RADIUS * Math.sin(flightAngleRad);
   const flightDy = BOARD_RADIUS * (Math.cos(flightAngleRad) + 1);
 
   const overlayOpen = shopOpen || settingsOpen;
@@ -227,7 +232,7 @@ function App() {
             className="axe-flying"
             style={{
               animationDuration: `${FLIGHT_DURATION_MS}ms`,
-              ['--flight-dx' as string]: `${flightDx}px`,
+              ['--flight-x' as string]: `${flightX}px`,
               ['--flight-dy' as string]: `${flightDy}px`,
             }}
           >

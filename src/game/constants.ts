@@ -27,19 +27,17 @@ export const APPLE_HIT_TOLERANCE_DEG = 24;
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten
  * (0° = oben, im Uhrzeigersinn) – also unten an der Scheibe.
- * Zielt man daneben, verschiebt sich der Einschlag um bis zu MAX_AIM_SPREAD_DEG
- * (siehe aimToImpactWorldAngle in engine.ts).
+ * Zielt man daneben, wandert der Einschlag auf den Punkt senkrecht über der
+ * Tippposition (siehe aimToImpactWorldAngle in engine.ts).
  */
 export const IMPACT_WORLD_ANGLE_DEG = 180;
 
-/**
- * Wie weit man den Einschlag durch Zielen nach links/rechts verschieben kann (Grad).
- * Tippt man ganz am linken/rechten Rand der Scheibe, landet die Axt um diesen Winkel
- * neben dem Mittel-Einschlag. 75° deckt zusammen die gesamte untere Hälfte plus etwas
- * ab – genug Kontrolle zum gezielten Apfel-Treffen, ohne dass ein von unten geworfener
- * Wurf unglaubwürdig auf der Oberseite einschlägt.
+/*
+ * Es gibt bewusst KEINE einstellbare "Ziel-Spreizung" mehr. Wie weit der Einschlag
+ * seitlich wandert, ergibt sich jetzt aus der Geometrie: der Punkt liegt immer
+ * senkrecht über der Tippposition (siehe aimToImpactWorldAngle in engine.ts).
+ * Erreichbar ist damit die gesamte untere Hälfte der Scheibe.
  */
-export const MAX_AIM_SPREAD_DEG = 75;
 
 /**
  * 100 Level, alle per Formel aus der Levelnummer erzeugt (von Hand wären 100 Stück
