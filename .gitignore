@@ -33,3 +33,4 @@ android/.gradle/
 
 # TypeScript build info
 *.tsbuildinfo
+dist-single

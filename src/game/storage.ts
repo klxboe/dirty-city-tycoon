@@ -1,8 +1,9 @@
 // Dauerhafte Speicherung über localStorage: Münzen, gekaufte/ausgerüstete Skins,
-// bestes erreichtes Level. Alles, was einen Game Over überlebt.
+// bestes erreichtes Level, aktuelles Level, Serie und Einstellungen.
 //
-// Der Level-Fortschritt eines LAUFENDEN Durchgangs wird bewusst NICHT gespeichert –
-// jeder Run startet bei Level 1 (siehe useAxeGame.ts).
+// Lesen UND Schreiben sind bewusst in try/catch: im Privatmodus und beim Öffnen
+// als lokale Datei (file://) kann localStorage komplett fehlen oder werfen. Das
+// Spiel läuft dann trotzdem, der Fortschritt ist eben nur nicht dauerhaft.
 import { COINS_PER_LEGACY_APPLE, CURRENCY_SAVE_KEY, SAVE_KEY } from './constants';
 import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
 

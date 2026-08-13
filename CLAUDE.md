@@ -184,6 +184,32 @@ Build. Für **iOS braucht es zwingend einen Mac mit Xcode** – auf Windows läs
 sich kein iOS-Build erzeugen. Ein Android-Build via Capacitor ginge dagegen
 auch unter Windows.
 
+### Wenn der WLAN-Weg nicht klappt: eine Datei zum Mitnehmen
+
+```bash
+npm run build:single
+```
+
+erzeugt `dist-single/axe-throw.html` – **eine einzige Datei mit allem drin**
+(~300 kB). Die kopiert man aufs Handy (Kabel, Mail an sich selbst, Cloud) und
+öffnet sie direkt. Kein Server, kein WLAN, nichts öffentlich im Netz.
+
+Zwei Fallstricke, die den Aufbau erklären (`vite.config.single.ts`,
+`scripts/bundle-single.mjs`):
+
+- **Kein ES-Modul.** Ein `<script type="module">` wird über `file://` durch die
+  CORS-Regeln blockiert – die Seite bliebe schwarz. Deshalb baut die
+  Single-Config nach `format: 'iife'`.
+- **Ersetzungs-FUNKTION statt -String beim Einfügen.** `String.replace` deutet
+  `$&`, `` $` `` und `$'` im Ersetzungstext als Sonderzeichen. Der gebaute Code
+  enthält solche Folgen; als String übergeben blähte das die Datei von 280 kB
+  auf 1,8 MB auf.
+
+Einschränkung: Über `file://` kann der Browser `localStorage` sperren. Das
+Spiel läuft dann normal, **der Fortschritt wird aber eventuell nicht
+gespeichert** (Lesen und Schreiben sind in `storage.ts` abgesichert, es stürzt
+also nichts ab). Wer Fortschritt behalten will, braucht den WLAN-Weg oben.
+
 ## Tech-Stack
 
 - Vite + React + TypeScript
