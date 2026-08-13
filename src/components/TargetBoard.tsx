@@ -11,6 +11,13 @@ export interface TargetBoardHandle {
   getAngleDeg: () => number;
   /** Horizontale Bildschirm-Mitte der Scheibe (px). Basis fürs Zielen: Tippposition minus diesem Wert. */
   getCenterX: () => number;
+  /**
+   * Tatsächliche Lage und Größe der Scheibe auf dem Bildschirm (px).
+   * Nötig, damit der Axt-Flug GENAU am Scheibenrand endet: eine feste Prozent-Höhe
+   * im CSS kann das nicht, weil die Scheibe mittig in einer flexiblen Zone sitzt und
+   * ihre Position deshalb von der Bildschirmhöhe abhängt.
+   */
+  getGeometry: () => { centerX: number; centerY: number; radius: number } | null;
 }
 
 interface TargetBoardProps {
@@ -158,6 +165,16 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
       if (!el) return 0;
       const rect = el.getBoundingClientRect();
       return rect.left + rect.width / 2;
+    },
+    getGeometry: () => {
+      const el = boardElRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        centerX: rect.left + rect.width / 2,
+        centerY: rect.top + rect.height / 2,
+        radius: rect.width / 2,
+      };
     },
   }));
 

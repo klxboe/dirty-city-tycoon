@@ -104,6 +104,7 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   zweiten Runde durch die Liste), gibt es stattdessen Münzen
   (`BOSS_REPEAT_BONUS`). Die Frucht-Äxte sind NICHT käuflich – sie stehen im
   Shop unter "Beute" und zeigen dort, welches Boss-Level sie freischaltet.
+
 ### Münzen, Läufe und die Werkstatt (Shop)
 
 - **Die 100 Level sind in 10er-Blöcke gruppiert** (`LEVELS_PER_BLOCK`,
@@ -330,20 +331,38 @@ das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
   Einschlag exakt über dem Finger (nachgerechnet: Abweichung 0,00 px über den
   ganzen Bereich), und die Axt fliegt **geradeaus nach oben**.
 - Die Flug-Animation setzt deshalb nur noch zwei Werte: `--flight-x` (feste
-  seitliche Position, ändert sich während des Flugs NICHT) und `--flight-dy`
-  (wie viel höher als der tiefste Scheibenpunkt eingeschlagen wird). Die Drehung
-  liegt bei einer Umdrehung – vorher waren es 900° in 140ms, also 2,5
-  Umdrehungen, was keine sichtbare Drehung mehr ist, sondern Matsch.
+  seitliche Position, ändert sich während des Flugs NICHT) und
+  `--flight-end-bottom` (wo der Flug endet). Die Drehung liegt bei einer
+  Umdrehung – vorher waren es 900° in 140ms, also 2,5 Umdrehungen, was keine
+  sichtbare Drehung mehr ist, sondern Matsch.
+- **Das Flugziel kommt aus der GEMESSENEN Scheibenposition, nicht aus einem
+  Prozentwert.** Die Animation endete früher fest bei `bottom: 68%` – ein Wert,
+  der zur alten 210px-Scheibe passte. Seit die Scheibe 260px groß ist und mittig
+  in einer flexiblen Zone sitzt, hängt ihre Lage von der Bildschirmhöhe ab, und
+  die Axt flog rund 300px zu weit: quer durch die Scheibe hindurch bis fast an
+  deren Oberkante ("fliegt einfach drüber"). `TargetBoardHandle.getGeometry()`
+  liefert jetzt Mitte und Radius in Bildschirmkoordinaten, `App.tsx` rechnet
+  daraus den Einschlagpunkt und setzt ihn als `--flight-end-bottom`. Gemessen
+  wird in einem `useLayoutEffect` mit `ResizeObserver` auf der Bühne – bewusst
+  nicht `window.resize`, weil sich die nutzbare Höhe auf dem Handy auch beim
+  Ein- und Ausfahren der Browserleiste ändert. Nachgemessen: der Einschlag liegt
+  bei Mitte- UND Seitenwürfen exakt 14px im Holz (`AXE_BITE_PX`), vorher 300px
+  dahinter.
 - Eine steckende Axt merkt sich ihren Winkel im LOKALEN Koordinatensystem der
   Scheibe (`boardLocalAngleDeg = Einschlag-Weltwinkel - aktueller Weltwinkel`),
   damit sie beim Rendern korrekt "mitrotiert", wenn sich die Scheibe weiterdreht.
 - Kollisionsprüfung vergleicht den neuen lokalen Winkel gegen alle bereits
   steckenden Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`).
-- **Wichtiges Balancing:** Bei 55°/Sek. (Level 1) dreht sich die Scheibe in der
-  140ms-Flugzeit nur ~7.7° – WENIGER als die Kollisions-Toleranz (10°). Wer in
-  die gleiche Richtung spammt, trifft also garantiert die eigene letzte Axt und
-  ist raus. Das ist seit der Game-Over-Regel bewusst so: Spammen wird bestraft,
-  getimtes Werfen belohnt. Zielen in eine andere Richtung bleibt jederzeit sicher.
+- **Wichtiges Balancing – bewusst geändert:** Die Flugzeit lag bei 140ms, damit
+  sich die Scheibe zwischen zwei Würfen weniger weit dreht als die
+  Kollisions-Toleranz (bei 55°/Sek. nur ~7.7° gegen 10°). Dauertippen traf damit
+  garantiert die eigene letzte Axt. Beim ersten Spielen auf dem Handy war das
+  aber unbrauchbar: die Axt legt die ganze Bildschirmhöhe in einer Siebtelsekunde
+  zurück, man sieht nicht, was passiert. **Lesbarkeit schlägt den Trick** –
+  jetzt 300ms. Dauertippen wird dadurch in den ersten Leveln etwas sicherer
+  (~16° Drehung gegen 10° Toleranz). Verkraftbar, weil das Brett sich ohnehin
+  füllt und ab Level 3 Hindernisse dazukommen. Stellschrauben, falls es zu leicht
+  wird: `COLLISION_ANGLE_TOLERANCE_DEG` erhöhen oder den Levelstart verlangsamen.
 - Es gab früher eine Halten-und-Loslassen-Timing-Mechanik (Lade-Regler mit
   "Sweet Spot"). Auf Wunsch entfernt. Seit der Ziel-Mechanik zählt wieder beides:
   WANN man tippt (Rotation) und WO man tippt (Einschlagpunkt).
@@ -352,7 +371,7 @@ das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingAimRef`)
 und feuert automatisch, sobald die aktuelle Axt gelandet ist – sonst fühlt
-sich schnelles Tippen "kaputt" an, weil Taps im kurzen 140ms-Flug einfach
+sich schnelles Tippen "kaputt" an, weil Taps mitten im Flug einfach
 verschluckt wurden.
 
 Frühere Versionen haben diesen Puffer INNERHALB der `setState`-Updater-Funktion
@@ -512,6 +531,17 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       und Home-Indikator, kein Ziehen-zum-Neuladen, kein Doppeltipp-Zoom, keine
       Text-Auswahl beim schnellen Tippen, `100dvh` gegen die ein- und
       ausfahrende Browserleiste.
+- [x] Axt-Flug korrigiert, nachdem das Spiel zum ersten Mal auf dem Handy lief:
+      - **Flug endet jetzt AN der Scheibe.** Vorher endete die Animation bei
+        einem festen `bottom: 68%` und die Axt flog rund 300px zu weit, also
+        quer durch die Scheibe hindurch. Das Ziel kommt jetzt aus der gemessenen
+        Scheibenposition (`getGeometry()` + `ResizeObserver`). Nachgemessen:
+        Einschlag bei Mitte- und Seitenwürfen exakt 14px im Holz.
+      - **Flugzeit 140ms → 300ms.** Die 140ms waren ein Balancing-Trick gegen
+        Dauertippen, aber auf dem Handy legt die Axt damit die ganze
+        Bildschirmhöhe in einer Siebtelsekunde zurück – man sieht schlicht
+        nichts. Lesbarkeit hat hier Vorrang, siehe Begründung in `constants.ts`.
+      - Flugkurve bremst zum Schluss leicht ab, damit die Axt "ankommt".
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
@@ -524,20 +554,6 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 - [ ] Phase 3: Splash-Screen, App-Store-Vorbereitung. (App-Icon steht bereits.)
 
 ## Offene To-dos
-
-- **ZUERST: Der Axt-Flug endet nicht an der Scheibe.** Die Axt fliegt sichtbar
-  durch die Scheibe hindurch statt an ihrem Rand steckenzubleiben – der Flug
-  endet rund 300px ZU WEIT OBEN. Nachgemessen bei 1316x916:
-  unterer Scheibenrand y=673, Scheibenmitte y=489, Flugende y=371.
-  Ursache: die Endhöhe steht als feste `bottom: 68%` in der `axe-fly`-Animation
-  (`App.css`). Der Wert war für die alte 210px-Scheibe getunt; seit die Scheibe
-  260px groß ist und mittig in einer flexiblen Zone sitzt (`.stage__board-zone`
-  mit `flex: 1`), stimmt er nicht mehr – und er kann gar nicht stimmen, weil die
-  Scheibenposition jetzt von der Bildschirmhöhe abhängt.
-  Lösung: das Flugende aus der TATSÄCHLICHEN Scheibenposition berechnen statt
-  aus einem Prozentwert. `TargetBoardHandle` liefert dafür schon `getCenterX()`;
-  analog eine Möglichkeit ergänzen, die Mitte/den Radius in Bildschirm-
-  koordinaten zu holen, und daraus in `App.tsx` das Flugziel setzen.
 
 - Selbst durchspielen und Feedback zum Balancing geben – die Werte sind
   Schätzungen. Konkret unklar:

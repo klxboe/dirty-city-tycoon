@@ -180,11 +180,12 @@
   position: absolute;
   z-index: 1;
   --flight-x: 0px;
-  --flight-dy: 0px;
+  --flight-end-bottom: 68%;
   left: calc(50% + var(--flight-x));
   bottom: 8%;
   animation-name: axe-fly;
-  animation-timing-function: ease-out;
+  /* Leicht abbremsend zum Schluss: die Axt "kommt an" statt durchzurauschen. */
+  animation-timing-function: cubic-bezier(0.25, 0.7, 0.4, 1);
   animation-fill-mode: forwards;
   pointer-events: none;
 }
@@ -195,8 +196,8 @@
     transform: translateX(-50%) rotate(0deg);
   }
   to {
-    bottom: 68%;
-    transform: translateX(-50%) translateY(calc(-1 * var(--flight-dy))) rotate(360deg);
+    bottom: var(--flight-end-bottom);
+    transform: translateX(-50%) rotate(360deg);
   }
 }
 

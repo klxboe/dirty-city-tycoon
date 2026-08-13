@@ -3,17 +3,27 @@ import { BOSS_FRUITS, type BossFruit } from './shop';
 import type { LevelConfig, SpinPattern } from './types';
 
 /**
- * Wie lange die Fluganimation der Axt dauert (ms). Bewusst kurz: das ist auch die
- * kürzestmögliche Zeit zwischen zwei Würfen. Bei 70°/Sek. Board-Geschwindigkeit dreht
- * sich die Scheibe in 140ms nur um ~9.8° – WENIGER als die Kollisions-Toleranz (10°).
- * Wer also direkt hintereinander tippt (spammt), trifft garantiert die eigene vorherige
- * Axt und ist raus. Bewusst getimtes Werfen (mit Pause dazwischen) bleibt sicher.
+ * Wie lange die Fluganimation der Axt dauert (ms). Das ist zugleich die kürzestmögliche
+ * Zeit zwischen zwei Einschlägen.
+ *
+ * Stand früher auf 140ms, mit der Absicht: bei ~70°/Sek. dreht sich die Scheibe in
+ * dieser Zeit nur ~9.8°, also WENIGER als die Kollisions-Toleranz (10°) – Dauertippen
+ * traf damit garantiert die eigene vorherige Axt. Beim ersten echten Spielen auf dem
+ * Handy war das aber unbrauchbar: die Axt legt die ganze Bildschirmhöhe in einer
+ * Siebtelsekunde zurück, man sieht schlicht nicht, was passiert ("viel zu schnell,
+ * fliegt einfach drüber").
+ *
+ * Lesbarkeit schlägt hier den Trick: 300ms sind gut zu verfolgen. Dauertippen wird
+ * dadurch in den ersten Leveln etwas sicherer (bei 55°/Sek. dreht sich die Scheibe in
+ * 300ms um ~16°, mehr als die 10° Toleranz). Das ist verkraftbar, weil das Brett sich
+ * ohnehin füllt und ab Level 3 Hindernisse dazukommen – wer stumpf spammt, läuft
+ * trotzdem in eine steckende Axt. Sollte es zu leicht werden, sind die Stellschrauben
+ * COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein langsamerer Levelstart.
+ *
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
  */
-export const FLIGHT_DURATION_MS = 140;
-/** Wie oft sich die Axt während des Flugs sichtbar dreht (rein optisch). */
-export const FLIGHT_VISUAL_SPINS = 2.5;
+export const FLIGHT_DURATION_MS = 300;
 
 /**
  * Ab welchem Winkel-Abstand zwei Äxte als "Kollision" gelten (Grad) – die "Hitbox" der Axt

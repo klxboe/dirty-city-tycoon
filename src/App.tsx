@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Axe } from './components/Axe';
 import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
@@ -23,6 +23,23 @@ import type { ThrowOutcome } from './game/types';
 import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95, -120, 130];
+
+/** Wie tief der Axtkopf ins Holz fährt (px). Ohne das bliebe die Axt vor dem Rand stehen. */
+const AXE_BITE_PX = 14;
+
+/**
+ * Lage der Scheibe innerhalb der Bühne, in Pixeln. Grundlage für die Flugbahn –
+ * siehe ausführliche Begründung unten bei der Berechnung.
+ */
+interface BoardGeometry {
+  /** Seitlicher Abstand der Scheibenmitte zur Bühnenmitte. */
+  centerX: number;
+  /** Abstand der Scheibenmitte zur Oberkante der Bühne. */
+  centerY: number;
+  radius: number;
+  /** Höhe der Bühne – nötig, um von "Abstand oben" auf `bottom` umzurechnen. */
+  height: number;
+}
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
@@ -52,6 +69,39 @@ function App() {
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
+  const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
+
+  /*
+   * Scheibenposition messen, sobald die Bühne steht – und bei jeder Größenänderung neu.
+   * `useLayoutEffect`, damit der Wert vor dem ersten Zeichnen da ist und der allererste
+   * Wurf nicht mit einer Notfall-Schätzung fliegt.
+   *
+   * Der ResizeObserver hängt an der Bühne, nicht am Fenster: auf dem Handy ändert sich
+   * die nutzbare Höhe auch ohne Fenster-Resize, wenn die Browserleiste ein- und
+   * ausfährt. Ein reiner `window.resize`-Listener würde das verpassen.
+   */
+  useLayoutEffect(() => {
+    if (screen !== 'game') return;
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const messen = () => {
+      const board = boardHandleRef.current?.getGeometry();
+      if (!board) return;
+      const s = stage.getBoundingClientRect();
+      setBoardGeom({
+        centerX: board.centerX - (s.left + s.width / 2),
+        centerY: board.centerY - s.top,
+        radius: board.radius,
+        height: s.height,
+      });
+    };
+
+    messen();
+    const beobachter = new ResizeObserver(messen);
+    beobachter.observe(stage);
+    return () => beobachter.disconnect();
+  }, [screen, game.levelIndex]);
 
   // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle + kurzer Rums bei jedem Treffer.
   useEffect(() => {
@@ -122,17 +172,31 @@ function App() {
     setScreen('game');
   };
 
-  // Flugbahn der Axt. Weltwinkel: 0° = oben, im Uhrzeigersinn -> ein Punkt auf dem Kreis
-  // liegt (R·sin a) seitlich und (R·cos a) über der Scheibenmitte.
-  //
-  // Die Axt fliegt GERADEAUS NACH OBEN: `flightX` ist ihre feste seitliche Position
-  // (gleich der Tippposition, dafür sorgt die Arkussinus-Zuordnung in engine.ts),
-  // `flightDy` nur, wie viel höher als der tiefste Punkt der Scheibe sie einschlägt.
-  // Vorher wurde stattdessen seitlich verschoben – der Schrägflug war für Spieler
-  // nicht nachvollziehbar.
+  /*
+   * Flugbahn der Axt.
+   *
+   * Weltwinkel: 0° = oben, im Uhrzeigersinn -> ein Punkt auf dem Kreis liegt
+   * (R·sin a) seitlich und (R·cos a) über der Scheibenmitte.
+   *
+   * Die Axt fliegt GERADEAUS NACH OBEN und endet GENAU am Einschlagpunkt:
+   * `flightX` ist ihre feste seitliche Lage (gleich der Tippposition, dafür sorgt
+   * die Arkussinus-Zuordnung in engine.ts), `flightEndBottom` der Abstand des
+   * Einschlagpunkts vom unteren Bühnenrand.
+   *
+   * Beides wird aus der GEMESSENEN Scheibenposition gerechnet, nicht aus festen
+   * Prozentwerten. Eine frühere Fassung ließ die Animation bei `bottom: 68%` enden –
+   * ein Wert, der zur alten, kleineren Scheibe passte. Seit die Scheibe größer ist
+   * und mittig in einer flexiblen Zone sitzt, hing ihre Lage von der Bildschirmhöhe
+   * ab, und die Axt flog rund 300px zu weit, also quer durch die Scheibe hindurch.
+   */
   const flightAngleRad = ((game.flyingAxe?.impactWorldAngleDeg ?? 180) * Math.PI) / 180;
-  const flightX = BOARD_RADIUS * Math.sin(flightAngleRad);
-  const flightDy = BOARD_RADIUS * (Math.cos(flightAngleRad) + 1);
+  const radius = boardGeom?.radius ?? BOARD_RADIUS;
+  const flightX = (boardGeom?.centerX ?? 0) + radius * Math.sin(flightAngleRad);
+  const impactY = (boardGeom?.centerY ?? 0) - radius * Math.cos(flightAngleRad);
+  // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
+  // daher die Differenz. AXE_BITE_PX kommt DAZU (nicht weg), damit die Axt ein Stück
+  // ins Holz fährt, statt davor stehen zu bleiben.
+  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_BITE_PX;
 
   const overlayOpen = shopOpen || settingsOpen;
 
@@ -233,7 +297,7 @@ function App() {
             style={{
               animationDuration: `${FLIGHT_DURATION_MS}ms`,
               ['--flight-x' as string]: `${flightX}px`,
-              ['--flight-dy' as string]: `${flightDy}px`,
+              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
             }}
           >
             <span className="axe-flying__trail" />
