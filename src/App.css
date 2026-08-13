@@ -168,8 +168,8 @@
 /*
  * Die Axt fliegt SENKRECHT nach oben – von der Stelle, an der getippt wurde, gerade
  * hoch bis zum Einschlagpunkt. App.tsx setzt dafür zwei Werte:
- *   --flight-x   feste seitliche Position (0 = Mitte der Scheibe)
- *   --flight-dy  wie viel höher als der tiefste Punkt der Scheibe eingeschlagen wird
+ *   --flight-x           feste seitliche Position (0 = Mitte der Scheibe)
+ *   --flight-end-bottom  wo der Flug endet, gemessen vom unteren Bühnenrand
  *
  * Eine frühere Fassung ließ die Axt stattdessen von unten-Mitte SCHRÄG zum Ziel
  * fliegen. Das war für Spieler nicht lesbar – die Schräge entsprach nichts, was man
@@ -201,29 +201,46 @@
   }
 }
 
-/* Bewegungsschweif hinter der Axt: sitzt im rotierenden Element, wischt also mit. */
+/*
+ * Bewegungsschweif hinter der Axt. Sitzt IM rotierenden Element, wischt also mit der
+ * Drehung – das liest sich als Rotationsunschaerfe statt als angeklebter Strich.
+ * Laeuft ueber die gesamte Flugzeit statt kurz aufzublitzen, sonst sieht man ihn
+ * bei 220ms Flug praktisch gar nicht.
+ */
 .axe-flying__trail {
   position: absolute;
   left: 50%;
-  top: 55%;
-  width: 10px;
-  height: 78px;
-  margin-left: -5px;
+  top: 50%;
+  width: 13px;
+  height: 120px;
+  margin-left: -6.5px;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
-  filter: blur(3px);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 246, 214, 0.7),
+    rgba(255, 210, 120, 0.28) 45%,
+    rgba(255, 190, 90, 0)
+  );
+  filter: blur(4px);
   pointer-events: none;
-  animation: axe-trail-fade 0.18s ease-out forwards;
+  animation: axe-trail-fade 0.22s ease-out forwards;
 }
 
 @keyframes axe-trail-fade {
-  from {
-    opacity: 0.85;
-  }
-  to {
+  0% {
     opacity: 0;
+    transform: scaleY(0.5);
+  }
+  25% {
+    opacity: 0.95;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(0.7);
   }
 }
+
 
 /* ---- Juice: Screen-Shake bei Treffer. Spürbar, aber kurz genug, um nicht zu nerven. ---- */
 .stage--shake {
@@ -248,11 +265,18 @@
   }
 }
 
-/* ---- Juice: Holzspäne + Schockwelle bei Treffer ---- */
+/*
+ * Juice: Holzspäne + Schockwelle beim Treffer.
+ *
+ * Sitzt am ECHTEN Einschlagpunkt (dieselben Werte wie der Axt-Flug), nicht mehr fest
+ * unten in der Mitte. Vorher platzte der Burst immer an derselben Stelle, egal wo die
+ * Axt eingeschlagen hat – bei einem Wurf an den Scheibenrand lagen Späne und Treffer
+ * sichtbar auseinander.
+ */
 .hit-effect {
   position: absolute;
-  left: 50%;
-  bottom: 6px;
+  left: calc(50% + var(--flight-x, 0px));
+  bottom: var(--flight-end-bottom, 6px);
   width: 0;
   height: 0;
   z-index: 2;
@@ -306,13 +330,23 @@
   background: #f4ede0;
 }
 
+/*
+ * Spaene fliegen erst weg, dann faellt der Rest nach unten. Die zweite Haelfte
+ * schiebt ueber `translate(x, y)` nach unten und bricht die Sternform auf –
+ * ohne das wirkt der Burst wie eine gleichmaessige Explosion aus einem Baukasten.
+ */
 @keyframes chip-burst {
   0% {
-    transform: rotate(var(--angle)) translateY(0) rotate(0deg) scale(1.2);
+    transform: rotate(var(--angle)) translateY(0) rotate(0deg) scale(1.35);
+    opacity: 1;
+  }
+  45% {
+    transform: rotate(var(--angle)) translateY(-58px) rotate(180deg) scale(1);
     opacity: 1;
   }
   100% {
-    transform: rotate(var(--angle)) translateY(-64px) rotate(340deg) scale(0.6);
+    transform: rotate(var(--angle)) translateY(-76px) translate(6px, 54px) rotate(430deg)
+      scale(0.5);
     opacity: 0;
   }
 }

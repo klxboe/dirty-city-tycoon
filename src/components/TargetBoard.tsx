@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
+import { HIT_STOP_MS } from '../game/constants';
 import { boardStyleVars } from '../game/shop';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
 import './TargetBoard.css';
@@ -18,6 +19,13 @@ export interface TargetBoardHandle {
    * ihre Position deshalb von der Bildschirmhöhe abhängt.
    */
   getGeometry: () => { centerX: number; centerY: number; radius: number } | null;
+  /**
+   * "Hit-Stop": hält die Drehung für einen Sekundenbruchteil an und lässt die Scheibe
+   * kurz zusammenzucken. Läuft bewusst über den Handle statt über eine Prop, damit der
+   * Treffer keinen React-Re-Render der ganzen App auslöst – dieselbe Überlegung wie
+   * bei der Rotation selbst (siehe Kommentar oben).
+   */
+  punch: () => void;
 }
 
 interface TargetBoardProps {
@@ -83,8 +91,17 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
 }
 
 export const BOARD_SIZE = 260;
-/** Radius, auf dem die Äxte im Holz stecken. Auch die Bezugsgröße fürs Zielen und die Flugbahn. */
+/** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands (130), damit sie im Holz sitzen. */
 export const BOARD_RADIUS = 120;
+/**
+ * Steck-Radius als Anteil des Scheiben-Radius (120 von 130).
+ *
+ * Nötig, weil Zielen und Flugbahn mit der GEMESSENEN Scheibengröße rechnen, die
+ * Äxte aber auf dem festen Wert 120 stecken. Ohne diesen Faktor liefen beide
+ * auseinander: der Flug endete auf Radius 130, die Axt steckte danach auf 120 –
+ * ein sichtbarer Sprung von 10px, und der Späne-Burst saß daneben.
+ */
+export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 152;
 const APPLE_STEM_LENGTH = 20;
@@ -101,6 +118,9 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
   ref,
 ) {
   const boardElRef = useRef<HTMLDivElement>(null);
+  const mountElRef = useRef<HTMLDivElement>(null);
+  /** Bis zu diesem Zeitpunkt steht die Drehung still (Hit-Stop beim Treffer). */
+  const freezeUntilRef = useRef(0);
   const angleRef = useRef(0);
   const speedRef = useRef(speedDegPerSec);
   const patternRef = useRef(spinPattern);
@@ -176,6 +196,19 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         radius: rect.width / 2,
       };
     },
+    punch: () => {
+      freezeUntilRef.current = performance.now() + HIT_STOP_MS;
+      // Das Zusammenzucken läuft auf der HÜLLE, nicht auf der Scheibe selbst: die trägt
+      // schon die Inline-Rotation aus dem rAF-Loop, eine CSS-Animation auf derselben
+      // Eigenschaft würde die Drehung kurz überschreiben und sichtbar zurückspringen
+      // lassen (derselbe Grund wie beim Riss-Effekt, siehe TargetBoard.css).
+      const huelle = mountElRef.current;
+      if (huelle) {
+        huelle.classList.remove('target-mount--hit');
+        void huelle.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
+        huelle.classList.add('target-mount--hit');
+      }
+    },
   }));
 
   useEffect(() => {
@@ -192,7 +225,10 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
       const deltaSeconds = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      if (!pausedRef.current) {
+      // Hit-Stop: Zeit läuft weiter (lastTime ist schon gesetzt), nur gedreht wird
+      // nicht. Dadurch springt die Scheibe danach nicht nach, sondern macht einfach
+      // dort weiter, wo sie stand.
+      if (!pausedRef.current && now >= freezeUntilRef.current) {
         elapsedRef.current += deltaSeconds;
         const speed = currentSpeed(speedRef.current, patternRef.current, elapsedRef.current);
         angleRef.current = normalizeAngle(angleRef.current + speed * deltaSeconds);
@@ -209,7 +245,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
   }, []);
 
   return (
-    <div className="target-mount">
+    <div ref={mountElRef} className="target-mount">
       {/* Nicht rotierende Ebene für abgeworfene Äpfel – sie sollen senkrecht fallen,
           nicht mit der Scheibe mitkreiseln. */}
       <div className="target-mount__falling">

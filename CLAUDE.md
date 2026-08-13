@@ -346,8 +346,25 @@ das Spiel automatisiert testet: dort hilft Zielen statt Timing zum Streuen.)
   wird in einem `useLayoutEffect` mit `ResizeObserver` auf der Bühne – bewusst
   nicht `window.resize`, weil sich die nutzbare Höhe auf dem Handy auch beim
   Ein- und Ausfahren der Browserleiste ändert. Nachgemessen: der Einschlag liegt
-  bei Mitte- UND Seitenwürfen exakt 14px im Holz (`AXE_BITE_PX`), vorher 300px
-  dahinter.
+  bei Mitte- UND Seitenwürfen exakt am Steck-Radius, 6px im Holz (`AXE_BITE_PX`) –
+  vorher 300px dahinter.
+- **Ein Radius, überall derselbe (`AXE_STICK_RATIO`).** Zielen rechnete mit der
+  Konstante 120, die Flugbahn mit dem gemessenen Scheiben-Radius 130. Dadurch
+  endete der Flug 10px weiter außen als die Axt danach steckte, und der
+  Späne-Burst saß neben dem Einschlag. Jetzt leiten Zielen, Flugbahn und Burst
+  alle denselben Wert aus `stickRadiusPx()` ab – gemessene Scheibengröße mal
+  Steck-Anteil. Nachgemessen: seitliche Abweichung 0px.
+- **Der Späne-Burst sitzt am echten Treffpunkt.** Er hing vorher fest unten in
+  der Mitte der Scheiben-Zone; bei einem Wurf an den Rand lagen Späne und
+  Einschlag sichtbar auseinander. Jetzt nutzt er dieselben Koordinaten wie der
+  Flug (`--flight-x` / `--flight-end-bottom`).
+- **Hit-Stop beim Treffer** (`HIT_STOP_MS`, 55ms): die Drehung steht einen
+  Sekundenbruchteil still und die Scheibe zuckt zusammen (`punch()` auf dem
+  Handle, damit kein React-Re-Render nötig ist). Der klassische Kniff aus
+  Actionspielen – man nimmt ihn nicht bewusst wahr, aber der Treffer fühlt sich
+  schwer an. Die Zuck-Animation läuft auf der HÜLLE, nicht auf der Scheibe: die
+  trägt schon die Inline-Rotation, eine zweite transform-Animation würde sie
+  sichtbar zurückspringen lassen.
 - Eine steckende Axt merkt sich ihren Winkel im LOKALEN Koordinatensystem der
   Scheibe (`boardLocalAngleDeg = Einschlag-Weltwinkel - aktueller Weltwinkel`),
   damit sie beim Rendern korrekt "mitrotiert", wenn sich die Scheibe weiterdreht.
@@ -542,6 +559,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Bildschirmhöhe in einer Siebtelsekunde zurück – man sieht schlicht
         nichts. Lesbarkeit hat hier Vorrang, siehe Begründung in `constants.ts`.
       - Flugkurve bremst zum Schluss leicht ab, damit die Axt "ankommt".
+- [x] Wucht und Tempo nachgeschärft, nachdem der Flug endlich saß:
+      - Flugzeit 300ms → **220ms**. 300ms waren gut lesbar, fühlten sich beim
+        Spielen aber zäh an.
+      - **Hit-Stop** (55ms) plus Zusammenzucken der Scheibe beim Treffer.
+      - **Späne-Burst sitzt am echten Treffpunkt** statt fest unten in der Mitte.
+      - Schweif länger und wärmer, läuft über die ganze Flugzeit; Späne fallen
+        jetzt am Ende nach unten statt gleichmäßig zu verpuffen.
+      - Dabei gefunden: Zielen und Flugbahn benutzten unterschiedliche Radien
+        (120 gegen gemessene 130) – behoben über `AXE_STICK_RATIO`.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

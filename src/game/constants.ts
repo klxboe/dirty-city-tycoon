@@ -13,17 +13,27 @@ import type { LevelConfig, SpinPattern } from './types';
  * Siebtelsekunde zurück, man sieht schlicht nicht, was passiert ("viel zu schnell,
  * fliegt einfach drüber").
  *
- * Lesbarkeit schlägt hier den Trick: 300ms sind gut zu verfolgen. Dauertippen wird
- * dadurch in den ersten Leveln etwas sicherer (bei 55°/Sek. dreht sich die Scheibe in
- * 300ms um ~16°, mehr als die 10° Toleranz). Das ist verkraftbar, weil das Brett sich
- * ohnehin füllt und ab Level 3 Hindernisse dazukommen – wer stumpf spammt, läuft
- * trotzdem in eine steckende Axt. Sollte es zu leicht werden, sind die Stellschrauben
- * COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein langsamerer Levelstart.
+ * Lesbarkeit schlägt hier den Trick. 300ms waren gut zu verfolgen, fühlten sich beim
+ * Spielen aber zäh an – 220ms sind der Kompromiss: noch klar zu sehen, aber wieder
+ * knackig. Dauertippen wird dadurch in den ersten Leveln etwas sicherer (bei 55°/Sek.
+ * dreht sich die Scheibe in 220ms um ~12°, knapp über der 10°-Toleranz). Das ist
+ * verkraftbar, weil das Brett sich ohnehin füllt und ab Level 3 Hindernisse dazukommen –
+ * wer stumpf spammt, läuft trotzdem in eine steckende Axt. Sollte es zu leicht werden,
+ * sind die Stellschrauben COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein
+ * langsamerer Levelstart.
  *
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
  */
-export const FLIGHT_DURATION_MS = 300;
+export const FLIGHT_DURATION_MS = 220;
+
+/**
+ * Wie lange die Scheibe beim Treffer stehen bleibt (ms). Ein sehr kurzer Stopp im
+ * Moment des Einschlags – der klassische "Hit-Stop" aus Actionspielen. Er lässt den
+ * Treffer schwer und getroffen wirken, ohne dass man ihn bewusst wahrnimmt.
+ * Bewusst winzig: alles ab ~90ms fühlt sich nach Ruckeln statt nach Wucht an.
+ */
+export const HIT_STOP_MS = 55;
 
 /**
  * Ab welchem Winkel-Abstand zwei Äxte als "Kollision" gelten (Grad) – die "Hitbox" der Axt

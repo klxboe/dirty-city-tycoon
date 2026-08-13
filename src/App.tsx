@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Axe } from './components/Axe';
 import { AxeInventory } from './components/AxeInventory';
 import { HUD } from './components/HUD';
-import { BOARD_RADIUS, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
+import { AXE_STICK_RATIO, BOARD_SIZE, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { GameOverModal } from './components/GameOverModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -24,8 +24,8 @@ import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95, -120, 130];
 
-/** Wie tief der Axtkopf ins Holz fährt (px). Ohne das bliebe die Axt vor dem Rand stehen. */
-const AXE_BITE_PX = 14;
+/** Wie tief der Axtkopf über den Steck-Radius hinaus ins Holz fährt (px). */
+const AXE_BITE_PX = 6;
 
 /**
  * Lage der Scheibe innerhalb der Bühne, in Pixeln. Grundlage für die Flugbahn –
@@ -39,6 +39,18 @@ interface BoardGeometry {
   radius: number;
   /** Höhe der Bühne – nötig, um von "Abstand oben" auf `bottom` umzurechnen. */
   height: number;
+}
+
+/**
+ * Radius in Bildschirm-Pixeln, auf dem die Äxte tatsächlich stecken.
+ *
+ * Zielen, Flugbahn und Späne-Burst müssen ALLE diesen Wert benutzen. Vorher rechnete
+ * das Zielen mit der Konstante 120, die Flugbahn dagegen mit dem gemessenen
+ * Scheiben-Radius 130 – dadurch endete der Flug 10px weiter außen als die Axt danach
+ * steckte, und der Späne-Burst saß sichtbar neben dem Einschlag.
+ */
+function stickRadiusPx(geom: BoardGeometry | null): number {
+  return (geom?.radius ?? BOARD_SIZE / 2) * AXE_STICK_RATIO;
 }
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
@@ -70,6 +82,12 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
   const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
+  /** Winkel des zuletzt geworfenen Wurfs – überlebt das Landen, damit der Späne-Burst weiß, wo er hingehört. */
+  const lastImpactAngleRef = useRef(180);
+
+  useEffect(() => {
+    if (game.flyingAxe) lastImpactAngleRef.current = game.flyingAxe.impactWorldAngleDeg;
+  }, [game.flyingAxe]);
 
   /*
    * Scheibenposition messen, sobald die Bühne steht – und bei jeder Größenänderung neu.
@@ -113,6 +131,7 @@ function App() {
         el.classList.add('stage--shake');
       }
       setBurstId((id) => id + 1);
+      boardHandleRef.current?.punch(); // Hit-Stop + Zusammenzucken der Scheibe
       vibrate(18);
     }
     prevHitsRef.current = game.hits;
@@ -160,10 +179,11 @@ function App() {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
 
     // Zielen: horizontaler Abstand der Tippposition zur Scheibenmitte, normiert auf den
-    // Scheibenradius. -1 = linker Rand, 0 = Mitte, +1 = rechter Rand (Werte darüber hinaus
-    // schneidet die Engine ab, damit auch ein Tap weit neben der Scheibe noch funktioniert).
+    // STECK-Radius (nicht den Scheiben-Radius – siehe stickRadiusPx). -1 = linker Rand,
+    // 0 = Mitte, +1 = rechter Rand. Werte darüber hinaus schneidet die Engine ab, damit
+    // auch ein Tap weit neben der Scheibe noch funktioniert.
     const centerX = boardHandleRef.current?.getCenterX() ?? event.clientX;
-    game.throwAxe((event.clientX - centerX) / BOARD_RADIUS);
+    game.throwAxe((event.clientX - centerX) / stickRadiusPx(boardGeom));
   };
 
   const startPlaying = () => {
@@ -189,10 +209,14 @@ function App() {
    * und mittig in einer flexiblen Zone sitzt, hing ihre Lage von der Bildschirmhöhe
    * ab, und die Axt flog rund 300px zu weit, also quer durch die Scheibe hindurch.
    */
-  const flightAngleRad = ((game.flyingAxe?.impactWorldAngleDeg ?? 180) * Math.PI) / 180;
-  const radius = boardGeom?.radius ?? BOARD_RADIUS;
-  const flightX = (boardGeom?.centerX ?? 0) + radius * Math.sin(flightAngleRad);
-  const impactY = (boardGeom?.centerY ?? 0) - radius * Math.cos(flightAngleRad);
+  // Beim Treffer ist `flyingAxe` schon wieder null – für den Späne-Burst brauchen wir
+  // den Winkel des GERADE gelandeten Wurfs, sonst platzt er immer unten in der Mitte.
+  const impactAngleDeg = game.flyingAxe?.impactWorldAngleDeg ?? lastImpactAngleRef.current;
+  const flightAngleRad = (impactAngleDeg * Math.PI) / 180;
+  // Steck-Radius, nicht Scheiben-Radius: dort landen die Äxte tatsächlich.
+  const stickRadius = stickRadiusPx(boardGeom);
+  const flightX = (boardGeom?.centerX ?? 0) + stickRadius * Math.sin(flightAngleRad);
+  const impactY = (boardGeom?.centerY ?? 0) - stickRadius * Math.cos(flightAngleRad);
   // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
   // daher die Differenz. AXE_BITE_PX kommt DAZU (nicht weg), damit die Axt ein Stück
   // ins Holz fährt, statt davor stehen zu bleiben.
@@ -276,19 +300,29 @@ function App() {
             broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}
           />
 
-          {burstId > 0 && (
-            <div key={burstId} className="hit-effect">
-              <span className="hit-effect__shockwave" />
-              {PARTICLE_ANGLES.map((angle, i) => (
-                <span
-                  key={i}
-                  className={`hit-effect__chip hit-effect__chip--${i % 3}`}
-                  style={{ ['--angle' as string]: `${angle}deg` }}
-                />
-              ))}
-            </div>
-          )}
         </div>
+
+        {/* Späne und Schockwelle liegen auf Bühnen-Ebene, damit sie dieselben
+            Koordinaten wie der Axt-Flug nutzen können und genau am Treffpunkt sitzen. */}
+        {burstId > 0 && (
+          <div
+            key={burstId}
+            className="hit-effect"
+            style={{
+              ['--flight-x' as string]: `${flightX}px`,
+              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
+            }}
+          >
+            <span className="hit-effect__shockwave" />
+            {PARTICLE_ANGLES.map((angle, i) => (
+              <span
+                key={i}
+                className={`hit-effect__chip hit-effect__chip--${i % 3}`}
+                style={{ ['--angle' as string]: `${angle}deg` }}
+              />
+            ))}
+          </div>
+        )}
 
         {game.phase === 'flying' && game.flyingAxe && (
           <div
