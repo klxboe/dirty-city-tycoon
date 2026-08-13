@@ -160,6 +160,30 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   (siehe Ende von `App.css`). Spielmechanik-Animationen wie Axt-Flug und
   Scheibendrehung bleiben bewusst – ohne sie wäre das Spiel nicht spielbar.
 
+## Auf dem Handy spielen (ohne App Store)
+
+Das Spiel läuft komplett im Browser – man braucht keinen Build und keinen Mac,
+um es auf dem eigenen Handy zu testen:
+
+1. `npm run dev` auf dem PC starten. Vite bindet dank `server.host: true` in
+   `vite.config.ts` ans ganze WLAN und gibt beim Start eine Network-Adresse aus
+   (`http://<PC-IP>:5173/`).
+2. Handy ins **gleiche WLAN**, diese Adresse im Browser öffnen.
+3. Im Browser-Menü **"Zum Home-Bildschirm"** wählen. Danach startet das Spiel
+   über ein eigenes Icon im Vollbild, ohne Browserleisten.
+
+Damit Schritt 3 funktioniert, liegen in `public/` ein `manifest.webmanifest`
+und PNG-Icons. **iOS ignoriert das Manifest weitgehend** und braucht die
+eigenen `apple-*`-Meta-Tags in `index.html`; `apple-touch-icon` muss ein PNG
+sein, SVG wird dort nicht unterstützt. Die Icons werden von einem
+Pillow-Skript gezeichnet (siehe Commit) – bewusst keine zusätzliche
+Build-Abhängigkeit im Projekt.
+
+Grenzen dieser Variante: Der PC muss laufen, und es ist kein echter App-Store-
+Build. Für **iOS braucht es zwingend einen Mac mit Xcode** – auf Windows lässt
+sich kein iOS-Build erzeugen. Ein Android-Build via Capacitor ginge dagegen
+auch unter Windows.
+
 ## Tech-Stack
 
 - Vite + React + TypeScript
@@ -442,9 +466,22 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Durchgetestet: Einstieg als frischer Spieler, Boss-Level 5 samt
       freigeschalteter Wassermelone-Axt, Münz-Rechnung inkl. Serien-Faktor,
       Beute-Reiter im Shop, fallender Apfel, Speichern und Fortsetzen.
+- [x] Auf dem Handy spielbar gemacht, ohne App Store (siehe Abschnitt oben):
+      Dev-Server im WLAN erreichbar, App-Icons, Manifest und iOS-Meta-Tags für
+      "Zum Home-Bildschirm", dazu Handy-Feinschliff – sichere Ränder für Notch
+      und Home-Indikator, kein Ziehen-zum-Neuladen, kein Doppeltipp-Zoom, keine
+      Text-Auswahl beim schnellen Tippen, `100dvh` gegen die ein- und
+      ausfahrende Browserleiste.
 - [ ] Weiterer Feinschliff nach Bedarf.
-- [ ] Phase 2: Capacitor + iOS-Plattform, Speicherung auf Capacitor Preferences.
-- [ ] Phase 3: App-Icon, Splash-Screen, App-Store-Vorbereitung.
+- [ ] Phase 2: Capacitor + native Plattform.
+      **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
+      Rechner ist Windows. Android ginge dort. Dabei zu erledigen:
+      - Speicherung auf `@capacitor/preferences` (localStorage kann iOS in
+        einer WKWebView unter Speicherdruck löschen – da hängt inzwischen
+        echter Fortschritt dran).
+      - Vibration auf `@capacitor/haptics` umstellen: `navigator.vibrate`
+        existiert auf iOS gar nicht, der Code läuft dort wirkungslos.
+- [ ] Phase 3: Splash-Screen, App-Store-Vorbereitung. (App-Icon steht bereits.)
 
 ## Offene To-dos
 

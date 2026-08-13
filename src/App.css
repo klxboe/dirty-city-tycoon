@@ -1,9 +1,17 @@
 .app {
   width: 100%;
   max-width: 480px;
-  min-height: 100svh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  /*
+   * Sichere Ränder: oben die Notch/Dynamic Island, unten der Home-Indikator.
+   * Ohne das säße die Levelnummer teilweise unter der Uhr und der Hinweistext
+   * unter dem Wischbalken – auf dem iPhone im Vollbild-Modus deutlich sichtbar.
+   */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /*

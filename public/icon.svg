@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="46%" r="52%">
+      <stop offset="0%" stop-color="#ff9f1c" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#ff9f1c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="blade" x1="0%" y1="0%" x2="100%" y2="60%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#dbe4ec"/>
+      <stop offset="100%" stop-color="#9aa6b2"/>
+    </linearGradient>
+    <linearGradient id="haft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c98a52"/>
+      <stop offset="100%" stop-color="#6b4420"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="#101318"/>
+  <circle cx="256" cy="236" r="250" fill="url(#glow)"/>
+
+  <!-- Stiel -->
+  <rect x="238" y="228" width="36" height="228" rx="16" fill="url(#haft)" stroke="#141820" stroke-width="9"/>
+  <g fill="#4a2c14">
+    <rect x="238" y="286" width="36" height="13" rx="5"/>
+    <rect x="238" y="318" width="36" height="13" rx="5"/>
+    <rect x="238" y="350" width="36" height="13" rx="5"/>
+  </g>
+
+  <!-- Axtkopf: Blatt rechts, Hammer-Sporn links -->
+  <path d="M262 108
+           C332 112 392 146 404 196
+           C392 246 332 280 262 284
+           Z"
+        fill="url(#blade)" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M250 130 L160 152 L160 240 L250 262 Z"
+        fill="#b8c2cc" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M300 140 C352 152 378 172 386 196 C378 220 352 240 300 252"
+        fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+</svg>

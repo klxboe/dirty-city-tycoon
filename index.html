@@ -2,10 +2,34 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#3f7fae" />
     <title>Axe Throw</title>
+
+    <!--
+      viewport-fit=cover laesst die Seite unter Notch und Home-Indikator laufen;
+      die App haelt ueber env(safe-area-inset-*) in App.css selbst Abstand.
+      user-scalable=no verhindert, dass ein Doppeltipp beim schnellen Werfen
+      versehentlich hineinzoomt.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="Wirf die Axt in die Lücke – triff die Äpfel, verfehle deine eigenen Äxte." />
+    <meta name="theme-color" content="#101318" />
+
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!--
+      iOS ignoriert das Manifest weitgehend und braucht diese eigenen Angaben,
+      damit "Zum Home-Bildschirm" ein Vollbild-Icon ohne Safari-Leisten ergibt.
+      apple-touch-icon MUSS ein PNG sein - SVG wird dort nicht unterstuetzt.
+    -->
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Axe Throw" />
+    <meta name="mobile-web-app-capable" content="yes" />
   </head>
   <body>
     <div id="root"></div>
