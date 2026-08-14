@@ -479,7 +479,7 @@ function App() {
           totalCoins={game.save.coins}
           totalGems={game.save.gems}
           streak={game.streak}
-          isLastLevel={game.isLastLevel}
+          isCampaignComplete={game.isCampaignComplete}
           onNext={game.nextLevel}
           onOpenShop={() => setShopOpen(true)}
         />

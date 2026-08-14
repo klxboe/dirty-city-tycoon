@@ -92,6 +92,41 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   "Weiter zu Level N+1" plus "Werkstatt öffnen". Level 100 geschafft:
   Glückwunsch-Badge "Alle Level gemeistert!" statt Weiter-Button.
 
+### Endlos-Modus nach Level 100
+
+Level 100 ist NICHT das Ende. `generateLevel()` (siehe Level-System oben) ist
+eine reine Funktion der Levelnummer OHNE eingebaute Obergrenze – Tempo deckelt
+sich selbst bei `MAX_SPEED_DEG_PER_SEC`, Axt-/Hindernis-/Apfelzahl bei den
+letzten `if`-Stufen, der Boss-Zyklus und die goldene-Apfel-Formel laufen über
+Modulo. Der Endlos-Modus nutzt genau das aus, statt etwas Neues zu bauen:
+- `levelConfigAt(levelIndex)` (`constants.ts`) liefert für Level ≤ 100 das
+  vorberechnete Array-Element, darüber hinaus wird `generateLevel()` bei
+  Bedarf einmalig live gerechnet. `useAxeGame.ts` nutzt diese Funktion überall
+  statt direkt auf `LEVELS[...]` zuzugreifen.
+- `nextLevel()` hat keine Obergrenze mehr (vorher `Math.min(..., LEVELS.length
+  - 1)` – das hätte Level 100 endlos wiederholt statt weiterzuzählen).
+- Nach Level 100 zeigt der Ergebnis-Screen einmalig "Alle 100 Level
+  gemeistert!" (`isCampaignComplete` in `useAxeGame.ts`, wahr GENAU beim
+  Abschluss von Level 100) – der Weiter-Button bleibt aber immer da, beschriftet
+  ab dann als "Weiter im Endlos-Modus" statt mit einer Levelnummer.
+- **Kein Extra-Spardaten-Feld nötig:** `SaveData.bestLevel` zählt ohnehin über
+  100 hinaus weiter (`Math.max(bestLevel, levelIndex + 2)`) und ist damit
+  zugleich die Endlos-Bestmarke.
+- **Welten laufen optisch aus:** `worldForLevel()` (`worlds.ts`) klemmt Level
+  jenseits von 100 auf die letzte Welt (Kosmos) – bewusst schon so gebaut, als
+  die Welten entstanden sind. Die Weltkarte zeigt zusätzlich einen Hinweis
+  "Endlos-Modus freigeschaltet – Bestmarke Level N", sobald `bestLevel` über
+  100 liegt, damit die randvollen Fortschrittsbalken nicht unerklärt bleiben.
+- **Game Over im Endlos-Modus verhält sich wie gewohnt:** `blockStartIndex()`
+  rechnet ohne Deckel weiter (Level 111 stirbt → zurück auf 110), es gibt
+  bewusst KEINEN Sonderfall "zurück auf Level 100" – die 10er-Block-Regel gilt
+  unverändert weiter.
+  Verifiziert durch direktes Setzen von `currentLevel`/`bestLevel` im
+  Spielstand (Level 105 lädt korrekt: Boss-Zyklus, Kosmos-Deko, Weltkarten-
+  Hinweis) statt durch Echtzeit-Durchspielen bis Level 100 – Letzteres ist in
+  der automatisierten Browser-Umgebung wegen des dokumentierten rAF-Freeze-
+  Problems nicht zuverlässig zu testen (siehe Zeitschritt-Deckel-Abschnitt).
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in

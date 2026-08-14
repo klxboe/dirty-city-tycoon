@@ -1,3 +1,4 @@
+import { LEVEL_COUNT } from '../game/constants';
 import { WORLDS, WORLDS_LEVEL_COUNT } from '../game/worlds';
 import './WorldMap.css';
 
@@ -87,6 +88,13 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
             );
           })}
         </div>
+
+        {/* Jenseits der 5 Welten (Level 100) läuft es als Endlos-Modus weiter – ohne
+            eigene Welt-Karte, aber mit einem Hinweis, damit die Bestmarke dort nicht
+            unerklärt über "Kosmos" hinausragt. */}
+        {bestLevel > LEVEL_COUNT && (
+          <div className="world-map__endless">Endlos-Modus freigeschaltet – Bestmarke Level {bestLevel}</div>
+        )}
 
         <button className="world-map__close" onClick={onClose}>
           Schließen

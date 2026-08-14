@@ -14,7 +14,8 @@ interface LevelCompleteModalProps {
   totalCoins: number;
   totalGems: number;
   streak: number;
-  isLastLevel: boolean;
+  /** Wahr genau einmal: wenn gerade Level 100 (der letzte feste Kampagnen-Level) geschafft wurde. */
+  isCampaignComplete: boolean;
   onNext: () => void;
   onOpenShop: () => void;
 }
@@ -27,7 +28,7 @@ export function LevelCompleteModal({
   totalCoins,
   totalGems,
   streak,
-  isLastLevel,
+  isCampaignComplete,
   onNext,
   onOpenShop,
 }: LevelCompleteModalProps) {
@@ -122,13 +123,12 @@ export function LevelCompleteModal({
           </div>
         )}
 
-        {isLastLevel ? (
-          <div className="modal-card__badge">Alle Level gemeistert! 🎉</div>
-        ) : (
-          <button className="modal-card__button" onClick={onNext}>
-            Weiter zu Level {level + 1}
-          </button>
-        )}
+        {/* Einmalige Glückwunsch-Zeile bei Level 100 – danach geht's im Endlos-Modus
+            einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}
+        {isCampaignComplete && <div className="modal-card__badge">Alle 100 Level gemeistert! 🎉</div>}
+        <button className="modal-card__button" onClick={onNext}>
+          {isCampaignComplete ? 'Weiter im Endlos-Modus' : `Weiter zu Level ${level + 1}`}
+        </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
           Werkstatt öffnen
         </button>

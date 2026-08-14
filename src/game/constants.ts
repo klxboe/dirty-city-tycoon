@@ -225,6 +225,19 @@ export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;
 
 export const LEVELS: LevelConfig[] = Array.from({ length: LEVEL_COUNT }, (_, i) => generateLevel(i));
 
+/**
+ * Level-Konfiguration für einen BELIEBIGEN Index – auch jenseits der 100 fest
+ * vorbereiteten Level. Trägt den Endlos-Modus: `generateLevel()` ist eine reine
+ * Funktion der Levelnummer ohne eingebaute Obergrenze (Tempo deckelt sich selbst bei
+ * MAX_SPEED_DEG_PER_SEC, Axt-/Hindernis-/Apfelzahl bei den letzten `if`-Stufen, der
+ * Boss-Zyklus und die goldene-Apfel-Formel laufen über Modulo) – jenseits von Level
+ * 100 musste dafür nichts Neues gebaut werden. Die ersten 100 kommen aus dem
+ * vorberechneten Array (billiger), alles danach wird bei Bedarf einmalig berechnet.
+ */
+export function levelConfigAt(levelIndex: number): LevelConfig {
+  return levelIndex < LEVEL_COUNT ? LEVELS[levelIndex] : generateLevel(levelIndex);
+}
+
 /** Alter Speicherstand (nur eine Apfel-Zahl). Wird beim ersten Start in Münzen migriert. */
 export const CURRENCY_SAVE_KEY = 'axe-throw-currency-v1';
 /** Aktueller Speicherstand: Münzen, Skins, bestes Level (JSON). */

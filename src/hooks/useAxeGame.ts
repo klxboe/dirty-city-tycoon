@@ -17,7 +17,8 @@ import {
   DIFFICULTY_SPEED_MULTIPLIER,
   FLIGHT_DURATION_MS,
   GEMS_PER_GOLDEN_APPLE,
-  LEVELS,
+  LEVEL_COUNT,
+  levelConfigAt,
   LEVELS_PER_BLOCK,
   levelCompletionBonus,
   PERFECT_APPLE_BONUS,
@@ -29,7 +30,7 @@ import { setMuted } from '../game/sound';
 import type { Difficulty, GameState, LevelReward, StuckAxe } from '../game/types';
 
 function createLevelState(levelIndex: number): Omit<GameState, 'save' | 'streak'> {
-  const level = LEVELS[levelIndex];
+  const level = levelConfigAt(levelIndex);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
     id: -1 - i,
@@ -60,7 +61,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const [state, setState] = useState<GameState>(() => {
     const save = loadSave();
     setMuted(!save.soundOn);
-    return { ...createLevelState(Math.min(save.currentLevel, LEVELS.length - 1)), streak: save.streak, save };
+    return { ...createLevelState(Math.max(0, save.currentLevel)), streak: save.streak, save };
   });
 
   /**
@@ -110,7 +111,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     const timeout = setTimeout(() => {
       setState((prev) => {
         if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-        const level = LEVELS[prev.levelIndex];
+        const level = levelConfigAt(prev.levelIndex);
 
         // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
         // des Flugs weiter, genau darin liegt das Timing-Spiel.
@@ -217,7 +218,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const goToLevel = useCallback((levelIndex: number) => {
     pendingThrowRef.current = false;
     setState((prev) => {
-      const target = Math.max(0, Math.min(levelIndex, LEVELS.length - 1));
+      const target = Math.max(0, levelIndex);
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
       return { ...createLevelState(target), streak: prev.streak, save: nextSave };
@@ -235,9 +236,14 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
+  /**
+   * Nächstes Level. Bewusst OHNE Obergrenze: nach Level 100 (LEVEL_COUNT) läuft es
+   * einfach als Endlos-Modus weiter – `levelConfigAt()` berechnet jede weitere
+   * Levelnummer live, siehe constants.ts.
+   */
   const nextLevel = useCallback(() => {
     setState((prev) => {
-      const target = Math.min(prev.levelIndex + 1, LEVELS.length - 1);
+      const target = prev.levelIndex + 1;
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
@@ -347,14 +353,18 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  const level = LEVELS[state.levelIndex];
-  const isLastLevel = state.levelIndex >= LEVELS.length - 1;
+  const level = levelConfigAt(state.levelIndex);
+  // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
+  // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
+  // keins, danach läuft es als Endlos-Modus weiter (siehe nextLevel oben). Der
+  // Ergebnis-Screen nutzt dieses Flag nur für die einmalige Glückwunsch-Anzeige.
+  const isCampaignComplete = state.phase === 'levelComplete' && state.levelIndex === LEVEL_COUNT - 1;
   const bossFruit = bossFruitForLevel(state.levelIndex);
 
   return {
     ...state,
-    levelCount: LEVELS.length,
-    isLastLevel,
+    levelCount: LEVEL_COUNT,
+    isCampaignComplete,
     /** Erster Level-Index des aktuellen 10er-Blocks – dorthin geht es nach einem Game Over. */
     blockStart: blockStartIndex(state.levelIndex),
     levelsPerBlock: LEVELS_PER_BLOCK,
@@ -412,7 +422,7 @@ function computeReward(
   streak: number,
   save: SaveData,
 ): LevelReward {
-  const level = LEVELS[levelIndex];
+  const level = levelConfigAt(levelIndex);
   const boss = bossFruitForLevel(levelIndex);
 
   const apples = (applesCollected - gemsCollected) * COINS_PER_APPLE;
