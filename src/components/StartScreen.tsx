@@ -15,6 +15,7 @@ interface StartScreenProps {
   onRestartFromOne: () => void;
   onOpenShop: () => void;
   onOpenSettings: () => void;
+  onOpenWorldMap: () => void;
 }
 
 export function StartScreen({
@@ -27,6 +28,7 @@ export function StartScreen({
   onRestartFromOne,
   onOpenShop,
   onOpenSettings,
+  onOpenWorldMap,
 }: StartScreenProps) {
   return (
     <div className="start">
@@ -87,6 +89,9 @@ export function StartScreen({
             Von Level 1 starten
           </button>
         )}
+        <button className="start__button start__button--ghost" onClick={onOpenWorldMap}>
+          Weltkarte
+        </button>
         <div className="start__button-row">
           <button className="start__button start__button--ghost" onClick={onOpenShop}>
             Werkstatt

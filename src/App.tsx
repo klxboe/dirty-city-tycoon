@@ -8,8 +8,11 @@ import { GameOverModal } from './components/GameOverModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
 import { StartScreen } from './components/StartScreen';
+import { WorldDecor } from './components/WorldDecor';
+import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
+import { worldForLevel, worldStyleVars } from './game/worlds';
 import {
   playAppleSound,
   playBossSound,
@@ -81,6 +84,7 @@ function App() {
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [worldMapOpen, setWorldMapOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
   const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
   /**
@@ -234,7 +238,8 @@ function App() {
   // daher die Differenz. AXE_BITE_PX kommt DAZU, damit die Axt ins Holz fährt.
   const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_BITE_PX;
 
-  const overlayOpen = shopOpen || settingsOpen;
+  const overlayOpen = shopOpen || settingsOpen || worldMapOpen;
+  const world = worldForLevel(game.levelIndex);
 
   if (screen === 'start') {
     return (
@@ -252,6 +257,7 @@ function App() {
           }}
           onOpenShop={() => setShopOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
+          onOpenWorldMap={() => setWorldMapOpen(true)}
         />
 
         {shopOpen && (
@@ -264,6 +270,17 @@ function App() {
             onToggleSound={game.setSoundOn}
             onResetProgress={game.resetProgress}
             onClose={() => setSettingsOpen(false)}
+          />
+        )}
+        {worldMapOpen && (
+          <WorldMap
+            bestLevel={game.save.bestLevel}
+            currentLevelIndex={game.levelIndex}
+            onSelectLevel={(levelIndex) => {
+              game.goToLevel(levelIndex);
+              startPlaying();
+            }}
+            onClose={() => setWorldMapOpen(false)}
           />
         )}
       </div>
@@ -282,7 +299,14 @@ function App() {
         onOpenShop={() => setShopOpen(true)}
       />
 
-      <div ref={stageRef} className={`stage ${game.bossFruit ? 'stage--boss' : ''}`} onPointerDown={handlePointerDown}>
+      <div
+        ref={stageRef}
+        className={`stage ${game.bossFruit ? 'stage--boss' : ''}`}
+        style={worldStyleVars(game.levelIndex) as React.CSSProperties}
+        onPointerDown={handlePointerDown}
+      >
+        <WorldDecor decor={world.decor} />
+
         <AxeInventory total={game.axeCount} thrown={game.axesThrown} skin={game.save.equippedAxeSkin} />
 
         <div className="stage__dust">

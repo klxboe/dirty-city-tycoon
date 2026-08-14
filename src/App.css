@@ -41,15 +41,20 @@
     linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
 }
 
-/* Warmer Lichtkegel hinter der Scheibe – hebt das Ziel vom dunklen Grund ab. */
+/*
+ * Lichtkegel hinter der Scheibe – hebt das Ziel vom dunklen Grund ab. Die Farbe kommt
+ * aus --stage-glow, das App.tsx pro Welt inline auf .stage setzt (siehe worlds.ts) –
+ * Fallback ist das ursprüngliche Orange, falls die Variable mal fehlt.
+ */
 .stage::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(ellipse 58% 42% at 50% 30%, rgba(255, 159, 28, 0.2), transparent 70%);
+  background: radial-gradient(ellipse 58% 42% at 50% 30%, var(--stage-glow, rgba(255, 159, 28, 0.2)), transparent 70%);
   pointer-events: none;
   animation: stage-glow-breathe 4s ease-in-out infinite;
+  transition: background 0.4s ease-out;
 }
 
 @keyframes stage-glow-breathe {

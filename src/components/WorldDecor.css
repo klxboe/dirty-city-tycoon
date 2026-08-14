@@ -1,0 +1,57 @@
+.world-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.world-decor__corner {
+  position: absolute;
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.06);
+  filter: drop-shadow(0 -2px 6px rgba(0, 0, 0, 0.3));
+}
+
+.world-decor__corner--left {
+  left: -4px;
+}
+
+.world-decor__corner--right {
+  right: -4px;
+  transform: scaleX(-1);
+}
+
+.world-decor__shape {
+  width: 52px;
+  height: 78px;
+  display: block;
+}
+
+/* Kosmos: statt Ecken-Silhouetten ein paar leise funkelnde Sterne im oberen Himmel. */
+.world-decor__star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.35;
+  animation: world-decor-twinkle 3.2s ease-in-out infinite;
+}
+
+@keyframes world-decor-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-decor__star {
+    animation: none;
+    opacity: 0.5;
+  }
+}
