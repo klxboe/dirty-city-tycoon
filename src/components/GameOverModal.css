@@ -1,0 +1,206 @@
+/*
+ * Eigene, unruhigere Inszenierung für den Game-Over-Moment – vorher teilte sich dieses
+ * Fenster die komplette Optik mit dem Erfolgs-Screen (nur andere Textfarbe) und wirkte
+ * dadurch wie dieselbe Karte zweimal. "Axt zersplittert" soll sich spürbar anders
+ * anfühlen als "Geschafft!".
+ */
+
+/* Rot pulsierende Vignette über dem normalen dunklen Hintergrund – zusätzlich zur
+   Dimmung aus .modal-backdrop, nicht als Ersatz dafür. */
+.modal-backdrop--danger::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255, 40, 60, 0.22), transparent 68%);
+  animation: gameover-vignette-pulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gameover-vignette-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Riss-Overlay über den ganzen Screen, hinter der Karte – blitzt kurz hell auf und
+   bleibt danach als schwaches Muster stehen (derselbe Trick wie der Bruch-Effekt auf
+   der Zielscheibe, hier nur bildschirmfüllend statt scheibengroß). */
+.gameover-cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0;
+  animation: gameover-cracks-in 0.5s ease-out 0.05s forwards;
+}
+
+@keyframes gameover-cracks-in {
+  0% {
+    opacity: 0;
+    stroke-dasharray: 340;
+    stroke-dashoffset: 340;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.3;
+    stroke-dasharray: 340;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Die Karte schlägt hart ein statt sanft einzufedern: startet größer und leicht
+   verdreht, knallt auf Zielgröße und wackelt kurz nach – im Gegensatz zum weichen
+   Bounce des Erfolgs-Screens (`modal-pop-in`). */
+.modal-card--gameover {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(255, 70, 90, 0.4);
+  animation: gameover-slam-in 0.36s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+@keyframes gameover-slam-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.4) rotate(-4deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.96) rotate(1.5deg);
+  }
+  75% {
+    transform: scale(1.03) rotate(-0.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Titel schlägt wie ein Stempel ein: kommt groß rein, klatscht auf Größe, ein Hauch
+   Überschwingen zum Ausklingen – deutlich härter als das normale sanfte Einblenden. */
+.modal-card__title--stamp {
+  animation: gameover-title-stamp 0.4s cubic-bezier(0.2, 0.9, 0.25, 1) 0.1s both;
+}
+
+@keyframes gameover-title-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---- Axt zerspringt in zwei Hälften ---- */
+.gameover-axe {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto var(--space-1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.gameover-axe__half {
+  position: absolute;
+  inset: 0;
+}
+
+.gameover-axe__half--a {
+  clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%);
+  animation: gameover-shard-a 0.55s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.gameover-axe__half--b {
+  clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%);
+  animation: gameover-shard-b 0.55s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+@keyframes gameover-shard-a {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  45% {
+    transform: translate(-11px, -15px) rotate(-20deg);
+  }
+  100% {
+    transform: translate(-6px, -9px) rotate(-13deg);
+  }
+}
+
+@keyframes gameover-shard-b {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  45% {
+    transform: translate(11px, 15px) rotate(18deg);
+  }
+  100% {
+    transform: translate(6px, 9px) rotate(11deg);
+  }
+}
+
+.gameover-axe__spark-ring {
+  position: absolute;
+  inset: 0;
+}
+
+.gameover-axe__spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  margin: -9px 0 0 -1.5px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #fff6e0, #ff5a5a 55%, rgba(255, 90, 90, 0));
+  transform-origin: center;
+  animation: gameover-spark-burst 0.45s cubic-bezier(0.15, 0.6, 0.4, 1) both;
+}
+
+@keyframes gameover-spark-burst {
+  0% {
+    transform: rotate(var(--angle)) translateY(0) scaleY(0.4);
+    opacity: 1;
+  }
+  35% {
+    transform: rotate(var(--angle)) translateY(-30px) scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateY(-46px) scaleY(0.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop--danger::before {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .modal-card--gameover,
+  .modal-card__title--stamp,
+  .gameover-axe__half--a,
+  .gameover-axe__half--b,
+  .gameover-axe__spark {
+    animation-duration: 0.15s;
+  }
+
+  .gameover-cracks {
+    animation: none;
+    opacity: 0.3;
+  }
+}

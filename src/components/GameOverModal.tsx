@@ -1,5 +1,7 @@
+import { Axe } from './Axe';
 import { Coin } from './Coin';
 import './LevelCompleteModal.css';
+import './GameOverModal.css';
 
 interface GameOverModalProps {
   level: number;
@@ -10,14 +12,25 @@ interface GameOverModalProps {
   /** Münzen, die dieser Lauf gekostet hat (gesammelte Äpfel des laufenden Levels). */
   coinsLost: number;
   totalCoins: number;
+  /** Nur fürs Icon oben im Fenster – zerspringt in zwei Hälften beim Erscheinen. */
+  axeSkin: string;
   onRestart: () => void;
   onOpenShop: () => void;
 }
+
+const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
 
 /**
  * Erscheint, wenn eine Axt eine bereits steckende Axt trifft. Das beendet den Lauf –
  * weiter geht es am Anfang des aktuellen 10er-Blocks. Die Münzen aus früher
  * abgeschlossenen Leveln bleiben erhalten, nur das angefangene Level bringt nichts ein.
+ *
+ * Bekommt bewusst eine EIGENE, deutlich unruhigere Inszenierung als das Erfolgs-Fenster
+ * (`LevelCompleteModal`) – vorher teilten sich beide dieselbe sanfte Pop-in-Animation,
+ * nur in Rot statt Orange, und wirkten dadurch wie dieselbe Karte zweimal. "Axt
+ * zersplittert" soll sich auch so anfühlen: Riss-Overlay, rot pulsierende Vignette,
+ * ein hart einschlagendes statt sanft einfedendes Fenster, und die Axt oben zerspringt
+ * beim Erscheinen sichtbar in zwei Hälften.
  */
 export function GameOverModal({
   level,
@@ -25,13 +38,40 @@ export function GameOverModal({
   bestLevel,
   coinsLost,
   totalCoins,
+  axeSkin,
   onRestart,
   onOpenShop,
 }: GameOverModalProps) {
   return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
-        <div className="modal-card__title modal-card__title--fail">Axt zersplittert!</div>
+    <div className="modal-backdrop modal-backdrop--danger">
+      {/* Riss-Overlay über den ganzen Bildschirm, direkt hinter der Karte – derselbe
+          Trick wie der Bruch-Effekt auf der Zielscheibe, nur bildschirmfüllend. */}
+      <svg className="gameover-cracks" viewBox="0 0 300 300" preserveAspectRatio="none">
+        <path
+          d="M150 150 L60 40 M150 150 L230 20 M150 150 L20 130 M150 150 L40 260 M150 150 L140 300 M150 150 L280 170 M150 150 L250 260 M150 150 L280 60"
+          stroke="rgba(255,90,90,0.8)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+
+      <div className="modal-card modal-card--gameover">
+        <div className="gameover-axe">
+          <span className="gameover-axe__spark-ring">
+            {SPARK_ANGLES.map((angle) => (
+              <span key={angle} className="gameover-axe__spark" style={{ ['--angle' as string]: `${angle}deg` }} />
+            ))}
+          </span>
+          <div className="gameover-axe__half gameover-axe__half--a">
+            <Axe size={54} skin={axeSkin} />
+          </div>
+          <div className="gameover-axe__half gameover-axe__half--b">
+            <Axe size={54} skin={axeSkin} />
+          </div>
+        </div>
+
+        <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">Axt zersplittert!</div>
         <div className="modal-card__body">
           Du hast deine eigene Axt getroffen – in Level {level}.
           {restartLevel === level
@@ -52,7 +92,7 @@ export function GameOverModal({
           <Coin size={15} /> Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
 
-        <button className="modal-card__button" onClick={onRestart}>
+        <button className="modal-card__button modal-card__button--danger" onClick={onRestart}>
           {restartLevel === level ? 'Neuer Versuch' : `Zurück zu Level ${restartLevel}`}
         </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>

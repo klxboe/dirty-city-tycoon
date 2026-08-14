@@ -526,6 +526,7 @@ function App() {
           bestLevel={game.save.bestLevel}
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}
+          axeSkin={game.save.equippedAxeSkin}
           onRestart={game.restartRun}
           onOpenShop={() => setShopOpen(true)}
         />
