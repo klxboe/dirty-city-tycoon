@@ -87,6 +87,29 @@ function App() {
   const prevFlightStartRef = useRef<number | null>(null);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [gemsFlash, setGemsFlash] = useState(false);
+  /**
+   * Kurzer "Level N"-Hinweis auf der Bühne, wenn ein geschafftes Level automatisch ins
+   * nächste übergeht (siehe LevelCompleteModal – kein Pflicht-Tap mehr auf "Weiter").
+   * Ohne diesen Hinweis würde die Spielszene einfach wechseln, ohne dass klar wird,
+   * DASS und WOHIN man gerade gesprungen ist. `expectLevelIntroRef` wird nur beim
+   * automatischen/manuellen "Weiter"-Übergang gesetzt, nicht bei jedem Levelwechsel
+   * (Weltkarten-Sprung, Neustart) – dort ist der Kontext schon durch die eigene
+   * Navigation klar.
+   */
+  const expectLevelIntroRef = useRef(false);
+  const prevLevelIndexForIntroRef = useRef(game.levelIndex);
+  const [levelIntroVisible, setLevelIntroVisible] = useState(false);
+  useEffect(() => {
+    if (game.levelIndex !== prevLevelIndexForIntroRef.current) {
+      prevLevelIndexForIntroRef.current = game.levelIndex;
+      if (expectLevelIntroRef.current) {
+        expectLevelIntroRef.current = false;
+        setLevelIntroVisible(true);
+        const timeout = setTimeout(() => setLevelIntroVisible(false), 1300);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [game.levelIndex]);
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worldMapOpen, setWorldMapOpen] = useState(false);
@@ -483,6 +506,15 @@ function App() {
             </span>
           </div>
         )}
+
+        {/* Macht den automatischen Levelwechsel sichtbar (siehe expectLevelIntroRef
+            oben) – ohne das würde die Szene nach dem Abschluss-Fenster einfach
+            wechseln, ohne dass klar ist, DASS und WOHIN man gerade gesprungen ist. */}
+        {levelIntroVisible && (
+          <div className="stage__level-intro">
+            <span>Level {game.levelIndex + 1}</span>
+          </div>
+        )}
       </div>
 
       {shopOpen && (
@@ -514,7 +546,10 @@ function App() {
           totalGems={game.save.gems}
           streak={game.streak}
           isCampaignComplete={game.isCampaignComplete}
-          onNext={game.nextLevel}
+          onNext={() => {
+            expectLevelIntroRef.current = true;
+            game.nextLevel();
+          }}
           onOpenShop={() => setShopOpen(true)}
         />
       )}

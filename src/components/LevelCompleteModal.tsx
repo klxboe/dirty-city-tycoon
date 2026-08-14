@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { Apple } from './Apple';
 import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
@@ -5,6 +7,12 @@ import { useCountUp } from '../hooks/useCountUp';
 import { getBossFruit, getSkin } from '../game/shop';
 import type { LevelReward } from '../game/types';
 import './LevelCompleteModal.css';
+
+/**
+ * Nach dieser Zeit geht's von selbst zum nächsten Level – kein Pflicht-Tap mehr auf
+ * "Weiter" nötig. Der Button bleibt trotzdem da, für alle, die es eilig haben.
+ */
+const AUTO_ADVANCE_MS = 3500;
 
 interface LevelCompleteModalProps {
   level: number;
@@ -35,6 +43,15 @@ export function LevelCompleteModal({
   // Zählt die verdienten Münzen hoch, statt sie fertig hinzuklatschen – fühlt sich
   // nach Belohnung an statt nach Zahl auf einem Zettel.
   const shownCoins = useCountUp(reward.total, 700);
+
+  // Automatisch weiter, statt bei JEDEM Level auf einen Tap zu warten – das nervte bei
+  // langen Läufen. `onNext` löst in App.tsx einen kurzen "Level N"-Hinweis auf der Bühne
+  // aus, damit der Sprung trotzdem sichtbar bleibt statt unbemerkt zu passieren.
+  useEffect(() => {
+    const timeout = setTimeout(onNext, AUTO_ADVANCE_MS);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const boss = reward.bossFruitId ? getBossFruit(reward.bossFruitId) : undefined;
   const unlockedAxe = reward.unlockedAxeSkinId ? getSkin(reward.unlockedAxeSkinId) : undefined;
@@ -82,6 +99,14 @@ export function LevelCompleteModal({
           </div>
         )}
 
+        {/* Sammelfigur getroffen (nur Heldenstadt): eigener Badge wie beim goldenen Apfel. */}
+        {reward.figurines > 0 && (
+          <div className="modal-card__gems modal-card__gems--figurine">
+            <Apple size={22} figurine />
+            <span className="modal-card__gems-score">+{reward.figurines}</span>
+          </div>
+        )}
+
         {/* Aufschlüsselung: zeigt, WOFÜR es Münzen gab – macht die Boni sichtbar. */}
         <div className="reward-breakdown">
           {reward.apples > 0 && (
@@ -112,6 +137,11 @@ export function LevelCompleteModal({
               Goldener Apfel <strong>+{reward.gems} Diamanten</strong>
             </span>
           )}
+          {reward.figurines > 0 && (
+            <span className="reward-breakdown__row reward-breakdown__row--gems">
+              Sammelfigur <strong>+{reward.figurines}</strong>
+            </span>
+          )}
         </div>
 
         <div className="modal-card__sub">
@@ -126,8 +156,9 @@ export function LevelCompleteModal({
         {/* Einmalige Glückwunsch-Zeile bei Level 100 – danach geht's im Endlos-Modus
             einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}
         {isCampaignComplete && <div className="modal-card__badge">Alle 100 Level gemeistert! 🎉</div>}
-        <button className="modal-card__button" onClick={onNext}>
+        <button className="modal-card__button modal-card__button--auto" onClick={onNext}>
           {isCampaignComplete ? 'Weiter im Endlos-Modus' : `Weiter zu Level ${level + 1}`}
+          <span className="modal-card__auto-bar" style={{ animationDuration: `${AUTO_ADVANCE_MS}ms` }} />
         </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
           Werkstatt öffnen

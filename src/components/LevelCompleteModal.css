@@ -128,7 +128,19 @@
   color: var(--color-accent);
 }
 
+/* Sammelfigur-Badge: eigener rot-blauer Akzent statt Diamant-Teal, passend zum
+   Heldenstadt-/Netzschwinger-Farbschema. */
+.modal-card__gems--figurine {
+  background: rgba(224, 36, 47, 0.12);
+  border-color: #e0242f;
+}
+
+.modal-card__gems--figurine .modal-card__gems-score {
+  color: #e0242f;
+}
+
 .modal-card__button {
+  position: relative;
   width: 100%;
   margin-top: var(--space-2);
   border: none;
@@ -139,6 +151,30 @@
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #08210f;
   box-shadow: 0 4px 0 var(--color-primary-dark);
+  overflow: hidden;
+}
+
+/* Schrumpfender Streifen am unteren Rand des Haupt-Buttons: zeigt, dass es von
+   selbst weitergeht, ohne dass ein Tap Pflicht wäre – wer es eilig hat, tippt
+   einfach trotzdem auf den Button. */
+.modal-card__auto-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(8, 33, 15, 0.4);
+  transform-origin: left;
+  animation: modal-auto-bar-shrink linear forwards;
+}
+
+@keyframes modal-auto-bar-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .modal-card__button:active {
@@ -283,4 +319,10 @@
 .reward-breakdown__row--bonus,
 .reward-breakdown__row--bonus strong {
   color: var(--color-money);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-card__auto-bar {
+    display: none;
+  }
 }
