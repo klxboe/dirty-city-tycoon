@@ -1,3 +1,10 @@
+/*
+ * Blauer Cartoon-Himmel statt schlicht schwarzem Hintergrund – passend zum neuen
+ * Ozean-Look der Weltkarte. Die Wolken-Tupfen sind Teil des `background` selbst
+ * (mehrere radial-gradient-Ebenen), nicht eigene Elemente: die Box scrollt bei
+ * langem Inhalt (erster Start mit Regeln) intern, aber der Hintergrund der Box
+ * selbst bleibt stehen, wandert also nicht mit dem Inhalt mit.
+ */
 .start {
   flex: 1;
   min-height: 0;
@@ -7,6 +14,11 @@
   gap: var(--space-4);
   padding: var(--space-5) var(--space-4) var(--space-6);
   overflow-y: auto;
+  background:
+    radial-gradient(ellipse 15% 3% at 15% 9%, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(ellipse 11% 2.5% at 78% 5%, rgba(255, 255, 255, 0.42), transparent 70%),
+    radial-gradient(ellipse 17% 3% at 48% 15%, rgba(255, 255, 255, 0.32), transparent 70%),
+    radial-gradient(ellipse 130% 65% at 50% -8%, #4fa3e8 0%, #1c5fa8 42%, #0c2f57 78%, #071b34 100%);
 }
 
 .start__top {
@@ -16,29 +28,55 @@
   gap: var(--space-2);
 }
 
+/*
+ * Dicke Comic-Kontur per gestapelten text-shadow-Versätzen statt einem echten
+ * `-webkit-text-stroke` (das würde die Innenfläche der Buchstaben dünner wirken
+ * lassen) – vier Versätze rundherum ergeben eine gleichmäßige Outline.
+ */
 .start__title {
   margin: 0;
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--color-text);
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-shadow:
+    -2px -2px 0 #0b2a52,
+    2px -2px 0 #0b2a52,
+    -2px 2px 0 #0b2a52,
+    2px 2px 0 #0b2a52,
+    0 6px 18px rgba(0, 0, 0, 0.45);
   /* Kein sichtbarer Hinweis, dass hier etwas verborgen ist – kein Cursor-Wechsel,
      keine Umrandung. Wer das Oster-Ei sucht, tippt sowieso einfach drauflos. */
   cursor: default;
   user-select: none;
+  animation: start-title-pop 0.55s cubic-bezier(0.22, 1.4, 0.36, 1) both;
 }
 
 .start__title-accent {
   color: var(--color-primary);
 }
 
+@keyframes start-title-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(-14px) rotate(-4deg);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.06) translateY(2px) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
 .start__stats {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2);
   font-size: 13px;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .start__coins,
@@ -46,6 +84,10 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(6, 20, 40, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -82,12 +124,39 @@
   }
 }
 
-/* Die Axt dreht sich langsam – gibt dem Startbildschirm Leben, ohne abzulenken. */
+/* Die Axt dreht sich langsam – gibt dem Startbildschirm Leben, ohne abzulenken.
+   Ein weicher Lichtfleck darunter (::after) gibt ihr einen "Bühnen"-Moment statt
+   frei im Raum zu schweben. */
 .start__art {
+  position: relative;
   display: flex;
   justify-content: center;
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
   animation: start-axe-float 3.4s ease-in-out infinite;
+}
+
+.start__art::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 90px;
+  height: 26px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(120, 190, 255, 0.45), transparent 72%);
+  animation: start-axe-glow-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes start-axe-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
 }
 
 @keyframes start-axe-float {
@@ -110,8 +179,9 @@
   max-width: 340px;
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: rgba(10, 35, 65, 0.55);
+  border: 1px solid rgba(140, 195, 255, 0.25);
+  backdrop-filter: blur(2px);
 }
 
 .start__rules-title {
@@ -137,11 +207,11 @@
   gap: var(--space-3);
   font-size: 13px;
   line-height: 1.45;
-  color: var(--color-text-muted);
+  color: rgba(230, 242, 255, 0.85);
 }
 
 .start__rules-list strong {
-  color: var(--color-text);
+  color: #fff;
 }
 
 .start__rules-icon {
@@ -170,7 +240,7 @@
 
 .start__button {
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   padding: var(--space-3);
   font-family: inherit;
   font-weight: 800;
@@ -178,26 +248,54 @@
   cursor: pointer;
 }
 
+/* Pulsiert leise, um zum Antippen einzuladen – hört bei "Bewegung reduzieren" auf. */
 .start__button--main {
   font-size: 18px;
   padding: var(--space-4);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #2a1400;
   box-shadow: 0 5px 0 var(--color-primary-dark);
+  animation: start-cta-pulse 2.4s ease-in-out infinite;
 }
 
 .start__button--main:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 var(--color-primary-dark);
+  animation: none;
 }
 
+@keyframes start-cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 5px 0 var(--color-primary-dark), 0 0 0 0 rgba(255, 159, 28, 0);
+  }
+  50% {
+    box-shadow: 0 5px 0 var(--color-primary-dark), 0 0 20px 5px rgba(255, 159, 28, 0.45);
+  }
+}
+
+/* Glasige blaue Buttons statt neutralem Grau – passend zum Ozean-Hintergrund. */
 .start__button--ghost {
-  background: var(--color-surface-raised);
-  color: var(--color-text-muted);
-  box-shadow: 0 3px 0 var(--color-border);
+  background: rgba(20, 55, 100, 0.45);
+  border: 1px solid rgba(140, 195, 255, 0.3);
+  color: #eaf4ff;
+  box-shadow: 0 3px 0 rgba(8, 28, 55, 0.7);
+  backdrop-filter: blur(2px);
 }
 
 .start__button--ghost:active {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--color-border);
+  box-shadow: 0 1px 0 rgba(8, 28, 55, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start__title,
+  .start__button--main {
+    animation: none;
+  }
+
+  .start__art,
+  .start__art::after {
+    animation: none;
+  }
 }
