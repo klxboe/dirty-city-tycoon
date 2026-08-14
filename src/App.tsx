@@ -529,6 +529,7 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           onRestart={game.restartRun}
           onOpenShop={() => setShopOpen(true)}
+          onBackToMenu={() => setScreen('start')}
         />
       )}
     </div>

@@ -5,13 +5,22 @@
  * anfühlen als "Geschafft!".
  */
 
-/* Rot pulsierende Vignette über dem normalen dunklen Hintergrund – zusätzlich zur
-   Dimmung aus .modal-backdrop, nicht als Ersatz dafür. */
+/* Bottom-Sheet statt mittigem Fenster: die Karte hängt am unteren Rand, statt in der
+   Bildschirmmitte zu schweben – dafür überschreibt dieser Selektor die Zentrierung aus
+   `.modal-backdrop` (LevelCompleteModal.css) gezielt nur für den Game-Over-Fall. */
+.modal-backdrop--danger {
+  align-items: flex-end;
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+}
+
+/* Blau pulsierende Vignette über dem normalen dunklen Hintergrund – zusätzlich zur
+   Dimmung aus .modal-backdrop, nicht als Ersatz dafür. Passend zum Ozean-Blau der
+   restlichen Oberfläche (Weltkarte) statt der ursprünglichen Warnrot-Fassung. */
 .modal-backdrop--danger::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255, 40, 60, 0.22), transparent 68%);
+  background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(40, 110, 255, 0.28), transparent 68%);
   animation: gameover-vignette-pulse 1.4s ease-in-out infinite;
   pointer-events: none;
 }
@@ -55,32 +64,38 @@
   }
 }
 
-/* Die Karte schlägt hart ein statt sanft einzufedern: startet größer und leicht
-   verdreht, knallt auf Zielgröße und wackelt kurz nach – im Gegensatz zum weichen
-   Bounce des Erfolgs-Screens (`modal-pop-in`). */
+/* Die Karte schiebt sich von unten herein statt mittig einzufedern – ein Bottom-Sheet,
+   wie man es von mobilen Apps kennt, statt eines klassischen Popups. Leichtes
+   Überschwingen am Ende gibt trotzdem etwas Wucht mit, ohne hart zu "schlagen". */
 .modal-card--gameover {
   position: relative;
   z-index: 1;
-  border-color: rgba(255, 70, 90, 0.4);
-  animation: gameover-slam-in 0.36s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  width: 100%;
+  border-color: rgba(70, 140, 255, 0.5);
+  box-shadow: 0 -8px 40px rgba(20, 80, 200, 0.25);
+  animation: gameover-slide-up 0.4s cubic-bezier(0.16, 0.9, 0.24, 1) both;
 }
 
-@keyframes gameover-slam-in {
+@keyframes gameover-slide-up {
   0% {
     opacity: 0;
-    transform: scale(1.4) rotate(-4deg);
+    transform: translateY(65%);
   }
-  55% {
+  70% {
     opacity: 1;
-    transform: scale(0.96) rotate(1.5deg);
-  }
-  75% {
-    transform: scale(1.03) rotate(-0.5deg);
+    transform: translateY(-4%);
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(0deg);
+    transform: translateY(0);
   }
+}
+
+/* Überschreibt die rote Titel-Warnfarbe aus LevelCompleteModal.css: hier soll es zum
+   neuen blauen Ozean-Look passen statt zur klassischen Warnrot-Fehlermeldung. */
+.modal-card--gameover .modal-card__title--fail {
+  color: #4ea1ff;
+  text-shadow: 0 0 18px rgba(78, 161, 255, 0.5);
 }
 
 /* Titel schlägt wie ein Stempel ein: kommt groß rein, klatscht auf Größe, ein Hauch
@@ -165,7 +180,7 @@
   height: 18px;
   margin: -9px 0 0 -1.5px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #fff6e0, #ff5a5a 55%, rgba(255, 90, 90, 0));
+  background: linear-gradient(180deg, #eaf4ff, #4ea1ff 55%, rgba(78, 161, 255, 0));
   transform-origin: center;
   animation: gameover-spark-burst 0.45s cubic-bezier(0.15, 0.6, 0.4, 1) both;
 }
@@ -183,6 +198,31 @@
     transform: rotate(var(--angle)) translateY(-46px) scaleY(0.6);
     opacity: 0;
   }
+}
+
+/* Blauer Haupt-Button statt des roten Warn-Stils – "Neuer Versuch" ist eine Einladung
+   weiterzuspielen, keine Fehlermeldung, das darf einladender wirken. */
+.modal-card__button--ocean {
+  background: linear-gradient(135deg, #4ea1ff, #1a5fd9);
+  color: #06172e;
+  box-shadow: 0 4px 0 #123f94;
+}
+
+.modal-card__button--ocean:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #123f94;
+}
+
+/* Zwei gleich breite Buttons nebeneinander für "Zurück zum Menü" / "Werkstatt öffnen". */
+.modal-card__button-row {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.modal-card__button-row .modal-card__button {
+  flex: 1;
+  margin-top: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

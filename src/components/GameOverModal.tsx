@@ -16,6 +16,8 @@ interface GameOverModalProps {
   axeSkin: string;
   onRestart: () => void;
   onOpenShop: () => void;
+  /** Zurück zum Startbildschirm, ohne einen neuen Versuch zu starten. */
+  onBackToMenu: () => void;
 }
 
 const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
@@ -25,12 +27,13 @@ const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
  * weiter geht es am Anfang des aktuellen 10er-Blocks. Die Münzen aus früher
  * abgeschlossenen Leveln bleiben erhalten, nur das angefangene Level bringt nichts ein.
  *
- * Bekommt bewusst eine EIGENE, deutlich unruhigere Inszenierung als das Erfolgs-Fenster
- * (`LevelCompleteModal`) – vorher teilten sich beide dieselbe sanfte Pop-in-Animation,
- * nur in Rot statt Orange, und wirkten dadurch wie dieselbe Karte zweimal. "Axt
- * zersplittert" soll sich auch so anfühlen: Riss-Overlay, rot pulsierende Vignette,
- * ein hart einschlagendes statt sanft einfedendes Fenster, und die Axt oben zerspringt
- * beim Erscheinen sichtbar in zwei Hälften.
+ * Bekommt bewusst eine EIGENE Inszenierung als das Erfolgs-Fenster (`LevelCompleteModal`)
+ * – vorher teilten sich beide dieselbe sanfte Pop-in-Animation, nur in Rot statt Orange,
+ * und wirkten dadurch wie dieselbe Karte zweimal. Jetzt: ein Bottom-Sheet, das von unten
+ * hereinschiebt statt mittig einzublenden, blau statt rot getönt (passend zum neuen
+ * Ozean-Look der Weltkarte), Riss-Overlay, die Axt zerspringt beim Erscheinen sichtbar
+ * in zwei Hälften, und drei klare Wege weiter: neuer Versuch, zurück zum Startbildschirm,
+ * oder direkt in die Werkstatt.
  */
 export function GameOverModal({
   level,
@@ -41,6 +44,7 @@ export function GameOverModal({
   axeSkin,
   onRestart,
   onOpenShop,
+  onBackToMenu,
 }: GameOverModalProps) {
   return (
     <div className="modal-backdrop modal-backdrop--danger">
@@ -49,7 +53,7 @@ export function GameOverModal({
       <svg className="gameover-cracks" viewBox="0 0 300 300" preserveAspectRatio="none">
         <path
           d="M150 150 L60 40 M150 150 L230 20 M150 150 L20 130 M150 150 L40 260 M150 150 L140 300 M150 150 L280 170 M150 150 L250 260 M150 150 L280 60"
-          stroke="rgba(255,90,90,0.8)"
+          stroke="rgba(90,160,255,0.85)"
           strokeWidth="2.4"
           strokeLinecap="round"
           fill="none"
@@ -92,12 +96,17 @@ export function GameOverModal({
           <Coin size={15} /> Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
 
-        <button className="modal-card__button modal-card__button--danger" onClick={onRestart}>
+        <button className="modal-card__button modal-card__button--ocean" onClick={onRestart}>
           {restartLevel === level ? 'Neuer Versuch' : `Zurück zu Level ${restartLevel}`}
         </button>
-        <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
-          Werkstatt öffnen
-        </button>
+        <div className="modal-card__button-row">
+          <button className="modal-card__button modal-card__button--secondary" onClick={onBackToMenu}>
+            Zurück zum Menü
+          </button>
+          <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
+            Werkstatt öffnen
+          </button>
+        </div>
       </div>
     </div>
   );
