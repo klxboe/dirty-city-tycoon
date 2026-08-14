@@ -1,187 +1,284 @@
-.world-map {
-  width: 100%;
-  max-width: 360px;
-  max-height: 84dvh;
+/*
+ * Die Weltkarte ist bewusst kein Modal-Fenster mehr, sondern ein eigener Vollbild-
+ * Screen: ein gewundener Reiseweg, den man durchscrollt, statt eine Liste von Karten.
+ * `left:0; right:0; max-width:480px; margin:auto` zentriert sie exakt wie `.app`
+ * selbst (siehe index.css: `#root` zentriert `.app` per Flexbox) – sonst würde ein
+ * simples `inset:0` auf breiten Fenstern über die volle Browserbreite reichen,
+ * während das Spiel daneben in einer schmalen Spalte sitzt.
+ */
+.world-path {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-  animation: modal-pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: #05060a;
+  animation: world-path-in 0.3s cubic-bezier(0.22, 0.9, 0.3, 1);
 }
 
-.world-map__head {
+@keyframes world-path-in {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.world-path__head {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0.92), rgba(5, 6, 10, 0.55) 80%, transparent);
 }
 
-.world-map__title {
+.world-path__title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
   color: var(--color-text);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.world-map__list {
+.world-path__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.world-path__close:active {
+  transform: scale(0.92);
+}
+
+.world-path__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  margin-top: -56px; /* Kopfzeile schwebt über der Karte, statt Platz wegzunehmen. */
 }
 
-.world-card {
+.world-path__track {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
-  overflow: hidden;
+  width: 100%;
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
 }
 
-.world-card::before {
-  /* Dünner farbiger Streifen am linken Rand in der Welt-Leitfarbe. */
-  content: '';
+.world-path__svg {
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 5px;
-  background: var(--world-accent);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.world-card--current {
-  border-color: var(--world-accent);
-  box-shadow: inset 0 0 0 1px var(--world-accent);
+.world-path__line {
+  fill: none;
+  vector-effect: non-scaling-stroke;
 }
 
-.world-card--locked {
-  cursor: default;
-  opacity: 0.6;
+.world-path__line--dim {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 3 6;
 }
 
-.world-card__swatch {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--world-accent);
-  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.2);
+.world-path__line--lit {
+  stroke: var(--color-primary);
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(255, 159, 28, 0.55));
 }
 
-.world-card--locked .world-card__swatch {
-  filter: grayscale(1);
-}
-
-.world-card__info {
-  flex: 1;
-  min-width: 0;
+.world-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
 }
 
-.world-card__name {
+.world-node__pin {
+  position: absolute;
+  top: -30px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--node-accent);
+  color: #08101a;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  animation: world-node-pin-bob 1.6s ease-in-out infinite;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes world-node-pin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.world-node__badge {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  /* Einfarbiger Fallback zuerst: falls color-mix() (neuere CSS-Funktion) nicht
+     unterstützt wird, ist die zweite `background`-Zeile als Ganzes ungültig und
+     wird ignoriert – ohne diese Zeile bliebe der Kreis dann unsichtbar. */
+  background-color: var(--node-accent);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--node-accent) 70%, white 30%), var(--node-accent) 55%, color-mix(in srgb, var(--node-accent) 60%, black 40%) 100%);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 4px rgba(5, 6, 10, 0.85),
+    0 0 22px 2px color-mix(in srgb, var(--node-accent) 55%, transparent);
+}
+
+.world-node__badge:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.world-node--locked .world-node__badge {
+  background: radial-gradient(circle at 35% 30%, #4a4f58, #2a2d33 60%, #1a1c20 100%);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    0 0 0 4px rgba(5, 6, 10, 0.85);
+}
+
+.world-node--current .world-node__badge {
+  animation: world-node-current-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes world-node-current-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.5),
+      0 0 0 4px rgba(5, 6, 10, 0.85),
+      0 0 22px 2px color-mix(in srgb, var(--node-accent) 55%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.5),
+      0 0 0 4px rgba(5, 6, 10, 0.85),
+      0 0 34px 10px color-mix(in srgb, var(--node-accent) 70%, transparent);
+  }
+}
+
+.world-node__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.world-node__ring-track,
+.world-node__ring-fill {
+  fill: none;
+  stroke-width: 7;
+}
+
+.world-node__ring-track {
+  stroke: rgba(0, 0, 0, 0.32);
+}
+
+.world-node__ring-fill {
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease-out;
+}
+
+.world-node--locked .world-node__ring-fill {
+  stroke: transparent;
+}
+
+.world-node__icon {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.world-node--locked .world-node__icon {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.world-node__lock {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.world-node__label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 118px;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(5, 6, 10, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.world-node__label--right {
+  left: calc(50% + 62px);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.world-node__label--left {
+  right: calc(50% + 62px);
+  align-items: flex-end;
+  text-align: right;
+}
+
+.world-node__name {
+  font-size: 14px;
   font-weight: 800;
-  font-size: 15px;
   color: var(--color-text);
 }
 
-.world-card__current-tag {
-  padding: 1px 7px;
-  border-radius: var(--radius-full);
-  background: var(--world-accent);
-  color: #08210f;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.world-card__levels {
+.world-node__sub {
   font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.world-card__progress {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: 2px;
-}
-
-.world-card__progress-track {
-  flex: 1;
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-.world-card__progress-fill {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-full);
-  background: var(--world-accent);
-  transition: width 0.3s ease-out;
-}
-
-.world-card__progress-label {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 800;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.world-card__lock-hint {
-  font-size: 11px;
+.world-node--locked .world-node__name,
+.world-node--locked .world-node__sub {
   color: var(--color-text-muted);
-  font-style: italic;
-}
-
-.world-card__lock-icon {
-  flex-shrink: 0;
-  color: var(--color-text-muted);
-}
-
-.world-map__endless {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--color-accent);
-  background: rgba(46, 196, 182, 0.1);
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.world-map__close {
-  border: none;
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  font-weight: 800;
-  font-size: 16px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: #08210f;
-  box-shadow: 0 4px 0 var(--color-primary-dark);
-}
-
-.world-map__close:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--color-primary-dark);
 }
