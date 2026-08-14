@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
+import { Apple } from './Apple';
 import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
+import { worldForLevel } from '../game/worlds';
 import './StartScreen.css';
 
 interface StartScreenProps {
@@ -11,6 +13,8 @@ interface StartScreenProps {
   bestLevel: number;
   coins: number;
   gems: number;
+  /** Sammelfiguren aus Heldenstadt – nur gezeigt, wenn schon welche im Inventar sind. */
+  figurines: number;
   axeSkin: string;
   /** Beim allerersten Start zeigen wir zusätzlich die Regeln. */
   showTutorial: boolean;
@@ -33,6 +37,7 @@ export function StartScreen({
   bestLevel,
   coins,
   gems,
+  figurines,
   axeSkin,
   showTutorial,
   onPlay,
@@ -66,12 +71,31 @@ export function StartScreen({
     }, SECRET_TAP_WINDOW_MS);
   };
 
+  // Welche Welt als Nächstes drankommt – rein informativ, damit der Startbildschirm
+  // schon vorher zeigt, wo man landet, statt das erst nach dem Start-Tap zu erfahren.
+  const world = worldForLevel(Math.max(0, continueLevel - 1));
+
   return (
     <div className="start">
+      {/* Rein dekorative Wolken, die langsam über den Himmel driften – reine Atmosphäre,
+          kein eigenes Element im Hintergrund-`background` (der bleibt für die
+          statischen Tupfen zuständig), damit sie unabhängig animieren können. */}
+      <div className="start__clouds" aria-hidden="true">
+        <span className="start__cloud start__cloud--1" />
+        <span className="start__cloud start__cloud--2" />
+        <span className="start__cloud start__cloud--3" />
+      </div>
+
       <div className="start__top">
         <h1 className="start__title" onClick={handleLogoTap}>
           Axe<span className="start__title-accent">Throw</span>
         </h1>
+
+        <div className="start__world-badge" style={{ ['--world-accent' as string]: world.colors.accent }}>
+          <span className="start__world-dot" />
+          Aktuelle Welt: <strong>{world.name}</strong>
+        </div>
+
         <div className="start__stats">
           <span>
             Bestmarke: <strong>Level {bestLevel}</strong>
@@ -82,6 +106,11 @@ export function StartScreen({
           {gems > 0 && (
             <span className="start__gems">
               <Gem size={14} /> {gems}
+            </span>
+          )}
+          {figurines > 0 && (
+            <span className="start__figurines">
+              <Apple size={14} figurine /> {figurines}
             </span>
           )}
         </div>

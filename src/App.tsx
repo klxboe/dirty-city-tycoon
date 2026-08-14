@@ -310,6 +310,7 @@ function App() {
           bestLevel={game.save.bestLevel}
           coins={game.save.coins}
           gems={game.save.gems}
+          figurines={game.save.figurines}
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
           onPlay={startPlaying}
