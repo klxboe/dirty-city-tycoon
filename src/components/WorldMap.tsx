@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Axe } from './Axe';
 import { LEVEL_COUNT } from '../game/constants';
 import { WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
 import './WorldMap.css';
@@ -143,34 +144,71 @@ const TOP_PAD = 50;
 const ISLAND_R = 25;
 const NODE_X = [32, 68]; // Zickzack: gerader Index links, ungerader rechts.
 
-function nodeCenter(i: number): { x: number; y: number } {
+type Point = { x: number; y: number };
+
+function nodeCenter(i: number): Point {
   return { x: NODE_X[i % 2], y: TOP_PAD + i * ROW_HEIGHT + ROW_HEIGHT / 2 };
 }
 
-function curveSegment(from: { x: number; y: number }, to: { x: number; y: number }): string {
+function curveSegment(from: Point, to: Point): string {
   const midY = (from.y + to.y) / 2;
   return `C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
 }
 
-/** Kleine Deko-Sprites im Insel-Innern, an drei festen Punkten um die Mitte gestreut. */
+/** Ein kubisches Bezier-Segment zwischen zwei Inseln, dieselben Kontrollpunkte wie curveSegment. */
+interface BezierSegment {
+  p0: Point;
+  cp1: Point;
+  cp2: Point;
+  p3: Point;
+}
+
+function segmentBetween(from: Point, to: Point): BezierSegment {
+  const midY = (from.y + to.y) / 2;
+  return { p0: from, cp1: { x: from.x, y: midY }, cp2: { x: to.x, y: midY }, p3: to };
+}
+
+function pointOnSegment(seg: BezierSegment, t: number): Point {
+  const mt = 1 - t;
+  const a = mt * mt * mt;
+  const b = 3 * mt * mt * t;
+  const c = 3 * mt * t * t;
+  const d = t * t * t;
+  return {
+    x: a * seg.p0.x + b * seg.cp1.x + c * seg.cp2.x + d * seg.p3.x,
+    y: a * seg.p0.y + b * seg.cp1.y + c * seg.cp2.y + d * seg.p3.y,
+  };
+}
+
+/** Die Kette von Kurvensegmenten zwischen zwei (nicht zwingend benachbarten) Inseln,
+ *  in der richtigen Reihenfolge – für die Reise-Animation über mehrere Inseln hinweg. */
+function routeSegments(centers: Point[], from: number, to: number): BezierSegment[] {
+  const step = from <= to ? 1 : -1;
+  const segs: BezierSegment[] = [];
+  for (let i = from; i !== to; i += step) {
+    segs.push(segmentBetween(centers[i], centers[i + step]));
+  }
+  return segs;
+}
+
+function pointOnRoute(segs: BezierSegment[], t: number): Point {
+  if (segs.length === 0) return segs[0]?.p0 ?? { x: 0, y: 0 };
+  const scaled = Math.min(segs.length - 1e-6, Math.max(0, t * segs.length));
+  const index = Math.min(segs.length - 1, Math.floor(scaled));
+  return pointOnSegment(segs[index], scaled - index);
+}
+
+/** Kleine Deko-Sprites im Insel-Innern – Position UND ein Hauch Drehung/Größe pro
+ *  Instanz gestreut (per Seed, nicht zufällig), damit die Inseln weniger wie eine
+ *  Schablone und mehr wie handgemalt wirken. */
 const DECOR_OFFSETS: [number, number][] = [
   [-0.55, -0.25],
   [0.5, 0.3],
   [-0.15, 0.5],
+  [0.35, -0.45],
+  [-0.5, 0.15],
 ];
 
-/**
- * Weltkarte im Cartoon-Draufsicht-Stil: verbundene Inseln im Ozean statt einer
- * schlichten Knoten-Kette. Jede Insel ist eine per Seed erzeugte, unregelmäßige
- * Blase (organischer als ein Kreis) mit einer dunkleren "Klippen"-Ebene darunter für
- * Tiefe, dazu ein paar verstreute Deko-Icons und der eigentliche antippbare
- * Marker mit Fortschrittsring. Ein Sandpfad in zwei Tönen windet sich zwischen den
- * Inseln hindurch, wie ein eingelaufener Trampelpfad.
- *
- * Koordinatensystem wie zuvor: alles in Prozent der EIGENEN Breite der Karte (nicht
- * des Viewports), damit Inseln, Pfad und Marker bei jeder Bildschirmgröße ohne
- * Messen exakt deckungsgleich bleiben.
- */
 export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose }: WorldMapProps) {
   const nodes: MapNode[] = WORLDS.map((world) => ({
     key: world.id,
@@ -234,11 +272,56 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
     delay: (seededRandom(i * 3 + 2) * 6).toFixed(1),
   }));
 
+  /**
+   * Reise-Animation: statt beim Antippen sofort zu springen, reist eine kleine Axt
+   * sichtbar den Sandpfad entlang zur Zielwelt – über beliebig viele Zwischen-Inseln
+   * hinweg (`routeSegments`), damit ein Sprung von Wald direkt nach Kosmos genauso
+   * einen echten Weg zurücklegt wie ein Sprung zur Nachbarwelt. Läuft komplett über
+   * dieselben Prozent-Koordinaten wie der Rest der Karte (kein CSS `offset-path`,
+   * das würde echte Pixel statt Prozent brauchen und bräche bei jeder Fenstergröße).
+   */
+  const currentIndex = Math.max(0, nodes.findIndex((n) => n.isCurrent));
+  const [travel, setTravel] = useState<{ target: number; segs: BezierSegment[]; durationMs: number } | null>(null);
+  const [travelPos, setTravelPos] = useState<Point | null>(null);
+  const travelStartRef = useRef(0);
+
+  useEffect(() => {
+    if (!travel) return;
+    let frameId: number;
+    travelStartRef.current = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - travelStartRef.current) / travel.durationMs);
+      setTravelPos(pointOnRoute(travel.segs, t));
+      if (t >= 1) {
+        onSelectLevel(nodes[travel.target].startLevelIndex);
+        onClose();
+        return;
+      }
+      frameId = requestAnimationFrame(tick);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [travel]);
+
+  const startTravel = (target: number) => {
+    if (travel || target === currentIndex) {
+      // Kein Weg zu reisen (schon dort) -> direkt springen, keine leere Animation zeigen.
+      onSelectLevel(nodes[target].startLevelIndex);
+      onClose();
+      return;
+    }
+    const segs = routeSegments(centers, currentIndex, target);
+    const durationMs = Math.min(1800, 550 + (segs.length - 1) * 280);
+    setTravel({ target, segs, durationMs });
+  };
+
   return (
     <div className="world-atlas">
       <header className="world-atlas__head">
         <h2 className="world-atlas__title">Weltkarte</h2>
-        <button className="world-atlas__close" onClick={onClose} aria-label="Schließen">
+        <button className="world-atlas__close" onClick={onClose} aria-label="Schließen" disabled={!!travel}>
           ✕
         </button>
       </header>
@@ -282,13 +365,28 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
             <path d={litPath} className="world-atlas__path world-atlas__path--base" />
             <path d={litPath} className="world-atlas__path world-atlas__path--top" />
 
-            {/* Inseln: dunklere Klippen-Ebene versetzt darunter, helle Deckfläche obendrauf. */}
+            {/* Inseln: dunklere Klippen-Ebene versetzt darunter, helle Deckfläche obendrauf,
+                dazu ein kleiner Satelliten-Fels daneben für mehr "handgemalte" Unruhe. */}
             {nodes.map((n, i) => {
               const c = centers[i];
               const cliffPts = blobPoints(c.x, c.y + 2.6, ISLAND_R * 1.1, i * 31 + 7);
               const topPts = blobPoints(c.x, c.y, ISLAND_R, i * 31 + 7);
+              const satAngle = seededRandom(i * 53 + 4) * Math.PI * 2;
+              const satDist = ISLAND_R * 1.35;
+              const satCx = c.x + Math.cos(satAngle) * satDist * 0.4;
+              const satCy = c.y + Math.sin(satAngle) * satDist * 0.25;
+              const satR = ISLAND_R * (0.16 + seededRandom(i * 61 + 8) * 0.08);
               return (
                 <g key={n.key} className={n.unlocked ? '' : 'world-atlas__island--locked'}>
+                  <path
+                    d={smoothClosedPath(blobPoints(satCx, satCy + 1, satR * 1.15, i * 71 + 19, 7))}
+                    className="world-atlas__island-cliff"
+                  />
+                  <path
+                    d={smoothClosedPath(blobPoints(satCx, satCy, satR, i * 71 + 19, 7))}
+                    fill={`url(#island-fill-${i})`}
+                    className="world-atlas__island-top"
+                  />
                   <path d={smoothClosedPath(cliffPts)} className="world-atlas__island-cliff" />
                   <path d={smoothClosedPath(topPts)} fill={`url(#island-fill-${i})`} className="world-atlas__island-top" />
                 </g>
@@ -305,19 +403,24 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
             return (
               <div key={node.key} className="world-atlas__spot" style={{ left: `${c.x}%`, top: `${(c.y / totalHeight) * 100}%` }}>
                 {node.unlocked &&
-                  DECOR_OFFSETS.map(([dx, dy], di) => (
-                    <span
-                      key={di}
-                      className="world-atlas__decor"
-                      style={{
-                        left: `${dx * ISLAND_R * 1.5}px`,
-                        top: `${dy * ISLAND_R * 1.5}px`,
-                        color: node.accent,
-                      }}
-                    >
-                      <WorldIcon kind={node.icon} />
-                    </span>
-                  ))}
+                  DECOR_OFFSETS.map(([dx, dy], di) => {
+                    const rot = (seededRandom(i * 17 + di * 3 + 1) - 0.5) * 50;
+                    const scale = 0.5 + seededRandom(i * 23 + di * 5 + 2) * 0.3;
+                    return (
+                      <span
+                        key={di}
+                        className="world-atlas__decor"
+                        style={{
+                          left: `${dx * ISLAND_R * 1.5}px`,
+                          top: `${dy * ISLAND_R * 1.5}px`,
+                          color: node.accent,
+                          transform: `translate(-50%, -50%) rotate(${rot.toFixed(1)}deg) scale(${scale.toFixed(2)})`,
+                        }}
+                      >
+                        <WorldIcon kind={node.icon} />
+                      </span>
+                    );
+                  })}
 
                 <div
                   className={`world-node ${node.unlocked ? '' : 'world-node--locked'} ${
@@ -325,15 +428,12 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
                   }`}
                   style={{ ['--node-accent' as string]: node.accent }}
                 >
-                  {node.isCurrent && <span className="world-node__pin">Du bist hier</span>}
+                  {node.isCurrent && !travel && <span className="world-node__pin">Du bist hier</span>}
 
                   <button
                     className="world-node__badge"
-                    disabled={!node.unlocked}
-                    onClick={() => {
-                      onSelectLevel(node.startLevelIndex);
-                      onClose();
-                    }}
+                    disabled={!node.unlocked || !!travel}
+                    onClick={() => startTravel(i)}
                     aria-label={`${node.name}, ${node.sublabel}`}
                   >
                     <svg className="world-node__ring" viewBox="0 0 100 100">
@@ -360,6 +460,19 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
               </div>
             );
           })}
+
+          {/* Reise-Marker: eine kleine, sich drehende Axt wandert entlang des Pfads zur
+              Zielwelt, bevor der eigentliche Sprung passiert – macht den Wechsel sichtbar
+              statt eines abrupten Schnitts. */}
+          {travel && travelPos && (
+            <div
+              className="world-atlas__traveler"
+              style={{ left: `${travelPos.x}%`, top: `${(travelPos.y / totalHeight) * 100}%` }}
+            >
+              <span className="world-atlas__traveler-glow" />
+              <Axe size={26} />
+            </div>
+          )}
         </div>
       </div>
     </div>

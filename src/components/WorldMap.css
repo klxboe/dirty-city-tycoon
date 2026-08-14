@@ -70,6 +70,10 @@
   transform: scale(0.92);
 }
 
+.world-atlas__close:disabled {
+  opacity: 0.4;
+}
+
 .world-atlas__scroll {
   flex: 1;
   min-height: 0;
@@ -160,10 +164,64 @@
 
 .world-atlas__decor {
   position: absolute;
-  transform: translate(-50%, -50%) scale(0.6);
+  /* transform (Position + Dreh-/Größen-Jitter je Instanz) kommt komplett inline aus
+     der Komponente, siehe DECOR_OFFSETS-Schleife in WorldMap.tsx. */
   opacity: 0.85;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
   pointer-events: none;
+}
+
+/* ---- Reise-Marker: wandert entlang des Pfads zur Zielwelt. ---- */
+.world-atlas__traveler {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+  animation: world-atlas-traveler-spin 0.5s linear infinite;
+}
+
+@keyframes world-atlas-traveler-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.world-atlas__traveler-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 210, 120, 0.55), transparent 70%);
+  animation: world-atlas-traveler-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes world-atlas-traveler-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-atlas__traveler {
+    animation: none;
+  }
+
+  .world-atlas__traveler-glow {
+    animation: none;
+  }
 }
 
 /* ---- Marker (unverändert von der vorherigen Fassung: Icon + Fortschrittsring). ---- */
