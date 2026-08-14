@@ -67,6 +67,14 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-gold', kind: 'axe', name: 'Goldrausch', blurb: 'Massives Gold. Wirft sich erstaunlich gut.', price: 2000, source: 'shop' },
   { id: 'axe-jade', kind: 'axe', name: 'Jadeschneide', blurb: 'Polierter Jadestein auf schwarzem Schaft.', price: 3200, source: 'shop' },
   { id: 'axe-void', kind: 'axe', name: 'Leerenzahn', blurb: 'Schluckt das Licht, statt es zu spiegeln.', price: 5000, source: 'shop' },
+  {
+    id: 'axe-webslinger',
+    kind: 'axe',
+    name: 'Netzschwinger',
+    blurb: 'Rot, blau, schwingt sich durch die Straßen – Ähnlichkeit rein zufällig.',
+    price: 1100,
+    source: 'shop',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -79,6 +87,14 @@ export const BOARD_SKINS: SkinDef[] = [
   { id: 'board-ice', kind: 'board', name: 'Gletscher', blurb: 'Gefrorene Scheibe mit blauem Schimmer.', price: 600, source: 'shop' },
   { id: 'board-volcano', kind: 'board', name: 'Vulkan', blurb: 'Erkaltete Lava mit glühenden Rissen.', price: 1400, source: 'shop' },
   { id: 'board-ebony', kind: 'board', name: 'Ebenholz', blurb: 'Tiefschwarzes Holz mit Silberadern.', price: 2600, source: 'shop' },
+  {
+    id: 'board-webslinger',
+    kind: 'board',
+    name: 'Spinnennetz',
+    blurb: 'Die Speichen sehen verdächtig nach einem Netz aus der Nachbarschaft aus.',
+    price: 1000,
+    source: 'shop',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -391,6 +407,21 @@ export const BOARD_STYLES: Record<string, BoardStyle> = {
     coreGlow: 'rgba(196, 138, 232, 0.7)',
   },
 
+  // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded
+  // (siehe CLAUDE.md) ---
+  'board-webslinger': {
+    rim: 'linear-gradient(150deg, #3a5fd9, #1a2a6b 55%, #0a1030)',
+    faceInner: '#ff6b73',
+    faceOuter: '#c4242f',
+    wedge: 'rgba(255, 255, 255, 0.6)',
+    glow: 'rgba(224, 36, 47, 0.5)',
+    ringLight: 'rgba(255, 255, 255, 0.55)',
+    ringAccent: 'rgba(26, 42, 107, 0.6)',
+    core: 'radial-gradient(circle at 38% 32%, #fff0f0, #ff5b63 60%, #8a0f16 100%)',
+    coreEdge: 'rgba(20, 30, 80, 0.7)',
+    coreGlow: 'rgba(255, 91, 99, 0.75)',
+  },
+
   // --- Legendär (Diamanten) ---
   'board-legendary-galaxy': {
     rim: 'linear-gradient(150deg, #6b4fd4, #2e1a6b 55%, #12082e)',
@@ -537,6 +568,16 @@ export const AXE_STYLES: Record<string, AxeStyle> = {
     wrap: '#182410',
     outline: '#22103a',
     glow: 'rgba(180, 122, 224, 0.8)',
+  },
+
+  // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded
+  // (siehe CLAUDE.md) ---
+  'axe-webslinger': {
+    steel: ['#ffb3b8', '#e0242f', '#8a0f16'],
+    wood: ['#3a5fd9', '#16215a'],
+    wrap: '#0a0a0a',
+    outline: '#0a0a0a',
+    glow: 'rgba(224, 36, 47, 0.85)',
   },
 
   // --- Legendär (Diamanten) ---
