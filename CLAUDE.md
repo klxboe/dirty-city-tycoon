@@ -205,8 +205,21 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   je nach Stand "Los geht's" oder "Weiter – Level N" (plus "Von Level 1
   starten"). Beim allerersten Start stehen dort zusätzlich die vier Regeln –
   danach nie wieder (`tutorialSeen` im Spielstand).
-- `SettingsModal.tsx`: Ton/Vibration an-aus und "Fortschritt zurücksetzen"
-  (mit Rückfrage, weil es alles löscht).
+- `SettingsModal.tsx`: Ton/Vibration an-aus, **Schwierigkeitsgrad** (Leicht/
+  Normal/Schwer) und "Fortschritt zurücksetzen" (mit Rückfrage, weil es alles
+  löscht).
+- **Schwierigkeitsgrad** (`SaveData.difficulty`, `Difficulty` in `types.ts`):
+  rührt bewusst NICHT an `generateLevel()` – die 100 Level bleiben eine
+  einzige, für alle geltende Formel, sonst müsste man drei komplette Kurven
+  pflegen. Stattdessen skaliert `useAxeGame.ts` zwei Werte nachträglich über
+  `DIFFICULTY_SPEED_MULTIPLIER`/`DIFFICULTY_REWARD_MULTIPLIER` (`constants.ts`):
+  Board-Tempo (×0.8 / ×1 / ×1.25) und die Münz-Endsumme aus `computeReward()`
+  (×0.75 / ×1 / ×1.4). Mehr Risiko bei "Schwer" bringt bewusst auch mehr
+  Münzen – sonst gäbe es keinen Grund, es zu wählen. Der Faktor steckt NICHT
+  in `LevelReward.streakMultiplier` (der Ergebnis-Screen beschriftet dieses
+  Feld explizit als "Serie ×N"), sondern wird separat auf `total` multipliziert.
+  Diamanten aus goldenen Äpfeln bleiben unberührt – die sind ohnehin reines
+  Fund-Glück, kein Skill-Ertrag.
 - **Vibration** (`vibrate()` in `sound.ts`) bei Treffer, Apfel und Game Over.
   Läuft über denselben Schalter wie der Ton. iOS-Safari kennt
   `navigator.vibrate` nicht und ignoriert das stillschweigend.

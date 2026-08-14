@@ -1,6 +1,6 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
 import { BOSS_FRUITS, type BossFruit } from './shop';
-import type { LevelConfig, SpinPattern } from './types';
+import type { Difficulty, LevelConfig, SpinPattern } from './types';
 
 /**
  * Wie lange die Fluganimation der Axt dauert (ms). Das ist zugleich die kürzestmögliche
@@ -266,3 +266,22 @@ export function streakMultiplier(streak: number): number {
 
 /** Boss-Level, dessen Axt man schon besitzt: gibt es stattdessen Münzen. */
 export const BOSS_REPEAT_BONUS = 150;
+
+/**
+ * Schwierigkeitsgrad (Einstellungen). Rührt bewusst NICHT an `generateLevel()` selbst –
+ * die 100 Level bleiben eine einzige, für alle geltende Formel. Stattdessen skaliert der
+ * Hook (`useAxeGame.ts`) zwei Werte nachträglich: wie schnell sich die Scheibe dreht und
+ * wie viele Münzen ein geschafftes Level bringt. Schneller drehen UND mehr Münzen bei
+ * "Schwer" hängen bewusst zusammen – das Risiko soll sich auch lohnen.
+ */
+export const DIFFICULTY_SPEED_MULTIPLIER: Record<Difficulty, number> = {
+  easy: 0.8,
+  normal: 1,
+  hard: 1.25,
+};
+
+export const DIFFICULTY_REWARD_MULTIPLIER: Record<Difficulty, number> = {
+  easy: 0.75,
+  normal: 1,
+  hard: 1.4,
+};

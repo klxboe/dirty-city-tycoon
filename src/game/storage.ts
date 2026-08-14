@@ -6,6 +6,9 @@
 // Spiel läuft dann trotzdem, der Fortschritt ist eben nur nicht dauerhaft.
 import { COINS_PER_LEGACY_APPLE, CURRENCY_SAVE_KEY, SAVE_KEY } from './constants';
 import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
+import type { Difficulty } from './types';
+
+const VALID_DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 
 export interface SaveData {
   coins: number;
@@ -29,6 +32,8 @@ export interface SaveData {
   soundOn: boolean;
   /** Wurde die Einstiegs-Erklärung schon gezeigt? */
   tutorialSeen: boolean;
+  /** Schwierigkeitsgrad – skaliert Board-Tempo und Münz-Belohnung, siehe types.ts. */
+  difficulty: Difficulty;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -42,6 +47,7 @@ const EMPTY_SAVE: SaveData = {
   streak: 0,
   soundOn: true,
   tutorialSeen: false,
+  difficulty: 'normal',
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -73,6 +79,7 @@ export function loadSave(): SaveData {
         streak: Math.max(0, Math.floor(toFiniteNumber(parsed.streak, 0))),
         soundOn: parsed.soundOn !== false,
         tutorialSeen: parsed.tutorialSeen === true,
+        difficulty: VALID_DIFFICULTIES.includes(parsed.difficulty as Difficulty) ? (parsed.difficulty as Difficulty) : 'normal',
       };
     }
 
