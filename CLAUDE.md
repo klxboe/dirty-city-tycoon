@@ -205,6 +205,60 @@ kurzen Animationen, siehe rAF-Freeze-Abschnitt weiter oben) – stattdessen
 direkt per `getAnimations()`/DOM-Inspektion bestätigt, dass die neuen Klassen
 und Elemente bei einem echten Wurf zuverlässig gesetzt werden.
 
+### Cartoon-Ozean-Ausbau: Weltkarte, Web-Slinger-Skin, Game Over, Startbildschirm
+
+Zweiter Grafik-Durchgang, ausgelöst durch ein Referenzbild (gemaltes Mario-
+World-artiges Overworld-Poster) und den Wunsch nach einem Spider-Man-artigen
+Skin sowie einem lebendigeren, blaueren Look insgesamt:
+
+- **Weltkarte als Cartoon-Insel-Archipel** (`WorldMap.tsx`/`.css`, löst die
+  vorherige schlichte Knoten-Kette ab): jede Welt ist jetzt eine organische
+  Insel im Ozean statt eines Kreis-Badges auf einer Linie. Die Insel-Silhouette
+  entsteht aus `blobPoints()` (Punkte unregelmäßig auf einem Kreis verteilt,
+  per `seededRandom()` – deterministisch, sieht bei jedem Öffnen gleich aus)
+  und `smoothClosedPath()` (Catmull-Rom-Spline durch diese Punkte zu einer
+  glatten geschlossenen Kurve). Eine zweite, dunklere "Klippen"-Insel sitzt
+  leicht nach unten versetzt darunter für Tiefe. Der Ozean-Hintergrund nutzt
+  ein SVG-`<pattern>` für die Wellenoptik, dazu ein paar per Seed platzierte
+  Wolken. Der Sandpfad zwischen den Inseln ist jetzt dreilagig (gedimmte
+  Vollstrecke + heller "Trampelpfad"-Überzug), Deko-Sprites (Bäume, Kakteen, …)
+  sitzen verstreut auf den Inseln. Marker-Logik (Fortschrittsring, Sperr-
+  Zustand, Tap-Navigation, Endlos-Modus-Knoten, Auto-Scroll) ist unverändert
+  aus der vorherigen Fassung übernommen – reines Grafik-Update.
+- **"Netzschwinger"-Axt + "Spinnennetz"-Scheibe** (`shop.ts`): der Wunsch nach
+  einem Spider-Man-Skin wurde bewusst NICHT wörtlich umgesetzt – die Marvel/
+  Sony-Figur samt Kostüm-Design ist urheberrechtlich geschützt, eine
+  Reproduktion würde dagegen verstoßen. Stattdessen ein eigener rot-blauer
+  Held-Look ohne Namen-/Logo-Bezug, käuflich in den normalen Äxte-/Scheiben-
+  Reitern (nicht Diamanten/Legendär). Netter Nebeneffekt: die radialen
+  Speichen der Zielscheibe (eigentlich fürs Stamm-Muster gedacht) lesen sich
+  in Rot/Blau von selbst wie ein Spinnennetz.
+- **Game-Over als Bottom-Sheet in Blau** (`GameOverModal.tsx`/`.css`): statt
+  mittig einzublenden schiebt sich die Karte jetzt von unten herein
+  (`.modal-backdrop--danger { align-items: flex-end; }` + `gameover-slide-up`-
+  Keyframe) – ein Bottom-Sheet, wie man es aus mobilen Apps kennt. Farbschema
+  von Warnrot auf Blau umgestellt (Vignette, Risslinien, Funken, Titel-Glow),
+  passend zum neuen Ozean-Look. Dabei eine echte Lücke geschlossen: es gab
+  vorher KEINEN Weg zurück zum Startbildschirm nach einem Game Over (nur
+  Neustart oder Werkstatt) – jetzt ein dritter Button "Zurück zum Menü"
+  (`onBackToMenu` → `setScreen('start')` in `App.tsx`).
+- **Startbildschirm im Blue-Cartoon-Stil** (`StartScreen.css`): Himmel-zu-
+  Ozean-Verlauf mit Wolken-Tupfen direkt im `background` der `.start`-Box
+  (keine eigenen Elemente – wichtig, weil die Box bei langem Inhalt intern
+  scrollt und separate Deko-Elemente sonst mit hochgescrollt wären, der
+  Box-Hintergrund selbst aber stehen bleibt), dick umrandeter Comic-Titel
+  (gestapelte `text-shadow`-Versätze statt `text-stroke`, das würde die
+  Innenfläche dünner wirken lassen) mit Pop-in-Animation, Münzen/Diamanten
+  als Badge-Pillen, pillenförmige glasige Buttons, leise pulsierender
+  Haupt-Button als Antipp-Einladung. Respektiert `prefers-reduced-motion`.
+
+Durchgetestet: Weltkarte mit Insel-Klippen-Schichtung und grauem Sperr-
+Zustand, echter Kauf + Ausrüsten beider Web-Slinger-Skins mit sichtbarem
+Netz-Speichen-Effekt auf der Scheibe, Game-Over-Bottom-Sheet inkl. Klick auf
+"Zurück zum Menü" (kehrt korrekt zum Startbildschirm zurück, Lauf-Fortschritt
+bleibt erhalten), Startbildschirm normal und im Erstlauf-Tutorial-Zustand –
+alles per echtem Tap, keine Konsolenfehler in beiden Durchläufen.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
@@ -818,6 +872,18 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Dabei einen echten React-Key-Kollisions-Bug gefunden und behoben
       (drei unabhängige Zähler für Wurf-Effekte konnten denselben Zahlenwert
       erreichen).
+- [x] **Cartoon-Ozean-Ausbau** nach einer Bild-Vorlage (gemaltes Overworld-
+      Poster) und dem Wunsch nach einem lebendigeren, blaueren Gesamtlook
+      (Details siehe eigener Abschnitt oben):
+      - Weltkarte als Insel-Archipel im Ozean statt Knoten-Kette (organische
+        Insel-Silhouetten per Seed, Klippen-Schichtung, Wellen-Pattern).
+      - "Netzschwinger"/"Spinnennetz"-Skin als eigener, unbranded Rot-Blau-
+        Look statt einer wörtlichen (urheberrechtlich geschützten)
+        Spider-Man-Kopie.
+      - Game-Over als blaues Bottom-Sheet mit drittem Button "Zurück zum
+        Menü" – vorher fehlte dieser Weg ganz.
+      - Startbildschirm im selben blauen Cartoon-Stil (Himmel-Verlauf,
+        Comic-Titel, glasige Pillen-Buttons).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
