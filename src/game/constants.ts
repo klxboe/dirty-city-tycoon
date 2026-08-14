@@ -14,18 +14,22 @@ import type { LevelConfig, SpinPattern } from './types';
  * fliegt einfach drüber").
  *
  * Lesbarkeit schlägt hier den Trick. 300ms waren gut zu verfolgen, fühlten sich beim
- * Spielen aber zäh an – 220ms sind der Kompromiss: noch klar zu sehen, aber wieder
- * knackig. Dauertippen wird dadurch in den ersten Leveln etwas sicherer (bei 55°/Sek.
- * dreht sich die Scheibe in 220ms um ~12°, knapp über der 10°-Toleranz). Das ist
- * verkraftbar, weil das Brett sich ohnehin füllt und ab Level 3 Hindernisse dazukommen –
- * wer stumpf spammt, läuft trotzdem in eine steckende Axt. Sollte es zu leicht werden,
- * sind die Stellschrauben COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein
- * langsamerer Levelstart.
+ * Spielen aber zäh an, 220ms danach immer noch "langweilig und zu langsam". Der nächste
+ * Schritt war deshalb NICHT nur die Zahl weiter zu senken (die Dauer war nie das
+ * Hauptproblem), sondern vor allem die Animation selbst mit mehr Energie zu versehen
+ * (Squash-and-Stretch beim Abschuss, schärferes Easing, kräftigerer Trail – siehe
+ * `axe-fly`-Keyframes in App.css). 190ms sind trotzdem spürbar knackiger als 220ms und
+ * bei 55°/Sek. Grundtempo dreht sich die Scheibe in dieser Zeit um ~10.5°, knapp ÜBER
+ * der 10°-Kollisions-Toleranz – Dauertippen bleibt also riskant, siehe unten.
+ * Das ist verkraftbar, weil das Brett sich ohnehin füllt und ab Level 3 Hindernisse
+ * dazukommen – wer stumpf spammt, läuft trotzdem in eine steckende Axt. Sollte es zu
+ * leicht werden, sind die Stellschrauben COLLISION_ANGLE_TOLERANCE_DEG (größer =
+ * strenger) oder ein langsamerer Levelstart.
  *
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
  */
-export const FLIGHT_DURATION_MS = 220;
+export const FLIGHT_DURATION_MS = 190;
 
 /**
  * Wie lange die Scheibe beim Treffer stehen bleibt (ms). Ein sehr kurzer Stopp im
@@ -34,6 +38,20 @@ export const FLIGHT_DURATION_MS = 220;
  * Bewusst winzig: alles ab ~90ms fühlt sich nach Ruckeln statt nach Wucht an.
  */
 export const HIT_STOP_MS = 55;
+
+/**
+ * Wie lange nach dem letzten Wurf gewartet wird, bevor das Ergebnis-Fenster kommt (ms).
+ *
+ * Ohne diese Pause knallte das Menü im selben Moment hoch, in dem die letzte Axt
+ * einschlug – man sah den eigenen Treffer gar nicht mehr und wurde vom Fenster
+ * überrumpelt ("kommt so random das Menü, das erschreckt einen"). In der Pause läuft
+ * der Bruch-Effekt der Scheibe und ein kurzer "Geschafft"-Schriftzug, erst danach
+ * fährt das Fenster ruhig herein.
+ */
+export const LEVEL_COMPLETE_DELAY_MS = 900;
+
+/** Dasselbe fürs Game Over – etwas kürzer, weil man den Fehlschlag sofort begreift. */
+export const GAME_OVER_DELAY_MS = 650;
 
 /**
  * Ab welchem Winkel-Abstand zwei Äxte als "Kollision" gelten (Grad) – die "Hitbox" der Axt

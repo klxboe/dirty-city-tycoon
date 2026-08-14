@@ -9,7 +9,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
 import { StartScreen } from './components/StartScreen';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS } from './game/constants';
+import { FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import {
   playAppleSound,
   playBossSound,
@@ -77,11 +77,31 @@ function App() {
   const prevApplesRef = useRef(game.applesCollectedThisRun);
   const prevCoinsRef = useRef(game.save.coins);
   const [burstId, setBurstId] = useState(0);
+  const [clashId, setClashId] = useState(0);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
   const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
+  /**
+   * Ob das große Ergebnis-Fenster schon sichtbar sein darf. Ohne diese Verzögerung
+   * knallte das Menü im selben Moment hoch, in dem die letzte Axt einschlug – man
+   * wurde davon regelrecht überrumpelt ("kommt so random das Menü, das erschreckt
+   * einen"). Die Scheibe friert trotzdem SOFORT ein (siehe `paused` weiter unten),
+   * nur das Fenster selbst wartet: erst zeigt die Bühne kurz ein großes "Geschafft!"
+   * bzw. "Axt zersplittert" (`.outcome-banner`), danach erst fährt das Menü rein.
+   */
+  const [modalVisible, setModalVisible] = useState(false);
+  useEffect(() => {
+    if (game.phase !== 'levelComplete' && game.phase !== 'gameOver') {
+      setModalVisible(false);
+      return;
+    }
+    setModalVisible(false);
+    const delay = game.phase === 'levelComplete' ? LEVEL_COMPLETE_DELAY_MS : GAME_OVER_DELAY_MS;
+    const timeout = setTimeout(() => setModalVisible(true), delay);
+    return () => clearTimeout(timeout);
+  }, [game.phase]);
   /*
    * Scheibenposition messen, sobald die Bühne steht – und bei jeder Größenänderung neu.
    * `useLayoutEffect`, damit der Wert vor dem ersten Zeichnen da ist und der allererste
@@ -114,21 +134,25 @@ function App() {
     return () => beobachter.disconnect();
   }, [screen, game.levelIndex]);
 
+  // Screen-Shake auf der Bühne – gemeinsam für Treffer UND Kollision genutzt.
+  const shakeStage = useCallback(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    el.classList.remove('stage--shake');
+    void el.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
+    el.classList.add('stage--shake');
+  }, []);
+
   // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle + kurzer Rums bei jedem Treffer.
   useEffect(() => {
     if (game.hits > prevHitsRef.current) {
-      const el = stageRef.current;
-      if (el) {
-        el.classList.remove('stage--shake');
-        void el.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
-        el.classList.add('stage--shake');
-      }
+      shakeStage();
       setBurstId((id) => id + 1);
       boardHandleRef.current?.punch(); // Hit-Stop + Zusammenzucken der Scheibe
       vibrate(18);
     }
     prevHitsRef.current = game.hits;
-  }, [game.hits]);
+  }, [game.hits, shakeStage]);
 
   // Soundeffekte je nach Ausgang des Wurfs.
   useEffect(() => {
@@ -141,10 +165,20 @@ function App() {
       } else {
         playMissSound();
         vibrate([40, 60, 90]); // Game Over darf sich anders anfühlen als ein Treffer
+        /*
+         * Trifft man die eigene Axt, steigt `hits` NICHT (die Axt prallt ab statt zu
+         * stecken) – der Treffer-Effekt oben feuerte deshalb bisher gar nicht, und die
+         * tödliche Kollision wirkte lahm: die Axt verschwand einfach. Ein eigener,
+         * metallischer "Clash"-Effekt (Funken statt Holzspäne) plus Hit-Stop und Shake
+         * geben genau diesem Moment das Gewicht, das er als Wendepunkt braucht.
+         */
+        shakeStage();
+        setClashId((id) => id + 1);
+        boardHandleRef.current?.punch();
       }
     }
     prevOutcomeRef.current = game.lastOutcome;
-  }, [game.lastOutcome, game.phase, game.bossFruit]);
+  }, [game.lastOutcome, game.phase, game.bossFruit, shakeStage]);
 
   // Eingesammelter Apfel: Ton. Das Fallen zeigt TargetBoard selbst an.
   useEffect(() => {
@@ -302,6 +336,28 @@ function App() {
           </div>
         )}
 
+        {/* Kollision mit der eigenen Axt: Funken statt Holzspäne, damit sich Sieg und
+            Niederlage nicht gleich anfühlen. */}
+        {clashId > 0 && (
+          <div
+            key={clashId}
+            className="hit-effect hit-effect--clash"
+            style={{
+              ['--flight-x' as string]: `${flightX}px`,
+              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
+            }}
+          >
+            <span className="hit-effect__shockwave hit-effect__shockwave--clash" />
+            {PARTICLE_ANGLES.map((angle, i) => (
+              <span
+                key={i}
+                className="hit-effect__spark"
+                style={{ ['--angle' as string]: `${angle}deg` }}
+              />
+            ))}
+          </div>
+        )}
+
         {game.phase === 'flying' && game.flyingAxe && (
           <div
             key={game.flyingAxe.startedAt}
@@ -326,6 +382,29 @@ function App() {
           )}
           <div className="stage__hint">{hint}</div>
         </div>
+
+        {/*
+         * Sofortige Rückmeldung, WÄHREND das Menü noch wartet (siehe modalVisible oben).
+         * Ohne dieses Banner war die Pause bis zum Menü ein stummes Nichts – jetzt sieht
+         * man sofort, was passiert ist, und das Menü kommt danach als bewusster zweiter
+         * Schritt statt als Überraschung.
+         */}
+        {(game.phase === 'levelComplete' || game.phase === 'gameOver') && !modalVisible && (
+          <div
+            className={`outcome-banner outcome-banner--${
+              game.phase === 'gameOver' ? 'fail' : game.bossFruit ? 'boss' : 'win'
+            }`}
+          >
+            <span
+              className="outcome-banner__title"
+              style={{
+                animationDuration: `${game.phase === 'gameOver' ? GAME_OVER_DELAY_MS : LEVEL_COMPLETE_DELAY_MS}ms`,
+              }}
+            >
+              {game.phase === 'gameOver' ? 'Axt zersplittert!' : game.bossFruit ? 'Boss besiegt!' : 'Geschafft!'}
+            </span>
+          </div>
+        )}
       </div>
 
       {shopOpen && (
@@ -345,7 +424,7 @@ function App() {
         />
       )}
 
-      {!overlayOpen && game.phase === 'levelComplete' && game.reward && (
+      {!overlayOpen && modalVisible && game.phase === 'levelComplete' && game.reward && (
         <LevelCompleteModal
           level={game.levelIndex + 1}
           applesCollected={game.applesCollectedThisRun}
@@ -359,7 +438,7 @@ function App() {
         />
       )}
 
-      {!overlayOpen && game.phase === 'gameOver' && (
+      {!overlayOpen && modalVisible && game.phase === 'gameOver' && (
         <GameOverModal
           level={game.levelIndex + 1}
           restartLevel={game.blockStart + 1}

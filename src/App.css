@@ -184,60 +184,78 @@
   left: calc(50% + var(--flight-x));
   bottom: 8%;
   animation-name: axe-fly;
-  /* Leicht abbremsend zum Schluss: die Axt "kommt an" statt durchzurauschen. */
-  animation-timing-function: cubic-bezier(0.25, 0.7, 0.4, 1);
+  /*
+   * Scharf beschleunigend, dann sanft abbremsend: die Axt "schießt" los, statt
+   * gleichmäßig zu gleiten – genau das fehlte, als die Animation trotz kürzerer
+   * Flugzeit noch "langweilig" wirkte. Reine Dauer war nie das Hauptproblem.
+   */
+  animation-timing-function: cubic-bezier(0.11, 0.85, 0.2, 1);
   animation-fill-mode: forwards;
   pointer-events: none;
 }
 
+/*
+ * Squash-and-Stretch beim Abschuss: die Axt streckt sich im Moment des Werfens kurz
+ * in Flugrichtung (schneller, "geschossener" Eindruck), federt beim Durchschwingen
+ * einmal über, und pendelt sich für die Landung wieder auf die normale Form ein.
+ * Klassischer Trickfilm-Trick, kostet nichts an Spielzeit – nur die Zwischenschritte
+ * der ohnehin vorhandenen Bewegung bekommen mehr Ausdruck.
+ */
 @keyframes axe-fly {
-  from {
+  0% {
     bottom: 8%;
-    transform: translateX(-50%) rotate(0deg);
+    transform: translateX(-50%) scale(0.8, 1.28) rotate(0deg);
   }
-  to {
+  14% {
+    transform: translateX(-50%) scale(1.12, 0.9) rotate(75deg);
+  }
+  55% {
+    transform: translateX(-50%) scale(0.96, 1.05) rotate(230deg);
+  }
+  100% {
     bottom: var(--flight-end-bottom);
-    transform: translateX(-50%) rotate(360deg);
+    transform: translateX(-50%) scale(1, 1) rotate(360deg);
   }
 }
 
 /*
  * Bewegungsschweif hinter der Axt. Sitzt IM rotierenden Element, wischt also mit der
  * Drehung – das liest sich als Rotationsunschaerfe statt als angeklebter Strich.
- * Laeuft ueber die gesamte Flugzeit statt kurz aufzublitzen, sonst sieht man ihn
- * bei 220ms Flug praktisch gar nicht.
+ * Laeuft ueber die gesamte Flugzeit statt kurz aufzublitzen, sonst sieht man ihn bei
+ * so kurzem Flug praktisch gar nicht. Deutlich heller/länger als zuvor, damit der
+ * Wurf selbst bei 190ms nach Tempo aussieht statt nach einem Zucken.
  */
 .axe-flying__trail {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 13px;
-  height: 120px;
-  margin-left: -6.5px;
+  width: 15px;
+  height: 150px;
+  margin-left: -7.5px;
   border-radius: 50%;
   background: linear-gradient(
     180deg,
-    rgba(255, 246, 214, 0.7),
-    rgba(255, 210, 120, 0.28) 45%,
+    rgba(255, 250, 224, 0.9),
+    rgba(255, 214, 130, 0.4) 40%,
     rgba(255, 190, 90, 0)
   );
-  filter: blur(4px);
+  filter: blur(3.5px);
   pointer-events: none;
-  animation: axe-trail-fade 0.22s ease-out forwards;
+  animation: axe-trail-fade 0.19s ease-out forwards;
 }
 
 @keyframes axe-trail-fade {
   0% {
     opacity: 0;
-    transform: scaleY(0.5);
+    transform: scaleY(0.4);
   }
-  25% {
-    opacity: 0.95;
+  20% {
+    opacity: 1;
     transform: scaleY(1);
   }
   100% {
     opacity: 0;
-    transform: scaleY(0.7);
+    transform: scaleY(0.75);
   }
 }
 
@@ -351,6 +369,110 @@
   }
 }
 
+/*
+ * ---- Clash-Effekt: eigene Axt getroffen (Game Over) ----
+ * Nutzt dasselbe Positionierungsschema wie .hit-effect (--flight-x/--flight-end-bottom),
+ * aber in kalten Metallfarben statt warmen Holzspänen – Sieg und Niederlage sollen sich
+ * nicht gleich anfühlen. Vorher gab es hier GAR KEINEN Effekt: `hits` steigt bei einer
+ * Kollision nicht (die Axt steckt ja nicht), der normale Treffer-Effekt feuerte also nie,
+ * und der tödliche Einschlag wirkte lahm – die Axt verschwand einfach.
+ */
+.hit-effect--clash {
+  z-index: 3;
+}
+
+.hit-effect__shockwave--clash {
+  border-color: rgba(255, 90, 90, 0.9);
+}
+
+.hit-effect__spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #fff6e0, #ffb37a 55%, rgba(255, 90, 90, 0));
+  transform-origin: center;
+  animation: spark-burst 0.4s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
+}
+
+@keyframes spark-burst {
+  0% {
+    transform: rotate(var(--angle)) translateY(0) scaleY(0.4);
+    opacity: 1;
+  }
+  35% {
+    transform: rotate(var(--angle)) translateY(-46px) scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateY(-70px) scaleY(0.6);
+    opacity: 0;
+  }
+}
+
+/*
+ * ---- Ausgang-Banner ----
+ * Läuft SOFORT beim Level-Ende, während das große Menü noch wartet (siehe modalVisible
+ * in App.tsx) – ohne dieses Banner war die Wartezeit ein stummes Nichts. Die Dauer wird
+ * per Inline-Style exakt auf die jeweilige Verzögerung gesetzt (LEVEL_COMPLETE_DELAY_MS /
+ * GAME_OVER_DELAY_MS), damit Banner-Ende und Menü-Erscheinen nahtlos ineinander übergehen.
+ */
+.outcome-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.outcome-banner__title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  animation-name: outcome-banner-pop;
+  /* animation-duration wird inline gesetzt, siehe App.tsx */
+  animation-timing-function: cubic-bezier(0.2, 0.85, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.outcome-banner--win .outcome-banner__title {
+  color: var(--color-primary);
+}
+
+.outcome-banner--boss .outcome-banner__title {
+  color: var(--color-money);
+}
+
+.outcome-banner--fail .outcome-banner__title {
+  color: var(--color-danger);
+}
+
+@keyframes outcome-banner-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) translateY(14px);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.12) translateY(0);
+  }
+  26% {
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05) translateY(-8px);
+  }
+}
 
 /* ---- Boss-Level: eigenes Schild oben in der Bühne ---- */
 .stage--boss::before {
@@ -422,11 +544,29 @@
   }
 
   .hit-effect__chip,
-  .hit-effect__shockwave {
+  .hit-effect__shockwave,
+  .hit-effect__spark {
     animation-duration: 0.2s;
   }
 
   .stage__ready-axe {
     animation: none;
+  }
+
+  /* Das Banner selbst bleibt (es trägt Information, kein reiner Effekt), nur der
+     einleitende Pop-Sprung entfällt – es blendet stattdessen sanft ein und aus. */
+  .outcome-banner__title {
+    animation-name: outcome-banner-fade;
+  }
+}
+
+@keyframes outcome-banner-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  16%,
+  80% {
+    opacity: 1;
   }
 }

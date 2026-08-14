@@ -227,7 +227,8 @@ src/
     types.ts     GameState, StuckAxe, Apple, LevelConfig, SpinPattern,
                   GamePhase (ready/flying/levelComplete/gameOver)
     constants.ts  LEVELS (100 Stück, per generateLevel() erzeugt), Kollisions-/
-                   Apfel-Trefferradius, Flugzeit, Ziel-Spreizung, Münz-Wirtschaft
+                   Apfel-Trefferradius, Flugzeit, Verzögerungen vor den
+                   Ergebnis-Fenstern, Münz-Wirtschaft
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
                    normalizeAngle, angularDistance, computeBoardLocalAngle,
                    collidesWithStuckAxe, findHitApple
@@ -355,23 +356,26 @@ das Spiel automatisiert testet.)
   damit sie beim Rendern korrekt "mitrotiert", wenn sich die Scheibe weiterdreht.
 - Kollisionsprüfung vergleicht den neuen lokalen Winkel gegen alle bereits
   steckenden Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`).
-- **Wichtiges Balancing – bewusst geändert:** Die Flugzeit lag bei 140ms, damit
-  sich die Scheibe zwischen zwei Würfen weniger weit dreht als die
-  Kollisions-Toleranz (bei 55°/Sek. nur ~7.7° gegen 10°). Dauertippen traf damit
-  garantiert die eigene letzte Axt. Beim ersten Spielen auf dem Handy war das
-  aber unbrauchbar: die Axt legt die ganze Bildschirmhöhe in einer Siebtelsekunde
-  zurück, man sieht nicht, was passiert. **Lesbarkeit schlägt den Trick** –
-  jetzt 300ms. Dauertippen wird dadurch in den ersten Leveln etwas sicherer
-  (~16° Drehung gegen 10° Toleranz). Verkraftbar, weil das Brett sich ohnehin
-  füllt und ab Level 3 Hindernisse dazukommen. Stellschrauben, falls es zu leicht
-  wird: `COLLISION_ANGLE_TOLERANCE_DEG` erhöhen oder den Levelstart verlangsamen.
+- **Flugzeit – mehrfach nachjustiert, siehe `FLIGHT_DURATION_MS` in
+  `constants.ts` für die volle Herleitung.** Stand mal bei 140ms (Kalkül: unter
+  der Kollisions-Toleranz bleiben, Dauertippen also riskant machen), das war
+  aber unlesbar ("fliegt einfach drüber"). Über 300ms und 220ms ("langweilig und
+  zu langsam") liegt der aktuelle Wert bei 190ms. Der eigentliche Fix war NICHT
+  die Zahl allein, sondern die Animation selbst mit mehr Energie zu versehen
+  (Squash-and-Stretch beim Abschuss, schärferes Easing, kräftigerer Trail –
+  siehe `axe-fly`-Keyframes in App.css) – reine Dauer war nie das Hauptproblem.
+  190ms liegen bei 55°/Sek. knapp über der 10°-Kollisions-Toleranz, Dauertippen
+  bleibt also riskant. Stellschrauben, falls es zu leicht wird:
+  `COLLISION_ANGLE_TOLERANCE_DEG` erhöhen oder den Levelstart verlangsamen.
 - Es gab früher eine Halten-und-Loslassen-Timing-Mechanik (Lade-Regler mit
-  "Sweet Spot"). Auf Wunsch entfernt. Seit der Ziel-Mechanik zählt wieder beides:
-  WANN man tippt (Rotation) und WO man tippt (Einschlagpunkt).
+  "Sweet Spot") UND zwischenzeitlich eine Ziel-Mechanik (Tippposition bestimmte
+  den Einschlagpunkt). Beides wieder entfernt, auf ausdrücklichen Wunsch: "mach
+  doch das egal wo man auf den Bildschirm drückt es gerade aus geht, genauso wie
+  bei Knife Hit". Der einzige Skill ist wieder rein das TIMING.
 
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
-Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingAimRef`)
+Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
 und feuert automatisch, sobald die aktuelle Axt gelandet ist – sonst fühlt
 sich schnelles Tippen "kaputt" an, weil Taps mitten im Flug einfach
 verschluckt wurden.
@@ -559,6 +563,40 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       `aim`-Parameter und `FlyingAxe.impactWorldAngleDeg` weg; der Tap-Puffer ist
       wieder ein einfaches Flag. Nachgemessen: Tippen ganz links und in der Mitte
       ergeben identische Flugbahnen (`flightX` beide 0).
+- [x] **Drei Feedback-Punkte nach dem ersten echten Spielen auf dem Handy behoben:**
+      - **"Kommt so random das Menü, das erschreckt einen"** – das Ergebnis-Fenster
+        erschien im selben Moment, in dem die letzte Axt einschlug. Jetzt läuft
+        dazwischen eine kurze Pause (`LEVEL_COMPLETE_DELAY_MS` 900ms /
+        `GAME_OVER_DELAY_MS` 650ms, `constants.ts`), in der ein großes
+        `.outcome-banner` ("Geschafft!" / "Boss besiegt!" / "Axt zersplittert!")
+        auf der Bühne erscheint. Die Scheibe friert weiterhin SOFORT ein (kein
+        zusätzliches Warten dafür), nur das Vollbild-Fenster selbst wartet – so
+        gibt es sofort eine Rückmeldung, aber das Menü kommt als bewusster
+        zweiter Schritt statt als Überraschung. Steuerung über `modalVisible` in
+        `App.tsx`, per `useEffect` an `game.phase` gekoppelt. Die Reihenfolge
+        (Banner zuerst, Menü nach exakt der konfigurierten Verzögerung) wurde per
+        `MutationObserver` nachgemessen: 665ms Abstand bei 650ms Vorgabe.
+      - **"Die Axt-Wurf-Animation ist langweilig und zu langsam"** – Flugzeit
+        220ms → 190ms (siehe Herleitung bei `FLIGHT_DURATION_MS`), vor allem aber
+        Squash-and-Stretch beim Abschuss in den `axe-fly`-Keyframes (App.css: die
+        Axt streckt sich beim Werfen, federt beim Durchschwingen über, pendelt
+        sich für die Landung ein), schärferes Easing
+        (`cubic-bezier(0.11, 0.85, 0.2, 1)` statt sanftem Ease-out) und ein
+        heller/längerer Trail. Die reine Dauer war beim zweiten Feedback trotz
+        vorheriger Kürzung immer noch das Problem – der eigentliche Fix war die
+        Bewegungsenergie der Animation selbst, nicht die Zahl.
+      - **Kollision (Game Over) hatte GAR KEINEN eigenen Effekt.** `hits` steigt
+        bei einer Kollision nicht (die Axt steckt ja nicht), der normale
+        Treffer-Effekt (Screen-Shake, Hit-Stop, Holzspäne-Burst) feuerte deshalb
+        nie – die tödliche Axt verschwand einfach kommentarlos. Neuer
+        `.hit-effect--clash`-Effekt in kalten Metallfarben (Funken statt
+        Holzspäne, `.hit-effect__spark`) plus Screen-Shake und Hit-Stop, ausgelöst
+        über denselben `shakeStage()`-Helfer wie normale Treffer.
+      - Dreh-Muster (Tempo steigt pro Level, `pulse`/`reverse` sorgen für
+        Schwankung mitten im Level wie beim Vorbild) und konstante Axt-Fluggeschw-
+        indigkeit unabhängig vom Scheibentempo gab es beides bereits, unverändert.
+      Durchgetestet: Level-Erfolg und Game-Over-Pfad einzeln mit echten Klicks,
+      Banner-vor-Menü-Reihenfolge und -Abstand per MutationObserver nachgemessen.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
