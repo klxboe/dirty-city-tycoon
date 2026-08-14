@@ -697,6 +697,33 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         indigkeit unabhängig vom Scheibentempo gab es beides bereits, unverändert.
       Durchgetestet: Level-Erfolg und Game-Over-Pfad einzeln mit echten Klicks,
       Banner-vor-Menü-Reihenfolge und -Abstand per MutationObserver nachgemessen.
+- [x] **Großer inhaltlicher Ausbau** nach dem Wunsch "erweiter das Spiel richtig,
+      lass dir Zeit" – an "Knife Hit" als Vorbild orientiert, aber bewusst nicht
+      1:1 kopiert. Sechs neue Bausteine, jeder einzeln im Browser geprüft und
+      committet (Details siehe die jeweiligen Abschnitte oben):
+      - **5 Welten** mit eigener Bühnen-Tönung und Ecken-Deko, **Weltkarte**
+        zum gezielten Zurückspringen.
+      - **Diamanten** als zweite Währung, ausschließlich aus goldenen Äpfeln
+        (~14% der Level), deterministisch wie der Rest der Level-Generierung.
+      - **Werkstatt auf vier Reiter erweitert**: Legendär (Diamanten-Preis)
+        und Extras (Boss-Beute + Oster-Ei). Dabei einen Anzeige-Bug im
+        gemischten Legendär-Reiter gefunden und behoben.
+      - **Oster-Ei**: sieben schnelle Taps aufs Logo schalten einen geheimen
+        Skin frei, ohne jeden Hinweis in der UI.
+      - **Schwierigkeitsgrad** (Leicht/Normal/Schwer) in den Einstellungen,
+        skaliert Tempo und Münz-Belohnung nachträglich, ohne die Level-Formel
+        selbst anzufassen.
+      - **Endlos-Modus**: Level 100 ist nicht mehr das Ende, weil
+        `generateLevel()` schon immer eine unbegrenzte reine Funktion der
+        Levelnummer war – der Deckel saß nur in `nextLevel()`.
+      Durchgetestet: alle vier Shop-Reiter inkl. einem echten Diamanten-Kauf,
+      Weltkarte-Fortschritt und -Sprung, goldener Apfel optisch, Oster-Ei-
+      Freischaltung Ende-zu-Ende (Sequenz-Logik mit testweise verlängertem
+      Zeitfenster, danach zurückgesetzt), Schwierigkeitsgrad-Umschalter samt
+      Speicherung, Level 105 direkt geladen (Boss-Zyklus, Kosmos-Deko,
+      Weltkarten-Hinweis) als Ersatz für ein Echtzeit-Durchspielen bis 100,
+      das an der bekannten rAF-Freeze-Einschränkung der automatisierten
+      Browser-Umgebung gescheitert wäre.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
