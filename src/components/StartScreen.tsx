@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react';
 import { Axe } from './Axe';
 import { Coin } from './Coin';
+import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
 import './StartScreen.css';
 
@@ -8,6 +10,7 @@ interface StartScreenProps {
   continueLevel: number;
   bestLevel: number;
   coins: number;
+  gems: number;
   axeSkin: string;
   /** Beim allerersten Start zeigen wir zusätzlich die Regeln. */
   showTutorial: boolean;
@@ -16,12 +19,20 @@ interface StartScreenProps {
   onOpenShop: () => void;
   onOpenSettings: () => void;
   onOpenWorldMap: () => void;
+  /** Oster-Ei: ausgelöst, wenn das Logo siebenmal schnell hintereinander angetippt wird. */
+  onSecretFound: () => void;
 }
+
+/** Wie viele Taps auf das Logo nötig sind, um das Oster-Ei freizuschalten. */
+const SECRET_TAP_COUNT = 7;
+/** Zeitfenster, in dem die Taps aufeinanderfolgen müssen (ms) – sonst zählt es nicht als Absicht. */
+const SECRET_TAP_WINDOW_MS = 2200;
 
 export function StartScreen({
   continueLevel,
   bestLevel,
   coins,
+  gems,
   axeSkin,
   showTutorial,
   onPlay,
@@ -29,11 +40,36 @@ export function StartScreen({
   onOpenShop,
   onOpenSettings,
   onOpenWorldMap,
+  onSecretFound,
 }: StartScreenProps) {
+  // Oster-Ei: bewusst KEIN Hinweis im Tutorial – wer's findet, findet's.
+  const tapCountRef = useRef(0);
+  const tapTimeoutRef = useRef<number | undefined>(undefined);
+  const [secretFoundMsg, setSecretFoundMsg] = useState(false);
+
+  const handleLogoTap = () => {
+    tapCountRef.current += 1;
+    window.clearTimeout(tapTimeoutRef.current);
+
+    if (tapCountRef.current >= SECRET_TAP_COUNT) {
+      tapCountRef.current = 0;
+      onSecretFound();
+      setSecretFoundMsg(true);
+      window.setTimeout(() => setSecretFoundMsg(false), 3000);
+      return;
+    }
+
+    // Zählt nur, wenn die Taps zügig aufeinanderfolgen – ein zufälliger Tap alle
+    // paar Sekunden beim Anschauen des Titels soll nichts auslösen.
+    tapTimeoutRef.current = window.setTimeout(() => {
+      tapCountRef.current = 0;
+    }, SECRET_TAP_WINDOW_MS);
+  };
+
   return (
     <div className="start">
       <div className="start__top">
-        <h1 className="start__title">
+        <h1 className="start__title" onClick={handleLogoTap}>
           Axe<span className="start__title-accent">Throw</span>
         </h1>
         <div className="start__stats">
@@ -43,7 +79,13 @@ export function StartScreen({
           <span className="start__coins">
             <Coin size={16} /> {coins}
           </span>
+          {gems > 0 && (
+            <span className="start__gems">
+              <Gem size={14} /> {gems}
+            </span>
+          )}
         </div>
+        {secretFoundMsg && <div className="start__secret-toast">Geheimnis gefunden! Schau in der Werkstatt vorbei.</div>}
       </div>
 
       <div className="start__art">

@@ -28,17 +28,35 @@
   color: var(--color-text);
 }
 
-.shop__coins {
+.shop__wallet {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.shop__coins,
+.shop__gems {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.shop__coins {
   background: linear-gradient(180deg, #ffe9a8, #ffc233);
   border: 2px solid #b8860b;
-  font-weight: 800;
   color: #4a3400;
-  font-variant-numeric: tabular-nums;
+}
+
+.shop__gems {
+  background: linear-gradient(180deg, #b6fff5, #2ec4b6);
+  border: 2px solid #177f76;
+  color: #06322e;
 }
 
 .shop__tabs {
@@ -100,6 +118,13 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.14);
+}
+
+/* Oster-Ei, noch nicht gefunden: Silhouette bleibt bewusst verborgen. */
+.shop-card__preview--mystery {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text-muted);
 }
 
 /* Miniatur der Zielscheibe: nutzt dieselben --board-* Variablen wie die echte Scheibe,

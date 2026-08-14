@@ -244,16 +244,25 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, []);
 
   /** Skin kaufen, falls genug Münzen da sind. Rüstet ihn direkt aus. */
+  /**
+   * Skin kaufen. Zwei käufliche Quellen: 'shop' zieht Münzen ab, 'gem' Diamanten –
+   * 'boss' und 'egg' sind nie käuflich (return früh). Welche Währung betroffen ist,
+   * entscheidet allein `skin.source`, nicht irgendein UI-Zustand.
+   */
   const buySkin = useCallback((skinId: string) => {
     setState((prev) => {
       const skin = getSkin(skinId);
-      if (!skin || skin.source !== 'shop') return prev;
+      if (!skin || (skin.source !== 'shop' && skin.source !== 'gem')) return prev;
       if (prev.save.ownedSkins.includes(skinId) || isFreeSkin(skinId)) return prev;
-      if (prev.save.coins < skin.price) return prev;
+
+      const useGems = skin.source === 'gem';
+      const balance = useGems ? prev.save.gems : prev.save.coins;
+      if (balance < skin.price) return prev;
 
       const nextSave: SaveData = {
         ...prev.save,
-        coins: prev.save.coins - skin.price,
+        coins: useGems ? prev.save.coins : prev.save.coins - skin.price,
+        gems: useGems ? prev.save.gems - skin.price : prev.save.gems,
         ownedSkins: [...prev.save.ownedSkins, skinId],
         ...(skin.kind === 'axe' ? { equippedAxeSkin: skinId } : { equippedBoardSkin: skinId }),
       };
@@ -282,6 +291,27 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     setMuted(!soundOn);
     setState((prev) => {
       const nextSave: SaveData = { ...prev.save, soundOn };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
+  /**
+   * Oster-Ei: schaltet einen versteckten Skin frei, ausgelöst über ein Geheimnis in
+   * der UI (siehe StartScreen.tsx – mehrfaches Antippen des Logos). Bewusst
+   * eigenständig statt über buySkin: kein Preis, keine Quellen-Prüfung, einfach ein
+   * Geschenk. Rennt gefahrlos mehrfach (z.B. wenn man die Sequenz zweimal schafft).
+   */
+  const unlockEasterEgg = useCallback((skinId: string) => {
+    setState((prev) => {
+      if (prev.save.ownedSkins.includes(skinId)) return prev;
+      const skin = getSkin(skinId);
+      if (!skin) return prev;
+      const nextSave: SaveData = {
+        ...prev.save,
+        ownedSkins: [...prev.save.ownedSkins, skinId],
+        ...(skin.kind === 'axe' ? { equippedAxeSkin: skinId } : { equippedBoardSkin: skinId }),
+      };
       saveSave(nextSave);
       return { ...prev, save: nextSave };
     });
@@ -332,6 +362,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     goToLevel,
     buySkin,
     equipSkin,
+    unlockEasterEgg,
     setSoundOn,
     markTutorialSeen,
     resetProgress,

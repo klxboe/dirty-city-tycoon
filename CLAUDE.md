@@ -106,6 +106,35 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   (`BOSS_REPEAT_BONUS`). Die Frucht-Äxte sind NICHT käuflich – sie stehen im
   Shop unter "Beute" und zeigen dort, welches Boss-Level sie freischaltet.
 
+### Welten, Weltkarte, Diamanten und goldener Apfel (Erweiterung)
+
+Nach dem Wunsch "erweiter das Spiel richtig, guck was man erweitern kann –
+mehr Welten, eine zweite Währung, Easter Eggs" kam ein zweites Standbein neben
+Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
+
+- **5 Welten** (`game/worlds.ts`): Wald, Wüste, Eis, Vulkan, Kosmos – je 20
+  Level (Start bei Level 1/21/41/61/81). Jede Welt bringt eine eigene
+  Bühnen-Farbpalette (`worldStyleVars()` setzt dieselben CSS-Variablen, die
+  `App.css`/`theme.css` schon lesen – `--color-bg-top`, `--stage-glow` usw. –
+  KEINE neue CSS-Struktur nötig) und eine eigene Deko (`WorldDecor.tsx`):
+  Baum-/Kaktus-/Eiszapfen-/Lava-Silhouetten in den Bühnenecken, bei Kosmos
+  stattdessen ein Sternenfeld. Rein optisch, ändert kein Balancing.
+- **Weltkarte** (`WorldMap.tsx`, über den neuen Button auf dem Startbildschirm):
+  zeigt alle 5 Welten mit Fortschrittsbalken (`bestLevel - startLevelIndex`,
+  begrenzt auf 20) und erlaubt per Tap den Sprung zu einer freigeschalteten
+  Welt. Gesperrte Welten zeigen "Erreiche Level X, um freizuschalten" statt
+  eines Zahlenwerts.
+- **Diamanten** (`Gem.tsx`, zweite Währung neben Münzen, `SaveData.gems`):
+  kommen NUR aus goldenen Äpfeln, nicht aus normalem Spielen – bewusst eine
+  Glücks-Komponente, die separat vom Serien-Multiplikator läuft (Serie
+  belohnt Nicht-Sterben, Diamanten sind reiner Zufall, siehe Kommentar in
+  `computeReward()`). Ob ein Level einen goldenen Apfel hat und an welcher
+  Apfel-Position, ist wie die restliche Level-Generierung eine reine Funktion
+  der Levelnummer (`goldenAppleIndexFor()` in `constants.ts`, KEIN
+  `Math.random()` – Retries bleiben reproduzierbar). Golden ist ungefähr
+  jedes 7. Level. Ein getroffener goldener Apfel gibt `GEMS_PER_GOLDEN_APPLE`
+  (3) Diamanten statt der normalen Münzen für diesen Apfel.
+
 ### Münzen, Läufe und die Werkstatt (Shop)
 
 - **Die 100 Level sind in 10er-Blöcke gruppiert** (`LEVELS_PER_BLOCK`,
@@ -132,10 +161,33 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   Game Over und multipliziert alle Münzen. Ein Game Over setzt sie auf 0. Im HUD
   taucht sie erst ab 5 auf – vorher wäre sie nur eine Zahl ohne Wirkung.
 - **Werkstatt** (`Shop.tsx`, erreichbar über den Münzstand im HUD, den
-  Startbildschirm und beide Modals): rein kosmetische Designs in drei Reitern –
-  Äxte, Scheiben, Beute (die Boss-Äxte). Kaufen zieht die Münzen ab und rüstet
-  direkt aus; Gekauftes lässt sich frei wechseln.
-  **Kein Design verändert das Balancing** – nur Farben und Glanz.
+  Startbildschirm und beide Modals): rein kosmetische Designs, mittlerweile in
+  VIER Reitern – Äxte, Scheiben, **Legendär** (Diamanten-Preis, gemischt Äxte
+  + Scheiben, `LEGENDARY_SKINS` in `shop.ts`) und **Extras** (Boss-Beute plus
+  das Oster-Ei, siehe unten). Kaufen zieht Münzen ODER Diamanten ab, je nach
+  `skin.source` (`'shop'` = Münzen, `'gem'` = Diamanten) und rüstet direkt aus;
+  Gekauftes lässt sich frei wechseln. **Kein Design verändert das Balancing** –
+  nur Farben und Glanz.
+  Bug beim Bau des vierten Reiters gefunden und behoben: `equippedId` wurde
+  früher einmal PRO REITER berechnet (`tab === 'board' ? ... : ...`), was für
+  den gemischten Legendär-Reiter falsch war (eine Scheibe konnte fälschlich als
+  "ausgerüstete Axt" markiert erscheinen). Jetzt wird pro Karte einzeln anhand
+  von `skin.kind` verglichen.
+- **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
+  Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
+  schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
+  Preis 0, `source: 'egg'`) und rüstet ihn direkt aus. Bewusst **kein Hinweis
+  im Tutorial oder in der UI** (kein Cursor-Wechsel, keine Umrandung am Logo) –
+  wer's findet, findet's. Im Shop-Reiter "Extras" wird der Skin, solange er
+  nicht gefunden ist, als "???"-Silhouette angezeigt
+  (`shop-card__preview--mystery`), damit man sieht, dass da etwas Verstecktes
+  existiert, ohne dass verraten wird, was oder wie. Freischalten läuft über
+  eine eigene, preis-lose Hook-Aktion (`unlockEasterEgg()`), getrennt von
+  `buySkin()`. Verifiziert per Browser-Automatisierung: das enge 2,2-Sekunden-
+  Fenster kollidiert mit der Klick-Latenz der Automatisierung, deshalb wurde
+  für den Test kurz auf ein 20-Sekunden-Fenster gestellt, die Freischalt-Logik
+  end-to-end bestätigt (Toast, Skin in `ownedSkins` + `equippedAxeSkin`,
+  sichtbar am Startbildschirm) und danach zurück auf 2200ms gestellt.
 - **Farbwerte stehen als DATEN in `game/shop.ts`** (`BOARD_STYLES`, `AXE_STYLES`),
   nicht im CSS. `TargetBoard` und die Shop-Vorschau setzen sie über
   `boardStyleVars()` als CSS-Variablen inline. Ein neues Design braucht deshalb

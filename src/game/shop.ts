@@ -6,8 +6,12 @@
 // einen Eintrag in dieser Datei statt zusätzlich einen CSS-Block.
 
 export type SkinKind = 'axe' | 'board';
-/** `shop` = für Münzen kaufbar, `boss` = nur als Belohnung aus einem Boss-Level. */
-export type SkinSource = 'shop' | 'boss';
+/**
+ * `shop` = für Münzen kaufbar, `boss` = Belohnung aus einem Boss-Level,
+ * `gem`  = für Diamanten kaufbar ("Legendär"-Reiter im Shop),
+ * `egg`  = Oster-Ei – nur über ein verstecktes Geheimnis freischaltbar, nie kaufbar.
+ */
+export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg';
 
 export interface SkinDef {
   id: string;
@@ -15,7 +19,10 @@ export interface SkinDef {
   name: string;
   /** Kurze Beschreibung für die Shop-Karte. */
   blurb: string;
-  /** Preis in Münzen. 0 = von Anfang an dabei. Bei Boss-Beute ohne Bedeutung. */
+  /**
+   * Preis in Münzen (source 'shop') oder Diamanten (source 'gem'). 0 = von Anfang an
+   * dabei. Bei 'boss'/'egg' ohne Bedeutung – die sind nie kaufbar.
+   */
   price: number;
   source: SkinSource;
 }
@@ -111,7 +118,73 @@ export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit) => ({
   source: 'boss',
 }));
 
-export const ALL_SKINS: SkinDef[] = [...AXE_SKINS, ...BOARD_SKINS, ...BOSS_AXE_SKINS];
+// ---------------------------------------------------------------------------
+// Legendär: für Diamanten statt Münzen, deutlich aufwendigere Designs.
+// ---------------------------------------------------------------------------
+
+export const LEGENDARY_AXE_SKINS: SkinDef[] = [
+  {
+    id: 'axe-legendary-meteor',
+    kind: 'axe',
+    name: 'Sternenhagel',
+    blurb: 'Aus einem Meteoriten geschmiedet, glüht noch immer nach.',
+    price: 45,
+    source: 'gem',
+  },
+  {
+    id: 'axe-legendary-phoenix',
+    kind: 'axe',
+    name: 'Phönixfeder',
+    blurb: 'Verbrennt nie ganz – die Glut erlischt nur, um neu zu entfachen.',
+    price: 60,
+    source: 'gem',
+  },
+];
+
+export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
+  {
+    id: 'board-legendary-galaxy',
+    kind: 'board',
+    name: 'Galaxie',
+    blurb: 'Ein Ausschnitt Sternennebel, eingefangen in Holz.',
+    price: 50,
+    source: 'gem',
+  },
+  {
+    id: 'board-legendary-crystal',
+    kind: 'board',
+    name: 'Kristallkern',
+    blurb: 'Gewachsener Kristall statt Holz – hart, klar, kalt.',
+    price: 70,
+    source: 'gem',
+  },
+];
+
+export const LEGENDARY_SKINS: SkinDef[] = [...LEGENDARY_AXE_SKINS, ...LEGENDARY_BOARD_SKINS];
+
+// ---------------------------------------------------------------------------
+// Oster-Ei: kein Hinweis im Tutorial, nur über ein verstecktes Geheimnis zu
+// finden (siehe StartScreen.tsx). Rein zum Spaß, kein Balancing-Effekt.
+// ---------------------------------------------------------------------------
+
+export const EASTER_EGG_SKINS: SkinDef[] = [
+  {
+    id: 'axe-egg-duck',
+    kind: 'axe',
+    name: 'Quietsche-Ente',
+    blurb: 'Wie sie hier hineingeraten ist, weiß niemand.',
+    price: 0,
+    source: 'egg',
+  },
+];
+
+export const ALL_SKINS: SkinDef[] = [
+  ...AXE_SKINS,
+  ...BOARD_SKINS,
+  ...BOSS_AXE_SKINS,
+  ...LEGENDARY_SKINS,
+  ...EASTER_EGG_SKINS,
+];
 
 export const DEFAULT_AXE_SKIN = AXE_SKINS[0].id;
 export const DEFAULT_BOARD_SKIN = BOARD_SKINS[0].id;
@@ -317,6 +390,32 @@ export const BOARD_STYLES: Record<string, BoardStyle> = {
     coreEdge: 'rgba(45, 16, 68, 0.7)',
     coreGlow: 'rgba(196, 138, 232, 0.7)',
   },
+
+  // --- Legendär (Diamanten) ---
+  'board-legendary-galaxy': {
+    rim: 'linear-gradient(150deg, #6b4fd4, #2e1a6b 55%, #12082e)',
+    faceInner: '#c8b8ff',
+    faceOuter: '#4a2f9c',
+    wedge: 'rgba(230, 220, 255, 0.5)',
+    glow: 'rgba(154, 110, 255, 0.55)',
+    ringLight: 'rgba(220, 210, 255, 0.5)',
+    ringAccent: 'rgba(255, 200, 255, 0.4)',
+    core: 'radial-gradient(circle at 38% 32%, #ffffff, #b48aff 55%, #4a2f9c 100%)',
+    coreEdge: 'rgba(30, 16, 74, 0.7)',
+    coreGlow: 'rgba(180, 138, 255, 0.8)',
+  },
+  'board-legendary-crystal': {
+    rim: 'linear-gradient(150deg, #eafcff, #7fd8e8 55%, #1c6b7a)',
+    faceInner: '#ffffff',
+    faceOuter: '#a0eaf5',
+    wedge: 'rgba(255, 255, 255, 0.9)',
+    glow: 'rgba(140, 240, 255, 0.6)',
+    ringLight: 'rgba(255, 255, 255, 0.8)',
+    ringAccent: 'rgba(60, 200, 220, 0.55)',
+    core: 'radial-gradient(circle at 38% 32%, #ffffff, #baf5ff 60%, #3ec4d8 100%)',
+    coreEdge: 'rgba(20, 90, 100, 0.6)',
+    coreGlow: 'rgba(140, 240, 255, 0.85)',
+  },
 };
 
 export const AXE_STYLES: Record<string, AxeStyle> = {
@@ -438,6 +537,31 @@ export const AXE_STYLES: Record<string, AxeStyle> = {
     wrap: '#182410',
     outline: '#22103a',
     glow: 'rgba(180, 122, 224, 0.8)',
+  },
+
+  // --- Legendär (Diamanten) ---
+  'axe-legendary-meteor': {
+    steel: ['#fff0d0', '#e07a3d', '#6b2f0f'],
+    wood: ['#2a2a34', '#121218'],
+    wrap: '#0a0a10',
+    outline: '#180c04',
+    glow: 'rgba(255, 138, 61, 0.95)',
+  },
+  'axe-legendary-phoenix': {
+    steel: ['#fffbe0', '#ff8a3d', '#c41e1e'],
+    wood: ['#5c2c14', '#2a1006'],
+    wrap: '#1a0a04',
+    outline: '#240a02',
+    glow: 'rgba(255, 138, 61, 1)',
+  },
+
+  // --- Oster-Ei ---
+  'axe-egg-duck': {
+    steel: ['#fffde0', '#ffe135', '#c49a00'],
+    wood: ['#ff8a3d', '#c46000'],
+    wrap: '#ffffff',
+    outline: '#8a5c00',
+    glow: 'rgba(255, 225, 53, 0.7)',
   },
 };
 

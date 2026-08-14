@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Axe } from './Axe';
 import { Coin } from './Coin';
+import { Gem } from './Gem';
 import {
   AXE_SKINS,
   BOARD_SKINS,
   BOSS_AXE_SKINS,
   BOSS_FRUITS,
+  EASTER_EGG_SKINS,
+  LEGENDARY_SKINS,
   boardStyleVars,
   isFreeSkin,
   type SkinDef,
@@ -14,7 +17,7 @@ import { BOSS_EVERY } from '../game/constants';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
 
-type Tab = 'axe' | 'board' | 'boss';
+type Tab = 'axe' | 'board' | 'legendary' | 'extras';
 
 interface ShopProps {
   save: SaveData;
@@ -43,61 +46,90 @@ function SkinPreview({ skin }: { skin: SkinDef }) {
   );
 }
 
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'axe', label: 'Äxte' },
+  { id: 'board', label: 'Scheiben' },
+  { id: 'legendary', label: 'Legendär' },
+  { id: 'extras', label: 'Extras' },
+];
+
 export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
 
-  const items = tab === 'axe' ? AXE_SKINS : tab === 'board' ? BOARD_SKINS : BOSS_AXE_SKINS;
-  const equippedId = tab === 'board' ? save.equippedBoardSkin : save.equippedAxeSkin;
+  const items =
+    tab === 'axe'
+      ? AXE_SKINS
+      : tab === 'board'
+        ? BOARD_SKINS
+        : tab === 'legendary'
+          ? LEGENDARY_SKINS
+          : [...BOSS_AXE_SKINS, ...EASTER_EGG_SKINS];
 
   return (
     <div className="modal-backdrop">
       <div className="shop">
         <header className="shop__head">
           <h2 className="shop__title">Werkstatt</h2>
-          <div className="shop__coins">
-            <Coin size={20} />
-            <span>{save.coins}</span>
+          <div className="shop__wallet">
+            <div className="shop__coins">
+              <Coin size={18} />
+              <span>{save.coins}</span>
+            </div>
+            {save.gems > 0 && (
+              <div className="shop__gems">
+                <Gem size={14} />
+                <span>{save.gems}</span>
+              </div>
+            )}
           </div>
         </header>
 
         <div className="shop__tabs">
-          <button className={`shop__tab ${tab === 'axe' ? 'shop__tab--active' : ''}`} onClick={() => setTab('axe')}>
-            Äxte
-          </button>
-          <button className={`shop__tab ${tab === 'board' ? 'shop__tab--active' : ''}`} onClick={() => setTab('board')}>
-            Scheiben
-          </button>
-          <button className={`shop__tab ${tab === 'boss' ? 'shop__tab--active' : ''}`} onClick={() => setTab('boss')}>
-            Beute
-          </button>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={`shop__tab ${tab === t.id ? 'shop__tab--active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {tab === 'boss' && (
-          <p className="shop__note">Diese Äxte gibt es nicht zu kaufen – nur als Beute aus den Boss-Leveln.</p>
+        {tab === 'legendary' && (
+          <p className="shop__note">Aufwendige Designs für Diamanten – die gibt's nur durch goldene Äpfel.</p>
+        )}
+        {tab === 'extras' && (
+          <p className="shop__note">
+            Boss-Beute und Geheimnisse – nicht käuflich, nur zu erspielen oder zu finden.
+          </p>
         )}
 
         <div className="shop__list">
           {items.map((skin) => {
             const owned = isFreeSkin(skin.id) || save.ownedSkins.includes(skin.id);
-            const equipped = equippedId === skin.id;
-            const affordable = save.coins >= skin.price;
+            const equipped =
+              skin.kind === 'board' ? save.equippedBoardSkin === skin.id : save.equippedAxeSkin === skin.id;
+            const currency = skin.source === 'gem' ? save.gems : save.coins;
+            const affordable = currency >= skin.price;
 
             // Bei Boss-Beute zeigen wir statt eines Preises, welches Level sie freischaltet.
             const bossIndex = BOSS_FRUITS.findIndex((f) => f.axeSkinId === skin.id);
             const bossLevel = bossIndex >= 0 ? (bossIndex + 1) * BOSS_EVERY : null;
+            const isMystery = skin.source === 'egg';
 
             return (
               <div
                 key={skin.id}
                 className={`shop-card ${equipped ? 'shop-card--equipped' : ''} ${
-                  !owned && skin.source === 'boss' ? 'shop-card--locked' : ''
+                  !owned && (skin.source === 'boss' || skin.source === 'egg') ? 'shop-card--locked' : ''
                 }`}
               >
-                <SkinPreview skin={skin} />
+                {isMystery && !owned ? <div className="shop-card__preview shop-card__preview--mystery">?</div> : <SkinPreview skin={skin} />}
 
                 <div className="shop-card__info">
-                  <span className="shop-card__name">{skin.name}</span>
-                  <span className="shop-card__blurb">{skin.blurb}</span>
+                  <span className="shop-card__name">{isMystery && !owned ? '???' : skin.name}</span>
+                  <span className="shop-card__blurb">{isMystery && !owned ? 'Ein gut gehütetes Geheimnis.' : skin.blurb}</span>
                 </div>
 
                 {equipped ? (
@@ -108,13 +140,15 @@ export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
                   </button>
                 ) : skin.source === 'boss' ? (
                   <span className="shop-card__locked">Level {bossLevel}</span>
+                ) : skin.source === 'egg' ? (
+                  <span className="shop-card__locked">???</span>
                 ) : (
                   <button
                     className="shop-card__action shop-card__action--buy"
                     disabled={!affordable}
                     onClick={() => onBuy(skin.id)}
                   >
-                    <Coin size={15} />
+                    {skin.source === 'gem' ? <Gem size={15} /> : <Coin size={15} />}
                     {skin.price}
                   </button>
                 )}

@@ -13,6 +13,7 @@ import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import { worldForLevel, worldStyleVars } from './game/worlds';
+import { EASTER_EGG_SKINS } from './game/shop';
 import {
   playAppleSound,
   playBossSound,
@@ -261,6 +262,7 @@ function App() {
           continueLevel={game.levelIndex + 1}
           bestLevel={game.save.bestLevel}
           coins={game.save.coins}
+          gems={game.save.gems}
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
           onPlay={startPlaying}
@@ -271,6 +273,7 @@ function App() {
           onOpenShop={() => setShopOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenWorldMap={() => setWorldMapOpen(true)}
+          onSecretFound={() => game.unlockEasterEgg(EASTER_EGG_SKINS[0].id)}
         />
 
         {shopOpen && (
