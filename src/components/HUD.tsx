@@ -1,4 +1,5 @@
 import { Coin } from './Coin';
+import { Gem } from './Gem';
 import { LEVELS_PER_BLOCK } from '../game/constants';
 import './HUD.css';
 
@@ -9,6 +10,9 @@ interface HUDProps {
   coins: number;
   /** Läuft kurz eine Aufblink-Animation, wenn gerade Münzen dazugekommen sind. */
   coinsFlash: boolean;
+  gems: number;
+  /** Läuft kurz eine Aufblink-Animation, wenn gerade Diamanten dazugekommen sind. */
+  gemsFlash: boolean;
   /** Level in Folge ohne Game Over. Ab 5 gibt es dafür einen Münz-Multiplikator. */
   streak: number;
   /** Boss-Level: die Levelnummer wird hervorgehoben. */
@@ -24,7 +28,7 @@ interface HUDProps {
  * wie weit ein Game Over zurückwerfen würde. Der Stern am Ende markiert den
  * Block-Abschluss.
  */
-export function HUD({ level, levelInBlock, coins, coinsFlash, streak, isBoss, onOpenShop }: HUDProps) {
+export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, streak, isBoss, onOpenShop }: HUDProps) {
   return (
     <header className="hud">
       <div className={`hud__level ${isBoss ? 'hud__level--boss' : ''}`}>
@@ -46,14 +50,28 @@ export function HUD({ level, levelInBlock, coins, coinsFlash, streak, isBoss, on
         <span className="hud__star">★</span>
       </div>
 
-      <button
-        className={`hud__coins ${coinsFlash ? 'hud__coins--flash' : ''}`}
-        onClick={onOpenShop}
-        aria-label="Werkstatt öffnen"
-      >
-        <span className="hud__coins-value">{coins}</span>
-        <Coin size={26} />
-      </button>
+      <div className="hud__wallet">
+        <button
+          className={`hud__coins ${coinsFlash ? 'hud__coins--flash' : ''}`}
+          onClick={onOpenShop}
+          aria-label="Werkstatt öffnen"
+        >
+          <span className="hud__coins-value">{coins}</span>
+          <Coin size={26} />
+        </button>
+        {/* Diamanten nur zeigen, sobald man den ersten hat – vorher wäre die Zeile
+            nur eine unerklärte 0 und würde eher verwirren als neugierig machen. */}
+        {gems > 0 && (
+          <button
+            className={`hud__gems ${gemsFlash ? 'hud__gems--flash' : ''}`}
+            onClick={onOpenShop}
+            aria-label="Werkstatt öffnen"
+          >
+            <span className="hud__gems-value">{gems}</span>
+            <Gem size={15} />
+          </button>
+        )}
+      </div>
     </header>
   );
 }

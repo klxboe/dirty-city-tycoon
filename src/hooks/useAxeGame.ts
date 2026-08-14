@@ -14,6 +14,7 @@ import {
   BOSS_REPEAT_BONUS,
   COINS_PER_APPLE,
   FLIGHT_DURATION_MS,
+  GEMS_PER_GOLDEN_APPLE,
   LEVELS,
   LEVELS_PER_BLOCK,
   levelCompletionBonus,
@@ -39,8 +40,14 @@ function createLevelState(levelIndex: number): Omit<GameState, 'save' | 'streak'
     axesThrown: 0,
     hits: 0,
     stuckAxes: preplacedAxes,
-    apples: level.appleAngles.map((angle, i) => ({ id: i, boardLocalAngleDeg: angle, collected: false })),
+    apples: level.appleAngles.map((angle, i) => ({
+      id: i,
+      boardLocalAngleDeg: angle,
+      collected: false,
+      golden: i === level.goldenAppleIndex,
+    })),
     applesCollectedThisRun: 0,
+    gemsCollectedThisRun: 0,
     reward: null,
     flyingAxe: null,
     lastOutcome: null,
@@ -125,10 +132,13 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 
         let apples = prev.apples;
         let applesCollectedThisRun = prev.applesCollectedThisRun;
+        let gemsCollectedThisRun = prev.gemsCollectedThisRun;
         const hitApple = findHitApple(localAngle, prev.apples);
         if (hitApple) {
           apples = prev.apples.map((apple) => (apple.id === hitApple.id ? { ...apple, collected: true } : apple));
           applesCollectedThisRun = prev.applesCollectedThisRun + 1;
+          // Golden statt normal -> Diamanten statt Münzen, siehe computeReward unten.
+          if (hitApple.golden) gemsCollectedThisRun = prev.gemsCollectedThisRun + 1;
         }
 
         const axesThrown = prev.axesThrown + 1;
@@ -144,7 +154,10 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
           stuckAxes,
           apples,
           applesCollectedThisRun,
-          reward: levelDone ? computeReward(prev.levelIndex, applesCollectedThisRun, prev.streak, prev.save) : null,
+          gemsCollectedThisRun,
+          reward: levelDone
+            ? computeReward(prev.levelIndex, applesCollectedThisRun, gemsCollectedThisRun, prev.streak, prev.save)
+            : null,
         };
       });
     }, FLIGHT_DURATION_MS);
@@ -171,6 +184,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const nextSave: SaveData = {
         ...prev.save,
         coins: prev.save.coins + prev.reward.total,
+        gems: prev.save.gems + prev.reward.gems,
         bestLevel: Math.max(prev.save.bestLevel, prev.levelIndex + 2),
         streak,
         ownedSkins: prev.reward.unlockedAxeSkinId
@@ -328,6 +342,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 function loadSaveFresh(): SaveData {
   return {
     coins: 0,
+    gems: 0,
     ownedSkins: [],
     equippedAxeSkin: 'axe-standard',
     equippedBoardSkin: 'board-oak',
@@ -342,12 +357,23 @@ function loadSaveFresh(): SaveData {
 /**
  * Rechnet die Belohnung eines geschafften Levels aus. Reine Funktion, damit sie
  * gefahrlos in der setState-Updater-Funktion laufen kann (StrictMode-Doppelaufruf).
+ *
+ * `applesCollected` zählt ALLE eingesammelten Äpfel (golden + normal) – wichtig für den
+ * Perfekt-Bonus, der "alle Äpfel des Levels" prüft. Für die Münzen zählen nur die
+ * NICHT-goldenen; goldene bringen stattdessen Diamanten (`gemsCollected`).
  */
-function computeReward(levelIndex: number, applesCollected: number, streak: number, save: SaveData): LevelReward {
+function computeReward(
+  levelIndex: number,
+  applesCollected: number,
+  gemsCollected: number,
+  streak: number,
+  save: SaveData,
+): LevelReward {
   const level = LEVELS[levelIndex];
   const boss = bossFruitForLevel(levelIndex);
 
-  const apples = applesCollected * COINS_PER_APPLE;
+  const apples = (applesCollected - gemsCollected) * COINS_PER_APPLE;
+  const gems = gemsCollected * GEMS_PER_GOLDEN_APPLE;
   const base = levelCompletionBonus(levelIndex);
   const perfect = applesCollected === level.appleAngles.length && applesCollected > 0 ? PERFECT_APPLE_BONUS : 0;
   const isBlockEnd = (levelIndex + 1) % LEVELS_PER_BLOCK === 0;
@@ -374,6 +400,9 @@ function computeReward(levelIndex: number, applesCollected: number, streak: numb
     block,
     streakMultiplier: multiplier,
     total: Math.round(raw * multiplier),
+    // Diamanten laufen bewusst NICHT durch den Serien-Multiplikator – der ist eine
+    // Münzen-Belohnung fürs Nicht-Sterben, goldene Äpfel sind reines Fund-Glück.
+    gems,
     bossFruitId: boss?.id,
     unlockedAxeSkinId,
   };

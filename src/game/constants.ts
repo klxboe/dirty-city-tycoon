@@ -150,6 +150,24 @@ function appleCountFor(levelIndex: number): number {
 }
 
 /**
+ * Ob (und welcher) Apfel eines Levels golden ist – seltene Variante, bringt Diamanten
+ * statt Münzen (siehe GEMS_PER_GOLDEN_APPLE). Deterministisch aus der Levelnummer
+ * berechnet statt mit `Math.random()`, damit ein Level bei jedem Versuch (auch nach
+ * einem Game Over) denselben goldenen Apfel an derselben Stelle hat – passend zum Rest
+ * der Level-Generierung, die komplett reine Funktionen der Levelnummer sind.
+ * Trifft auf ungefähr jedes 7. Level zu (~14%).
+ */
+function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
+  if (appleCount <= 0) return undefined;
+  const hasGolden = (levelIndex * 131 + 41) % 7 === 0;
+  if (!hasGolden) return undefined;
+  return (levelIndex * 3) % appleCount;
+}
+
+/** Wie viele Diamanten ein goldener Apfel bringt. */
+export const GEMS_PER_GOLDEN_APPLE = 3;
+
+/**
  * Dreh-Muster. Level 1-2 laufen gleichmäßig (Einstieg), ab Level 3 wechselt sich
  * Pulsieren ein, ab Level 8 kommt der Richtungswechsel dazu.
  */
@@ -190,14 +208,16 @@ function generateLevel(levelIndex: number): LevelConfig {
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113);
 
   const obstacleCount = obstacleCountFor(levelIndex);
+  const appleCount = appleCountFor(levelIndex);
 
   return {
     axeCount,
     boardSpeedDegPerSec,
     spinPattern: spinPatternFor(levelIndex),
-    appleAngles: spreadAngles(appleCountFor(levelIndex), appleSeed),
+    appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
     bossFruitId: boss?.id,
+    goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
   };
 }
 

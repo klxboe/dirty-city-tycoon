@@ -97,8 +97,35 @@
 }
 
 .modal-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   color: var(--color-text-muted);
+}
+
+/* Goldener Apfel: eigener kleiner Diamant-Badge, direkt unter dem Münz-Score. */
+.modal-card__gems {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(46, 196, 182, 0.14);
+  border: 1px solid var(--color-accent);
+  animation: unlock-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.modal-card__gems-score {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.reward-breakdown__row--gems,
+.reward-breakdown__row--gems strong {
+  color: var(--color-accent);
 }
 
 .modal-card__button {

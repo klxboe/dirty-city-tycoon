@@ -1,15 +1,35 @@
+import { useId } from 'react';
+
 interface AppleProps {
   size?: number;
+  /** Seltene Variante: golden statt rot, bringt Diamanten statt Münzen. */
+  golden?: boolean;
 }
 
 /**
  * Ein Apfel, der am Rand der Zielscheibe hängt und abgeworfen werden kann.
  * Flach und kontraststark gezeichnet (kräftiges Rot, dunkle Kontur, ein Glanzpunkt),
  * damit er vor dem dunklen Hintergrund auch klein sofort erkennbar ist.
+ *
+ * Golden ist bewusst dieselbe Form, nur andere Farben plus ein kleiner Funke – der
+ * Wiedererkennungswert als "Apfel" muss erhalten bleiben, nur golden statt rot soll
+ * ins Auge springen (~1 von 7 Leveln hat genau einen).
  */
-export function Apple({ size = 30 }: AppleProps) {
+export function Apple({ size = 30, golden = false }: AppleProps) {
+  const uid = useId();
+  const fruitId = `apple-fruit-${uid}`;
+
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
+      {golden && (
+        <defs>
+          <radialGradient id={fruitId} cx="0.35" cy="0.3" r="0.85">
+            <stop offset="0%" stopColor="#fff6c8" />
+            <stop offset="55%" stopColor="#ffce3d" />
+            <stop offset="100%" stopColor="#c98a00" />
+          </radialGradient>
+        </defs>
+      )}
       {/* Frucht: zwei verschmolzene Rundungen mit Kerbe oben */}
       <path
         d="M16 10.5
@@ -19,15 +39,15 @@ export function Apple({ size = 30 }: AppleProps) {
            C16.8 27.4 17.8 28 19.2 28
            C23.4 28 28 21.2 27 15
            C26 8.8 19.5 7.8 16 10.5 Z"
-        fill="#e63946"
-        stroke="#7a1119"
+        fill={golden ? `url(#${fruitId})` : '#e63946'}
+        stroke={golden ? '#8a5c00' : '#7a1119'}
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
       {/* Glanzlicht */}
       <path
         d="M10.5 14.5 C9.4 16.2 9.3 18.6 10.2 20.4"
-        stroke="#ff9b9b"
+        stroke={golden ? '#fff3c0' : '#ff9b9b'}
         strokeWidth="2.4"
         fill="none"
         strokeLinecap="round"
@@ -43,6 +63,14 @@ export function Apple({ size = 30 }: AppleProps) {
         strokeWidth="1.2"
         strokeLinejoin="round"
       />
+      {/* Funke: markiert golden zusätzlich, auch wenn die Farbe klein mal untergeht. */}
+      {golden && (
+        <path
+          d="M25 6 L26 8.4 L28.4 9.4 L26 10.4 L25 12.8 L24 10.4 L21.6 9.4 L24 8.4 Z"
+          fill="#fff3c0"
+          opacity="0.95"
+        />
+      )}
     </svg>
   );
 }

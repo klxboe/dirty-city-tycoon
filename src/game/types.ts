@@ -14,6 +14,8 @@ export interface Apple {
   id: number;
   boardLocalAngleDeg: number;
   collected: boolean;
+  /** Seltene Variante: bringt Diamanten statt Münzen (siehe goldenAppleIndexFor in constants.ts). */
+  golden: boolean;
 }
 
 /** Ergebnis eines einzelnen Wurfs, für kurzes Feedback nach der Flugphase. */
@@ -42,6 +44,8 @@ export interface LevelConfig {
   preplacedAxeAngles?: number[];
   /** Gesetzt bei Boss-Leveln: welche Frucht die Zielscheibe ist (siehe shop.ts). */
   bossFruitId?: string;
+  /** Index in appleAngles, falls dieses Level einen goldenen Apfel hat (selten). */
+  goldenAppleIndex?: number;
 }
 
 export interface GameState {
@@ -51,8 +55,10 @@ export interface GameState {
   hits: number;
   stuckAxes: StuckAxe[];
   apples: Apple[];
-  /** In diesem Level gesammelte Äpfel. Bei Game Over verfallen sie. */
+  /** In diesem Level gesammelte Äpfel (golden + normal). Bei Game Over verfallen sie. */
   applesCollectedThisRun: number;
+  /** Davon goldene Äpfel – zählen separat, weil sie Diamanten statt Münzen bringen. */
+  gemsCollectedThisRun: number;
   /** Münzen aus dem gerade abgeschlossenen Level, aufgeschlüsselt für den Ergebnis-Screen. */
   reward: LevelReward | null;
   /** Level in Folge ohne Game Over. Treibt den Münz-Multiplikator. */
@@ -77,6 +83,8 @@ export interface LevelReward {
   streakMultiplier: number;
   /** Endsumme nach Multiplikator – das, was gutgeschrieben wurde. */
   total: number;
+  /** Diamanten aus goldenen Äpfeln – eigene Währung, keine Münzen. */
+  gems: number;
   /** Bei Boss-Leveln: welche Frucht besiegt wurde. */
   bossFruitId?: string;
   /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */

@@ -1,5 +1,6 @@
 import { Axe } from './Axe';
 import { Coin } from './Coin';
+import { Gem } from './Gem';
 import { useCountUp } from '../hooks/useCountUp';
 import { getBossFruit, getSkin } from '../game/shop';
 import type { LevelReward } from '../game/types';
@@ -11,6 +12,7 @@ interface LevelCompleteModalProps {
   appleCount: number;
   reward: LevelReward;
   totalCoins: number;
+  totalGems: number;
   streak: number;
   isLastLevel: boolean;
   onNext: () => void;
@@ -23,6 +25,7 @@ export function LevelCompleteModal({
   appleCount,
   reward,
   totalCoins,
+  totalGems,
   streak,
   isLastLevel,
   onNext,
@@ -69,6 +72,15 @@ export function LevelCompleteModal({
           <span className="modal-card__score">+{shownCoins}</span>
         </div>
 
+        {/* Goldener Apfel getroffen: eigener Diamanten-Badge, damit der seltene Fund
+            nicht in der Textliste der Aufschlüsselung untergeht. */}
+        {reward.gems > 0 && (
+          <div className="modal-card__gems">
+            <Gem size={20} />
+            <span className="modal-card__gems-score">+{reward.gems}</span>
+          </div>
+        )}
+
         {/* Aufschlüsselung: zeigt, WOFÜR es Münzen gab – macht die Boni sichtbar. */}
         <div className="reward-breakdown">
           {reward.apples > 0 && (
@@ -94,11 +106,21 @@ export function LevelCompleteModal({
               Serie ×{streak} <strong>×{reward.streakMultiplier.toFixed(2)}</strong>
             </span>
           )}
+          {reward.gems > 0 && (
+            <span className="reward-breakdown__row reward-breakdown__row--gems">
+              Goldener Apfel <strong>+{reward.gems} Diamanten</strong>
+            </span>
+          )}
         </div>
 
         <div className="modal-card__sub">
           Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
+        {totalGems > 0 && (
+          <div className="modal-card__sub">
+            <Gem size={13} /> Diamanten insgesamt: <strong>{totalGems}</strong>
+          </div>
+        )}
 
         {isLastLevel ? (
           <div className="modal-card__badge">Alle Level gemeistert! 🎉</div>

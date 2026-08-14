@@ -9,6 +9,8 @@ import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
 
 export interface SaveData {
   coins: number;
+  /** Zweite, seltenere Währung aus goldenen Äpfeln – kauft "Legendäre" Skins im Shop. */
+  gems: number;
   /** IDs gekaufter bzw. erspielter Skins. Gratis-Shop-Skins stehen hier nicht drin. */
   ownedSkins: string[];
   equippedAxeSkin: string;
@@ -31,6 +33,7 @@ export interface SaveData {
 
 const EMPTY_SAVE: SaveData = {
   coins: 0,
+  gems: 0,
   ownedSkins: [],
   equippedAxeSkin: DEFAULT_AXE_SKIN,
   equippedBoardSkin: DEFAULT_BOARD_SKIN,
@@ -61,6 +64,7 @@ export function loadSave(): SaveData {
       const parsed = JSON.parse(raw) as Partial<SaveData>;
       return {
         coins: Math.max(0, Math.floor(toFiniteNumber(parsed.coins, 0))),
+        gems: Math.max(0, Math.floor(toFiniteNumber(parsed.gems, 0))),
         ownedSkins: Array.isArray(parsed.ownedSkins) ? parsed.ownedSkins.filter((id) => typeof id === 'string') : [],
         equippedAxeSkin: typeof parsed.equippedAxeSkin === 'string' ? parsed.equippedAxeSkin : DEFAULT_AXE_SKIN,
         equippedBoardSkin: typeof parsed.equippedBoardSkin === 'string' ? parsed.equippedBoardSkin : DEFAULT_BOARD_SKIN,

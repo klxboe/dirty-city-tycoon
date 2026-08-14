@@ -79,9 +79,11 @@ function App() {
   const prevOutcomeRef = useRef<ThrowOutcome | null>(null);
   const prevApplesRef = useRef(game.applesCollectedThisRun);
   const prevCoinsRef = useRef(game.save.coins);
+  const prevGemsRef = useRef(game.save.gems);
   const [burstId, setBurstId] = useState(0);
   const [clashId, setClashId] = useState(0);
   const [coinsFlash, setCoinsFlash] = useState(false);
+  const [gemsFlash, setGemsFlash] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worldMapOpen, setWorldMapOpen] = useState(false);
@@ -204,6 +206,17 @@ function App() {
     prevCoinsRef.current = game.save.coins;
   }, [game.save.coins]);
 
+  // Diamant-Anzeige aufblitzen lassen, sobald sich der Bestand erhöht.
+  useEffect(() => {
+    if (game.save.gems > prevGemsRef.current) {
+      setGemsFlash(true);
+      const timeout = setTimeout(() => setGemsFlash(false), 700);
+      prevGemsRef.current = game.save.gems;
+      return () => clearTimeout(timeout);
+    }
+    prevGemsRef.current = game.save.gems;
+  }, [game.save.gems]);
+
   const hint = game.phase === 'ready' ? 'Tippen zum Werfen – triff die Lücke' : '';
 
   const handlePointerDown = () => {
@@ -294,6 +307,8 @@ function App() {
         levelInBlock={game.levelIndex - game.blockStart}
         coins={game.save.coins}
         coinsFlash={coinsFlash}
+        gems={game.save.gems}
+        gemsFlash={gemsFlash}
         streak={game.streak}
         isBoss={!!game.bossFruit}
         onOpenShop={() => setShopOpen(true)}
@@ -455,6 +470,7 @@ function App() {
           appleCount={game.appleCount}
           reward={game.reward}
           totalCoins={game.save.coins}
+          totalGems={game.save.gems}
           streak={game.streak}
           isLastLevel={game.isLastLevel}
           onNext={game.nextLevel}
