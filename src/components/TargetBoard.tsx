@@ -45,7 +45,7 @@ interface TargetBoardProps {
 }
 
 /** Anzahl der radialen Segmente auf der Scheibe (rein optisch, wie Stamm-Spalten). */
-const WEDGE_COUNT = 12;
+const WEDGE_COUNT = 16;
 
 /** Wie lange ein abgeworfener Apfel sichtbar herunterfällt (ms). Muss zur CSS-Animation passen. */
 const APPLE_FALL_MS = 900;
@@ -274,9 +274,19 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             <span key={i} style={{ transform: `rotate(${(360 / WEDGE_COUNT) * i}deg)` }} />
           ))}
         </div>
+        {/* Zwei Muster-Ringe aus feinen/groben Strichen (per repeating-conic-gradient +
+            Masken-Ring – kostet keine zusätzlichen DOM-Knoten pro Strich) für mehr
+            Detail, wie Gradeinteilungen auf einer Zielscheibe/einem Kompass. */}
+        <div className="target-board__ticks target-board__ticks--fine" />
         <div className="target-board__ring target-board__ring--outer" />
         <div className="target-board__ring target-board__ring--mid" />
-        <div className="target-board__bullseye" />
+        <div className="target-board__ticks target-board__ticks--rim" />
+        {/* Glanzlicht: gibt der Fläche etwas Tiefe/Politur, ohne die Skin-Farben
+            selbst anzufassen (sitzt als Blend-Layer oben drauf). */}
+        <div className="target-board__sheen" />
+        <div className="target-board__bullseye">
+          <div className="target-board__bullseye-ring" />
+        </div>
 
         {apples
           .filter((apple) => !apple.collected)

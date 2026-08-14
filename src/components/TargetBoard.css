@@ -49,9 +49,14 @@
   height: 260px;
   border-radius: 50%;
   background: var(--board-rim);
+  /* Die beiden inset-Schatten geben dem Rand ein leichtes Relief (heller Kamm oben
+     links, dunklere Kante unten rechts) – macht aus der flachen Farbfläche ein
+     Objekt mit Tiefe, ganz ohne die Skin-Farbdaten selbst anzufassen. */
   box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.6),
-    0 0 50px 12px var(--board-glow);
+    0 0 50px 12px var(--board-glow),
+    inset 0 3px 5px rgba(255, 255, 255, 0.16),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.4);
 }
 
 .target-board__face {
@@ -80,6 +85,52 @@
   margin-left: -2px;
   transform-origin: 50% 100%;
   background: linear-gradient(180deg, var(--board-wedge), transparent 84%);
+}
+
+/* Jeder zweite Speichen-Strich etwas gedämpfter – aus den gleichmäßigen Speichen
+   wird so ein Sonnenrad-/Pinwheel-Muster statt einer monotonen Reihe. */
+.target-board__wedges span:nth-child(even) {
+  opacity: 0.55;
+  width: 3px;
+  margin-left: -1.5px;
+}
+
+/*
+ * Zwei Muster-Ringe aus feinen Strichen, per repeating-conic-gradient gezeichnet
+ * und über eine Masken-Radial-Gradient zu einem dünnen Ring zugeschnitten – das
+ * kostet nur ein Element pro Ring statt einzelner DOM-Knoten je Strich (bei bis zu
+ * 40 Strichen ein spürbarer Unterschied). Rein dekorativ, wie Gradeinteilungen auf
+ * einer Zielscheibe oder einem Kompass.
+ */
+.target-board__ticks {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.target-board__ticks--rim {
+  background: repeating-conic-gradient(rgba(0, 0, 0, 0.4) 0deg 2.2deg, transparent 2.2deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, transparent 91%, black 92.5%, black 96.5%, transparent 98%);
+  mask: radial-gradient(circle, transparent 91%, black 92.5%, black 96.5%, transparent 98%);
+}
+
+.target-board__ticks--fine {
+  background: repeating-conic-gradient(rgba(255, 255, 255, 0.3) 0deg 0.9deg, transparent 0.9deg 9deg);
+  -webkit-mask: radial-gradient(circle, transparent 48%, black 49.5%, black 52%, transparent 53.5%);
+  mask: radial-gradient(circle, transparent 48%, black 49.5%, black 52%, transparent 53.5%);
+}
+
+/* Glanzlicht oben links – macht aus der flachen Fläche eine leicht polierte
+   Wölbung. `soft-light` lässt es sich mit der jeweiligen Skin-Farbe vermischen,
+   statt sie zu übertünchen. */
+.target-board__sheen {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.4), transparent 48%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
 }
 
 .target-board__ring {
@@ -116,6 +167,15 @@
   border: 3px solid var(--board-core-edge);
   box-shadow: 0 0 18px 3px var(--board-core-glow);
   animation: bullseye-pulse 2.6s ease-in-out infinite;
+}
+
+/* Zusätzlicher dünner Ring im Kern – aus der flachen Kreisfläche wird damit ein
+   kleines Zielkreuz-Muster statt eines einzelnen Punkts. */
+.target-board__bullseye-ring {
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
 }
 
 @keyframes bullseye-pulse {
