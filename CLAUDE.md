@@ -42,9 +42,10 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 
 ### Level-System
 
-- **100 Level**, PER FORMEL aus der Levelnummer erzeugt (`generateLevel()` in
-  `constants.ts`), nicht von Hand aufgeschrieben (bei 100 Stück unübersichtlich).
-  Level haben KEINE Namen, nur die Nummer 1-100.
+- **120 Level** (ursprünglich 100, siehe Heldenstadt-Abschnitt weiter unten),
+  PER FORMEL aus der Levelnummer erzeugt (`generateLevel()` in `constants.ts`),
+  nicht von Hand aufgeschrieben (bei so vielen unübersichtlich). Level haben
+  KEINE Namen, nur die Nummer 1-120.
 - **Die Schwierigkeits-Kurve hängt an der LEVELNUMMER, nicht an "Stufen zu je 5".**
   Das war eine bewusste Korrektur: die erste Fassung änderte in den ersten 16
   Leveln praktisch nichts (immer 5 Äxte, 2 Äpfel, keine Hindernisse, gleichmäßige
@@ -92,40 +93,44 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   "Weiter zu Level N+1" plus "Werkstatt öffnen". Level 100 geschafft:
   Glückwunsch-Badge "Alle Level gemeistert!" statt Weiter-Button.
 
-### Endlos-Modus nach Level 100
+### Endlos-Modus nach Level 120
 
-Level 100 ist NICHT das Ende. `generateLevel()` (siehe Level-System oben) ist
-eine reine Funktion der Levelnummer OHNE eingebaute Obergrenze – Tempo deckelt
-sich selbst bei `MAX_SPEED_DEG_PER_SEC`, Axt-/Hindernis-/Apfelzahl bei den
-letzten `if`-Stufen, der Boss-Zyklus und die goldene-Apfel-Formel laufen über
-Modulo. Der Endlos-Modus nutzt genau das aus, statt etwas Neues zu bauen:
-- `levelConfigAt(levelIndex)` (`constants.ts`) liefert für Level ≤ 100 das
-  vorberechnete Array-Element, darüber hinaus wird `generateLevel()` bei
-  Bedarf einmalig live gerechnet. `useAxeGame.ts` nutzt diese Funktion überall
-  statt direkt auf `LEVELS[...]` zuzugreifen.
+Level 120 (ursprünglich 100, siehe Heldenstadt-Abschnitt weiter unten) ist
+NICHT das Ende. `generateLevel()` (siehe Level-System oben) ist eine reine
+Funktion der Levelnummer OHNE eingebaute Obergrenze – Tempo deckelt sich
+selbst bei `MAX_SPEED_DEG_PER_SEC`, Axt-/Hindernis-/Apfelzahl bei den letzten
+`if`-Stufen, der Boss-Zyklus und die goldene-Apfel-Formel laufen über Modulo.
+Der Endlos-Modus nutzt genau das aus, statt etwas Neues zu bauen:
+- `levelConfigAt(levelIndex)` (`constants.ts`) liefert für Level ≤
+  `LEVEL_COUNT` das vorberechnete Array-Element, darüber hinaus wird
+  `generateLevel()` bei Bedarf einmalig live gerechnet. `useAxeGame.ts` nutzt
+  diese Funktion überall statt direkt auf `LEVELS[...]` zuzugreifen.
 - `nextLevel()` hat keine Obergrenze mehr (vorher `Math.min(..., LEVELS.length
-  - 1)` – das hätte Level 100 endlos wiederholt statt weiterzuzählen).
-- Nach Level 100 zeigt der Ergebnis-Screen einmalig "Alle 100 Level
-  gemeistert!" (`isCampaignComplete` in `useAxeGame.ts`, wahr GENAU beim
-  Abschluss von Level 100) – der Weiter-Button bleibt aber immer da, beschriftet
-  ab dann als "Weiter im Endlos-Modus" statt mit einer Levelnummer.
+  - 1)` – das hätte das letzte Level endlos wiederholt statt weiterzuzählen).
+- Nach dem letzten Kampagnen-Level zeigt der Ergebnis-Screen einmalig "Alle
+  120 Level gemeistert!" (`isCampaignComplete` in `useAxeGame.ts`, wahr GENAU
+  beim Abschluss von Level `LEVEL_COUNT`) – der Weiter-Button bleibt aber immer
+  da, beschriftet ab dann als "Weiter im Endlos-Modus" statt mit einer
+  Levelnummer.
 - **Kein Extra-Spardaten-Feld nötig:** `SaveData.bestLevel` zählt ohnehin über
-  100 hinaus weiter (`Math.max(bestLevel, levelIndex + 2)`) und ist damit
-  zugleich die Endlos-Bestmarke.
+  `LEVEL_COUNT` hinaus weiter (`Math.max(bestLevel, levelIndex + 2)`) und ist
+  damit zugleich die Endlos-Bestmarke.
 - **Welten laufen optisch aus:** `worldForLevel()` (`worlds.ts`) klemmt Level
-  jenseits von 100 auf die letzte Welt (Kosmos) – bewusst schon so gebaut, als
-  die Welten entstanden sind. Die Weltkarte zeigt zusätzlich einen Hinweis
-  "Endlos-Modus freigeschaltet – Bestmarke Level N", sobald `bestLevel` über
-  100 liegt, damit die randvollen Fortschrittsbalken nicht unerklärt bleiben.
+  jenseits des letzten Welten-Levels auf die letzte Welt (aktuell Heldenstadt,
+  siehe eigener Abschnitt weiter unten) – bewusst generisch über
+  `WORLDS.length` gebaut, nicht auf eine bestimmte Welt fest verdrahtet, damit
+  eine neue letzte Welt hier nichts ändern muss. Die Weltkarte zeigt
+  zusätzlich einen Hinweis-Knoten "Endlos-Modus – Bestmarke Level N", sobald
+  `bestLevel > LEVEL_COUNT` ist, damit die randvollen Fortschrittsringe nicht
+  unerklärt bleiben.
 - **Game Over im Endlos-Modus verhält sich wie gewohnt:** `blockStartIndex()`
-  rechnet ohne Deckel weiter (Level 111 stirbt → zurück auf 110), es gibt
-  bewusst KEINEN Sonderfall "zurück auf Level 100" – die 10er-Block-Regel gilt
-  unverändert weiter.
+  rechnet ohne Deckel weiter, es gibt bewusst KEINEN Sonderfall am
+  Kampagnen-Ende – die 10er-Block-Regel gilt unverändert weiter.
   Verifiziert durch direktes Setzen von `currentLevel`/`bestLevel` im
-  Spielstand (Level 105 lädt korrekt: Boss-Zyklus, Kosmos-Deko, Weltkarten-
-  Hinweis) statt durch Echtzeit-Durchspielen bis Level 100 – Letzteres ist in
-  der automatisierten Browser-Umgebung wegen des dokumentierten rAF-Freeze-
-  Problems nicht zuverlässig zu testen (siehe Zeitschritt-Deckel-Abschnitt).
+  Spielstand statt durch Echtzeit-Durchspielen bis zum letzten Level –
+  Letzteres ist in der automatisierten Browser-Umgebung wegen des
+  dokumentierten rAF-Freeze-Problems nicht zuverlässig zu testen (siehe
+  Zeitschritt-Deckel-Abschnitt).
 
 ### Grafik- und Gefühl-Ausbau: Weltkarte, Zielscheibe, Wurf, Game Over
 
@@ -259,13 +264,101 @@ Netz-Speichen-Effekt auf der Scheibe, Game-Over-Bottom-Sheet inkl. Klick auf
 bleibt erhalten), Startbildschirm normal und im Erstlauf-Tutorial-Zustand –
 alles per echtem Tap, keine Konsolenfehler in beiden Durchläufen.
 
+### Heldenstadt (6. Welt), Sammelfiguren, Reise-Animation, automatischer Levelwechsel
+
+Dritter Ausbau-Durchgang: eine komplett neue Welt mit eigenen Bossen und
+einem eigenen Collectible, eine Reise-Animation auf der Weltkarte, und ein
+Levelwechsel, der nicht mehr bei jedem einzelnen Level einen Tap verlangt.
+
+- **Heldenstadt: 6. Welt, Level 101-120** (`worlds.ts`, `constants.ts`,
+  `shop.ts`): `DIFFICULTY_TIERS` von 20 auf 24 erhöht (`LEVEL_COUNT` damit
+  120 statt 100) – die Schwierigkeits-Kurve selbst brauchte dafür KEINE
+  Anpassung, weil Axt-/Hindernis-/Apfelzahl und Tempo ab Level 31/26/50
+  ohnehin schon am Anschlag sind (siehe Tabelle im Level-System-Abschnitt).
+  Die neue Welt hat eine EIGENE Boss-Rotation (`HERO_BOSSES` statt
+  `BOSS_FRUITS`): Drohnenwächter, Neonmaske, Wasserspeier, Antennentitan –
+  bewusst eigene, unbenannte Großstadt-Gegner-Konzepte statt Marvel-Figuren
+  (Green Goblin, Doc Ock, Electro, Venom …), die sind urheberrechtlich
+  geschützt und ein Nachbau wäre unabhängig vom gewählten Namen eine
+  Verletzung. `bossFruitForLevel()` (`constants.ts`) verzweigt nach
+  `HERO_WORLD_START` (aus `worlds.ts` exportiert, damit `constants.ts` und
+  `Shop.tsx` denselben Wert kennen) zwischen beiden Rotationen; `getBossFruit()`
+  sucht in beiden Listen. Die Shop-Anzeige der Freischalt-Levels musste
+  ebenfalls auf zwei Rotationen mit unterschiedlichem Start umgestellt werden
+  (`fruitIndex`/`heroIndex` statt einem gemeinsamen Index).
+- **Sammelfiguren** (`Apple.tsx`, `types.ts`, `storage.ts`, `constants.ts`,
+  `useAxeGame.ts`, `Shop.tsx`): exklusiv in Heldenstadt, gebaut als direkte
+  Erweiterung der goldenen-Apfel-Mechanik statt eines neuen Systems.
+  `figurineIndexFor()` (analog `goldenAppleIndexFor()`, aber nur aktiv für
+  Level in `HERO_WORLD_START..+WORLDS_LEVEL_COUNT`, trifft auf jedes 4. Level
+  der Welt zu) markiert einen Apfel-Slot als Sammelfigur statt Frucht – golden
+  und Sammelfigur schließen sich damit gegenseitig aus (goldene Äpfel gibt es
+  in Heldenstadt gar nicht erst). `Apple.tsx` rendert bei `figurine=true` eine
+  komplett andere kleine Chibi-Heldenfigur (rot/blau, eigene unbenannte
+  Gestaltung) statt der Frucht-Form. Landet beim Levelabschluss in
+  `SaveData.figurines` (reiner Vorrat, keine einzeln verwalteten Exemplare –
+  einfacher und robuster als eine "hat man diese schon"-Sammel-Logik), im
+  Shop-Extras-Reiter gegen Diamanten eintauschbar (`GEMS_PER_FIGURINE = 2`,
+  `tradeFigurines()` in `useAxeGame.ts`, tauscht immer den gesamten Vorrat auf
+  einmal). `LevelReward.figurines` läuft wie `gems` OHNE Serien-Multiplikator
+  (reines Fund-Glück) und wird im Ergebnis-Screen mit eigenem rot-blauem
+  Badge angezeigt.
+- **Weltkarte: Reise-Animation** (`WorldMap.tsx`/`.css`): Antippen einer
+  freigeschalteten Welt springt nicht mehr sofort – eine kleine, sich
+  drehende Axt reist sichtbar den Sandpfad entlang zur Zielwelt, auch über
+  mehrere Zwischen-Inseln hinweg (`routeSegments()` verkettet die
+  Kurvensegmente zwischen aktueller und Ziel-Position). Bewusst KEIN CSS
+  `offset-path` verwendet – das erwartet echte Pixel-Koordinaten und müsste
+  bei jeder Fenstergröße neu berechnet werden. Stattdessen dieselben
+  Prozent-Koordinaten wie der Rest der Karte, Position pro Frame per
+  kubischer Bezier-Auswertung (De-Casteljau-Formel, `pointOnSegment()`)
+  berechnet. Dazu mehr Insel-Detail (5 statt 3 Deko-Sprites pro Insel mit
+  Dreh-/Größen-Jitter je Instanz, ein kleiner Satelliten-Fels neben jeder
+  Insel) für mehr "handgemalte" Unruhe, näher an der als Vorlage geteilten
+  Bild-Referenz.
+- **Automatischer Levelwechsel** (`LevelCompleteModal.tsx`/`.css`, `App.tsx`):
+  nach einem geschafften Level geht es nach 3,5 Sekunden von selbst zum
+  nächsten Level über, statt auf einen Pflicht-Tap auf "Weiter" zu warten – ein
+  schrumpfender Balken am Haupt-Button zeigt das vorher an, der Button
+  funktioniert für Ungeduldige weiterhin. Damit der Sprung nicht unbemerkt
+  passiert, zeigt `App.tsx` danach kurz einen "Level N"-Toast auf der Bühne
+  (`expectLevelIntroRef` wird NUR beim automatischen/manuellen "Weiter"
+  gesetzt, nicht bei jedem Levelwechsel – ein Weltkarten-Sprung oder Neustart
+  hat seinen Kontext schon durch die eigene Navigation).
+- **Startbildschirm erweitert** (`StartScreen.tsx`/`.css`): ein "Aktuelle
+  Welt"-Badge (Punkt in der jeweiligen Welt-Akzentfarbe, aus dem geplanten
+  Level per `worldForLevel()` berechnet) und eine Sammelfiguren-Pille neben
+  Münzen/Diamanten, dazu drei sanft driftende Wolken als eigene Ebene (nicht
+  Teil des Hintergrund-Gradients, damit sie unabhängig vom teils scrollenden
+  Inhalt animieren). Titel und Regeln-Karte konsequenter blau: "Throw" von
+  Orange auf Zyan, Regeln-Karte mit Gradient statt flachem Blauton.
+
+Dabei ein fehlendes Anschluss-Stück gefunden und nachgezogen: die
+Sammelfiguren-Belohnung (`LevelReward.figurines`) wurde beim ersten Bau schon
+berechnet, aber im Ergebnis-Screen noch nicht angezeigt – erst beim
+automatischen-Levelwechsel-Umbau aufgefallen und mit erledigt.
+
+Durchgetestet: Level 105 direkt geladen (Boss-Zyklus zeigt korrekt
+"Drohnenwächter" statt einer Frucht, rote Heldenstadt-Bühnentönung), alle vier
+Helden-Boss-Äxte im Shop mit korrekten Freischalt-Leveln (105/110/115/120),
+Sammelfigur-Rendering per DOM-Inspektion bestätigt (eigenes `<circle>`-Element
+an der berechneten Apfel-Position), echter Eintausch von 3 Figuren gegen 6
+Diamanten im Shop, Weltkarten-Reise sowohl über eine benachbarte Welt als auch
+über vier Zwischen-Inseln hinweg (beide Male korrekte Landung + kein
+Konsolenfehler), automatischer Levelwechsel real beobachtet (Münzstand und
+Levelnummer stiegen über zwei Level hinweg ohne manuellen Tap), Startbildschirm
+mit neuem Welt-Badge in Wald (grün) und Heldenstadt (rot) sowie sichtbarer
+Sammelfiguren-Pille.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
   `constants.ts`). Statt Holz ist die Zielscheibe dann eine aufgeschnittene
   Frucht – Wassermelone, Orange, Kiwi, Drachenfrucht, Ananas, Zitrone,
   Blaubeere, Granatapfel, Kokosnuss, Traube (`BOSS_FRUITS` in `shop.ts`).
-  Die Liste wiederholt sich, Level 5-50 decken alle zehn ab.
+  Die Liste wiederholt sich, Level 5-50 decken alle zehn ab. Ab Level 101
+  (Heldenstadt) läuft eine GETRENNTE Boss-Rotation, siehe eigener Abschnitt
+  weiter unten.
 - Boss-Level sind eine Prüfung: eine Axt mehr und +12°/Sek. Tempo. Das
   Frucht-Design überschreibt für dieses Level das ausgerüstete Scheiben-Design.
 - **Belohnung:** die passende Frucht-Axt, geschenkt. Hat man sie schon (ab der
@@ -330,10 +423,14 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
 - **Werkstatt** (`Shop.tsx`, erreichbar über den Münzstand im HUD, den
   Startbildschirm und beide Modals): rein kosmetische Designs, mittlerweile in
   VIER Reitern – Äxte, Scheiben, **Legendär** (Diamanten-Preis, gemischt Äxte
-  + Scheiben, `LEGENDARY_SKINS` in `shop.ts`) und **Extras** (Boss-Beute plus
-  das Oster-Ei, siehe unten). Kaufen zieht Münzen ODER Diamanten ab, je nach
-  `skin.source` (`'shop'` = Münzen, `'gem'` = Diamanten) und rüstet direkt aus;
-  Gekauftes lässt sich frei wechseln. **Kein Design verändert das Balancing** –
+  + Scheiben, `LEGENDARY_SKINS` in `shop.ts`) und **Extras** (Boss-Beute aus
+  BEIDEN Boss-Rotationen – Boss-Früchte UND Heldenstadt-Bosse – plus das
+  Oster-Ei, siehe unten). Der Extras-Reiter zeigt zusätzlich, sobald Figuren
+  im Inventar sind, eine Sammelfiguren-Eintausch-Karte (siehe Heldenstadt-
+  Abschnitt weiter oben) GANZ OBEN, vor der Boss-Beute-Liste. Kaufen zieht
+  Münzen ODER Diamanten ab, je nach `skin.source` (`'shop'` = Münzen, `'gem'`
+  = Diamanten) und rüstet direkt aus; Gekauftes lässt sich frei wechseln.
+  **Kein Design verändert das Balancing** –
   nur Farben und Glanz.
   Bug beim Bau des vierten Reiters gefunden und behoben: `equippedId` wurde
   früher einmal PRO REITER berechnet (`tab === 'board' ? ... : ...`), was für
@@ -458,7 +555,7 @@ src/
   game/
     types.ts     GameState, StuckAxe, Apple, LevelConfig, SpinPattern,
                   GamePhase (ready/flying/levelComplete/gameOver)
-    constants.ts  LEVELS (100 Stück, per generateLevel() erzeugt), Kollisions-/
+    constants.ts  LEVELS (120 Stück, per generateLevel() erzeugt), Kollisions-/
                    Apfel-Trefferradius, Flugzeit, Verzögerungen vor den
                    Ergebnis-Fenstern, Münz-Wirtschaft
     engine.ts     Reine Winkel-Mathematik & Spiellogik (kein React):
@@ -884,6 +981,21 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Menü" – vorher fehlte dieser Weg ganz.
       - Startbildschirm im selben blauen Cartoon-Stil (Himmel-Verlauf,
         Comic-Titel, glasige Pillen-Buttons).
+- [x] **Heldenstadt (6. Welt), Sammelfiguren, Reise-Animation, automatischer
+      Levelwechsel** (Details siehe eigener Abschnitt oben):
+      - Kampagne auf 120 Level erweitert, 6. Welt "Heldenstadt" mit eigener
+        Boss-Rotation (vier original gestaltete Großstadt-Gegner statt
+        Marvel-Figuren).
+      - Sammelfiguren als Heldenstadt-exklusives Collectible, gegen Diamanten
+        eintauschbar im Shop.
+      - Weltkarte: sichtbare Reise-Animation entlang des Pfads statt
+        sofortigem Sprung, mehr Insel-Detail.
+      - Levelabschluss geht automatisch weiter statt bei jedem Level auf
+        einen Tap zu warten, mit kurzem "Level N"-Hinweis auf der Bühne.
+      - Startbildschirm um Welt-Badge und Sammelfiguren-Anzeige erweitert,
+        Titel/Regeln-Karte noch konsequenter blau.
+      Dabei eine fehlende Anzeige nachgezogen: die Sammelfiguren-Belohnung
+      wurde berechnet, aber zunächst nicht im Ergebnis-Screen gezeigt.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
