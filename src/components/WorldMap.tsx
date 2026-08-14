@@ -68,6 +68,15 @@ function WorldIcon({ kind }: { kind: DecorKind | 'endless' }) {
           />
         </svg>
       );
+    case 'city':
+      return (
+        <svg viewBox="0 0 24 24" width="30" height="30">
+          <rect x="2" y="12" width="4" height="10" fill="currentColor" />
+          <rect x="8" y="6" width="4" height="16" fill="currentColor" />
+          <rect x="14" y="10" width="4" height="12" fill="currentColor" />
+          <rect x="19" y="3" width="3" height="19" fill="currentColor" />
+        </svg>
+      );
   }
 }
 

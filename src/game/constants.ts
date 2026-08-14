@@ -1,5 +1,6 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
-import { BOSS_FRUITS, type BossFruit } from './shop';
+import { BOSS_FRUITS, HERO_BOSSES, type BossFruit } from './shop';
+import { HERO_WORLD_START } from './worlds';
 import type { Difficulty, LevelConfig, SpinPattern } from './types';
 
 /**
@@ -78,10 +79,14 @@ export const IMPACT_WORLD_ANGLE_DEG = 180;
  */
 
 /**
- * 100 Level, alle per Formel aus der Levelnummer erzeugt (von Hand wären 100 Stück
+ * 120 Level, alle per Formel aus der Levelnummer erzeugt (von Hand wären 120 Stück
  * unübersichtlich). Was sich womit ändert, steht weiter unten bei der Kurve.
+ * War lange 20 Stufen (100 Level) für die ersten 5 Welten; die 6. Welt
+ * "Heldenstadt" kam als 4 weitere Stufen dazu (Level 101-120) – die Kurve
+ * selbst brauchte dafür KEINE Änderung, weil Axt-/Hindernis-/Apfelzahl und
+ * Tempo ab Level 31/26/50 ohnehin schon am Anschlag sind (siehe unten).
  */
-const DIFFICULTY_TIERS = 20;
+const DIFFICULTY_TIERS = 24;
 const VARIATIONS_PER_TIER = 5;
 
 /**
@@ -185,9 +190,18 @@ export function isBossLevel(levelIndex: number): boolean {
   return (levelIndex + 1) % BOSS_EVERY === 0;
 }
 
-/** Welche Frucht der Boss bei diesem Level ist. Die Liste wiederholt sich. */
+/**
+ * Welcher Boss bei diesem Level ist. Die Heldenstadt-Welt (ab HERO_WORLD_START,
+ * siehe worlds.ts) hat eine EIGENE Boss-Rotation (HERO_BOSSES) statt der
+ * Boss-Früchte – beide Listen wiederholen sich, falls sie kürzer sind als die
+ * Anzahl Boss-Level in ihrem jeweiligen Bereich.
+ */
 export function bossFruitForLevel(levelIndex: number): BossFruit | null {
   if (!isBossLevel(levelIndex)) return null;
+  if (levelIndex >= HERO_WORLD_START) {
+    const heroBossNumber = Math.floor((levelIndex - HERO_WORLD_START) / BOSS_EVERY);
+    return HERO_BOSSES[heroBossNumber % HERO_BOSSES.length];
+  }
   const bossNumber = Math.floor(levelIndex / BOSS_EVERY); // 0-basiert
   return BOSS_FRUITS[bossNumber % BOSS_FRUITS.length];
 }

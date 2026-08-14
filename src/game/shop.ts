@@ -135,6 +135,35 @@ export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit) => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Heldenstadt-Bosse: die 6. Welt (Level 101-120) hat eigene Bosse statt der
+// Boss-Früchte-Rotation. Bewusst EIGENE, unbenannte Gegner-Konzepte statt
+// Marvel-Figuren (Green Goblin, Doc Ock, Electro, Venom ...) – die sind
+// urheberrechtlich geschützt, ein Nachbau (auch mit anderem Namen) wäre eine
+// Verletzung. Die Bosse drehen sich stattdessen um Großstadt-Gefahren, passend
+// zum "Netzschwinger"-Skin-Thema, ohne eine bestimmte Figur zu kopieren.
+// Nutzt bewusst dieselbe BossFruit-Struktur wie die Boss-Früchte (identisches
+// Schema: id/name/boardSkinId/axeSkinId) statt eines eigenen Typs – erspart
+// doppelten Code in `bossFruitForLevel()` und der Shop-Anzeige.
+// ---------------------------------------------------------------------------
+
+export const HERO_BOSSES: BossFruit[] = [
+  { id: 'drone', name: 'Drohnenwächter', boardSkinId: 'board-drone', axeSkinId: 'axe-drone' },
+  { id: 'neon', name: 'Neonmaske', boardSkinId: 'board-neon', axeSkinId: 'axe-neon' },
+  { id: 'gargoyle', name: 'Wasserspeier', boardSkinId: 'board-gargoyle', axeSkinId: 'axe-gargoyle' },
+  { id: 'antenna', name: 'Antennentitan', boardSkinId: 'board-antenna', axeSkinId: 'axe-antenna' },
+];
+
+/** Die Helden-Bossäxte als Skins – wie BOSS_AXE_SKINS, nur für die Heldenstadt-Bosse. */
+export const HERO_AXE_SKINS: SkinDef[] = HERO_BOSSES.map((boss) => ({
+  id: boss.axeSkinId,
+  kind: 'axe',
+  name: `${boss.name}-Axt`,
+  blurb: `Beute aus dem Kampf gegen den ${boss.name}.`,
+  price: 0,
+  source: 'boss',
+}));
+
+// ---------------------------------------------------------------------------
 // Legendär: für Diamanten statt Münzen, deutlich aufwendigere Designs.
 // ---------------------------------------------------------------------------
 
@@ -198,6 +227,7 @@ export const ALL_SKINS: SkinDef[] = [
   ...AXE_SKINS,
   ...BOARD_SKINS,
   ...BOSS_AXE_SKINS,
+  ...HERO_AXE_SKINS,
   ...LEGENDARY_SKINS,
   ...EASTER_EGG_SKINS,
 ];
@@ -216,7 +246,7 @@ export function isFreeSkin(id: string): boolean {
 }
 
 export function getBossFruit(id: string): BossFruit | undefined {
-  return BOSS_FRUITS.find((fruit) => fruit.id === id);
+  return BOSS_FRUITS.find((fruit) => fruit.id === id) ?? HERO_BOSSES.find((boss) => boss.id === id);
 }
 
 // ---------------------------------------------------------------------------
@@ -407,6 +437,56 @@ export const BOARD_STYLES: Record<string, BoardStyle> = {
     coreGlow: 'rgba(196, 138, 232, 0.7)',
   },
 
+  // --- Heldenstadt-Bosse (siehe HERO_BOSSES oben) ---
+  'board-drone': {
+    rim: 'linear-gradient(150deg, #6b7280, #374151 55%, #1a1d24)',
+    faceInner: '#c7cdd6',
+    faceOuter: '#5b6270',
+    wedge: 'rgba(255, 60, 60, 0.5)',
+    glow: 'rgba(120, 130, 150, 0.4)',
+    ringLight: 'rgba(220, 225, 235, 0.5)',
+    ringAccent: 'rgba(224, 36, 47, 0.5)',
+    core: 'radial-gradient(circle at 38% 32%, #ffe0e0, #e0242f 60%, #6b0f16 100%)',
+    coreEdge: 'rgba(30, 32, 38, 0.7)',
+    coreGlow: 'rgba(224, 36, 47, 0.7)',
+  },
+  'board-neon': {
+    rim: 'linear-gradient(150deg, #b453e0, #6b1f9c 55%, #2e0a4a)',
+    faceInner: '#f0c8ff',
+    faceOuter: '#9a3fd0',
+    wedge: 'rgba(80, 240, 255, 0.6)',
+    glow: 'rgba(180, 83, 224, 0.5)',
+    ringLight: 'rgba(160, 245, 255, 0.55)',
+    ringAccent: 'rgba(80, 240, 255, 0.5)',
+    core: 'radial-gradient(circle at 38% 32%, #ffffff, #80f0ff 55%, #b453e0 100%)',
+    coreEdge: 'rgba(40, 10, 74, 0.7)',
+    coreGlow: 'rgba(80, 240, 255, 0.8)',
+  },
+  'board-gargoyle': {
+    rim: 'linear-gradient(150deg, #5c6b5c, #33402e 55%, #181f14)',
+    faceInner: '#9cae94',
+    faceOuter: '#4a5c42',
+    wedge: 'rgba(180, 200, 160, 0.4)',
+    glow: 'rgba(120, 150, 100, 0.35)',
+    ringLight: 'rgba(200, 215, 185, 0.4)',
+    ringAccent: 'rgba(60, 80, 45, 0.5)',
+    core: 'radial-gradient(circle at 38% 32%, #e0ead0, #8ca87a 60%, #3a4a2e 100%)',
+    coreEdge: 'rgba(20, 26, 15, 0.7)',
+    coreGlow: 'rgba(140, 168, 122, 0.6)',
+  },
+  'board-antenna': {
+    rim: 'linear-gradient(150deg, #ff9a2e, #b3560a 55%, #5c2a04)',
+    faceInner: '#3a3a3e',
+    faceOuter: '#18181a',
+    wedge: 'rgba(255, 170, 60, 0.5)',
+    glow: 'rgba(255, 154, 46, 0.5)',
+    ringLight: 'rgba(255, 200, 130, 0.45)',
+    ringAccent: 'rgba(255, 154, 46, 0.5)',
+    core: 'radial-gradient(circle at 38% 32%, #fff0d0, #ffb44a 60%, #7a3800 100%)',
+    coreEdge: 'rgba(30, 16, 4, 0.75)',
+    coreGlow: 'rgba(255, 154, 46, 0.8)',
+  },
+
   // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded
   // (siehe CLAUDE.md) ---
   'board-webslinger': {
@@ -568,6 +648,36 @@ export const AXE_STYLES: Record<string, AxeStyle> = {
     wrap: '#182410',
     outline: '#22103a',
     glow: 'rgba(180, 122, 224, 0.8)',
+  },
+
+  // --- Heldenstadt-Bosse (siehe HERO_BOSSES oben) ---
+  'axe-drone': {
+    steel: ['#e8ecf2', '#8a94a6', '#3a414f'],
+    wood: ['#4a5568', '#1e232c'],
+    wrap: '#0e1116',
+    outline: '#0a0c10',
+    glow: 'rgba(224, 36, 47, 0.6)',
+  },
+  'axe-neon': {
+    steel: ['#e0fbff', '#50f0ff', '#1a8a9c'],
+    wood: ['#6b1f9c', '#33124a'],
+    wrap: '#1a0a2e',
+    outline: '#12081e',
+    glow: 'rgba(80, 240, 255, 0.85)',
+  },
+  'axe-gargoyle': {
+    steel: ['#d8e0d0', '#8ca87a', '#3a4a2e'],
+    wood: ['#5c5245', '#2a251e'],
+    wrap: '#1a1712',
+    outline: '#12100c',
+    glow: 'rgba(140, 168, 122, 0.6)',
+  },
+  'axe-antenna': {
+    steel: ['#fff0d0', '#ffb44a', '#7a3800'],
+    wood: ['#2a2a2e', '#111114'],
+    wrap: '#0a0a0c',
+    outline: '#0a0604',
+    glow: 'rgba(255, 154, 46, 0.85)',
   },
 
   // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded

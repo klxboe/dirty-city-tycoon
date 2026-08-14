@@ -3,14 +3,24 @@
 // durch. Jede Welt tönt die Bühne per eigenen Farbwerten (siehe worldStyleVars) und
 // bekommt eine kleine Deko-Silhouette in den unteren Bühnen-Ecken (siehe WorldDecor.tsx).
 //
-// Bewusst 5×20 statt mehr Level: das behält die 100 bekannten, ausbalancierten Level
-// (siehe Schwierigkeits-Tabelle in CLAUDE.md), Welten sind eine zusätzliche Schicht
-// darüber. "Mehr Level" im eigentlichen Sinn gibt der Endlos-Modus nach Level 100
-// (siehe LEVEL_COUNT-Grenze in constants.ts).
+// 6×20 Level: die ersten 5 Welten behalten die ursprüngliche Schwierigkeits-Kurve
+// (siehe Tabelle in CLAUDE.md), die 6. Welt "Heldenstadt" (Level 101-120) nutzt
+// dieselbe Formel einfach weiter – ab Level 31/26/50 sind Axt-/Hindernis-/Apfelzahl
+// ohnehin schon am Anschlag, Heldenstadt bringt also keine neue Kurve, nur eigene
+// Optik + eigene Bosse (siehe HERO_BOSSES in shop.ts). "Mehr Level" im eigentlichen
+// Sinn gibt der Endlos-Modus nach Level 120 (siehe LEVEL_COUNT-Grenze in constants.ts).
 
 export const WORLDS_LEVEL_COUNT = 20;
 
-export type DecorKind = 'trees' | 'cacti' | 'icicles' | 'lava' | 'stars';
+/**
+ * Erster Level-Index der Heldenstadt-Welt (siehe WORLDS unten) – als eigene
+ * Konstante exportiert, weil `constants.ts` (Boss-Rotation) und `Shop.tsx`
+ * (Beute-Anzeige) beide wissen müssen, ab wo die Helden-Bosse statt der
+ * Boss-Früchte laufen, ohne den ganzen WORLDS-Eintrag zu importieren.
+ */
+export const HERO_WORLD_START = 100;
+
+export type DecorKind = 'trees' | 'cacti' | 'icicles' | 'lava' | 'stars' | 'city';
 
 export interface World {
   id: string;
@@ -99,6 +109,20 @@ export const WORLDS: World[] = [
       shardDark: 'rgba(0, 0, 0, 0.3)',
       glow: 'rgba(154, 79, 208, 0.28)',
       accent: '#a86bd4',
+    },
+  },
+  {
+    id: 'metro',
+    name: 'Heldenstadt',
+    startLevelIndex: HERO_WORLD_START,
+    decor: 'city',
+    colors: {
+      bgTop: '#0d1b3a',
+      bgBottom: '#020610',
+      shardLight: 'rgba(224, 36, 47, 0.06)',
+      shardDark: 'rgba(0, 0, 0, 0.36)',
+      glow: 'rgba(224, 36, 47, 0.22)',
+      accent: '#e0242f',
     },
   },
 ];

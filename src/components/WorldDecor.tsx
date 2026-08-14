@@ -38,6 +38,16 @@ function CornerShape({ decor }: { decor: Exclude<DecorKind, 'stars'> }) {
           />
         </svg>
       );
+    case 'city':
+      return (
+        <svg viewBox="0 0 40 60" className="world-decor__shape">
+          <rect x="2" y="30" width="9" height="30" fill="currentColor" />
+          <rect x="13" y="14" width="8" height="46" fill="currentColor" />
+          <rect x="23" y="24" width="7" height="36" fill="currentColor" />
+          <rect x="32" y="8" width="6" height="52" fill="currentColor" />
+          <rect x="34" y="2" width="2" height="8" fill="currentColor" />
+        </svg>
+      );
   }
 }
 

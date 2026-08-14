@@ -8,12 +8,15 @@ import {
   BOSS_AXE_SKINS,
   BOSS_FRUITS,
   EASTER_EGG_SKINS,
+  HERO_AXE_SKINS,
+  HERO_BOSSES,
   LEGENDARY_SKINS,
   boardStyleVars,
   isFreeSkin,
   type SkinDef,
 } from '../game/shop';
 import { BOSS_EVERY } from '../game/constants';
+import { HERO_WORLD_START } from '../game/worlds';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
 
@@ -63,7 +66,7 @@ export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
         ? BOARD_SKINS
         : tab === 'legendary'
           ? LEGENDARY_SKINS
-          : [...BOSS_AXE_SKINS, ...EASTER_EGG_SKINS];
+          : [...BOSS_AXE_SKINS, ...HERO_AXE_SKINS, ...EASTER_EGG_SKINS];
 
   return (
     <div className="modal-backdrop">
@@ -114,8 +117,17 @@ export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
             const affordable = currency >= skin.price;
 
             // Bei Boss-Beute zeigen wir statt eines Preises, welches Level sie freischaltet.
-            const bossIndex = BOSS_FRUITS.findIndex((f) => f.axeSkinId === skin.id);
-            const bossLevel = bossIndex >= 0 ? (bossIndex + 1) * BOSS_EVERY : null;
+            // Zwei getrennte Rotationen (Boss-Früchte vs. Heldenstadt-Bosse, siehe
+            // bossFruitForLevel in constants.ts) brauchen unterschiedliche Rechnungen:
+            // die Helden-Bosse fangen erst bei HERO_WORLD_START an.
+            const fruitIndex = BOSS_FRUITS.findIndex((f) => f.axeSkinId === skin.id);
+            const heroIndex = HERO_BOSSES.findIndex((b) => b.axeSkinId === skin.id);
+            const bossLevel =
+              fruitIndex >= 0
+                ? (fruitIndex + 1) * BOSS_EVERY
+                : heroIndex >= 0
+                  ? HERO_WORLD_START + (heroIndex + 1) * BOSS_EVERY
+                  : null;
             const isMystery = skin.source === 'egg';
 
             return (
