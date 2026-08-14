@@ -127,6 +127,84 @@ Modulo. Der Endlos-Modus nutzt genau das aus, statt etwas Neues zu bauen:
   der automatisierten Browser-Umgebung wegen des dokumentierten rAF-Freeze-
   Problems nicht zuverlässig zu testen (siehe Zeitschritt-Deckel-Abschnitt).
 
+### Grafik- und Gefühl-Ausbau: Weltkarte, Zielscheibe, Wurf, Game Over
+
+Auf das Feedback "mach die Weltkarte wie eine echte Karte, erweiter die Grafik-
+und Spielqualität, die Axt muss sich wie eine Pistole anfühlen, das Game-Over-
+Menü ist langweilig" wurden vier Bereiche überarbeitet:
+
+- **Weltkarte als echter Reiseweg** (`WorldMap.tsx`/`.css`): kein Modal mit
+  Karten-Liste mehr, sondern ein eigener Vollbild-Screen mit einem gewundenen
+  Pfad, der alle Welten im Zickzack verbindet (S-Kurven per einfachem Trick:
+  Bezier-Kontrollpunkte auf halber Höhe zwischen zwei Knoten – braucht keine
+  Kurven-Bibliothek). Jede Welt hat eine eigene Knoten-Farbe, ein Icon, einen
+  Fortschrittsring (SVG `stroke-dasharray`) und – falls gesperrt – ein Schloss
+  statt Deko. Der Hintergrund tönt sich zonenweise passend zur jeweiligen Welt.
+  **Wichtig fürs Koordinatensystem:** alle Positionen (Knoten UND SVG-Pfad)
+  sind Prozent der EIGENEN Breite der Karte (nicht des Viewports) – dadurch
+  bleiben Knoten und Pfad bei jeder Bildschirmgröße exakt deckungsgleich, ohne
+  dass irgendetwas per `ResizeObserver` gemessen werden müsste. Ein sechster
+  Knoten für den Endlos-Modus erscheint automatisch oben auf dem Pfad, sobald
+  `bestLevel > LEVEL_COUNT`. Beim Öffnen scrollt die Karte automatisch zur
+  aktuellen Welt, damit man bei Level 80 nicht erst durch vier Welten scrollen
+  muss.
+- **Zielscheibe grafisch aufgewertet** (`TargetBoard.tsx`/`.css`): 16 statt 12
+  Speichen mit alternierender Helligkeit (Pinwheel-Muster statt gleichmäßiger
+  Reihe), zwei Strich-Ringe (fein am Kern, grob am Rand) per
+  `repeating-conic-gradient` + Masken-Ring – kostet nur EIN Element pro Ring
+  statt eines DOM-Knotens je Strich, wichtig bei bis zu 40 Strichen. Dazu ein
+  Glanzlicht-Layer (`mix-blend-mode: soft-light`) und ein Bevel-Schatten
+  (heller Kamm oben links, dunklere Kante unten rechts) für sichtbare Tiefe,
+  plus ein zusätzlicher Ring im Kern. Alles läuft über die BESTEHENDEN
+  `--board-*`-CSS-Variablen aus `shop.ts` – kein Skin musste angefasst werden,
+  der Effekt gilt automatisch für alle Scheiben-Designs.
+- **Axt-Wurf wie ein Pistolenschuss** (`App.tsx`/`.css`): auf "wie ne Pistole
+  direkt geschossen" reagiert, OHNE `FLIGHT_DURATION_MS` (190ms) anzufassen –
+  die ausführlich begründete Balance dahinter (siehe `constants.ts`) bleibt
+  unverändert, nur wie sich der Flug ANFÜHLT hat sich geändert:
+  - **Mündungsblitz + Rückstoß** feuern jetzt GENAU im Moment des Abtippens
+    (`muzzleId`-Zähler analog zu `burstId`/`clashId`, `recoilStage()` analog zu
+    `shakeStage()`) – vorher gab es nur beim Einschlag eine Reaktion, der
+    Abschuss selbst war stumm.
+  - Schärfere, vorne geladenere Beschleunigungskurve
+    (`cubic-bezier(0.05, 0.9, 0.1, 1)`), dünnerer/hellerer Leuchtspur-Trail
+    statt weichem Bewegungsschleier.
+  - **Rotation von 360° auf 190° gekürzt.** Eine volle Umdrehung liest sich
+    wie eine geworfene Tomahawk-Axt, die durch die Luft trudelt – ein
+    kontrollierter Schuss taumelt nicht. Die Axt dreht sich noch (bleibt als
+    Axt erkennbar), aber weniger als eine ganze Umdrehung.
+  - **Dabei gefunden und behoben:** der neue Mündungsblitz nutzte anfangs
+    denselben Zähler-Namensraum wie die Treffer-/Kollisions-Effekte
+    (`key={burstId}` etc. – alle drei Zähler laufen unabhängig hoch und
+    kollidieren zwangsläufig irgendwann auf denselben Zahlenwert). React warnte
+    vor doppelten Keys unter demselben Elternknoten (`.stage`). Behoben durch
+    Namensraum-Präfixe (`key={\`muzzle-${muzzleId}\`}` usw.).
+- **Game-Over-Fenster eigenständig inszeniert** (`GameOverModal.tsx` +
+  eigene neue `GameOverModal.css`): vorher teilte sich dieses Fenster
+  komplett die Optik von `LevelCompleteModal` (nur andere Textfarbe) und
+  wirkte dadurch wie derselbe Screen zweimal. Jetzt: rot pulsierende Vignette
+  über dem Hintergrund, ein bildschirmfüllendes Riss-Overlay (derselbe Trick
+  wie der Bruch-Effekt auf der Zielscheibe, nur größer), die Axt zerspringt
+  beim Erscheinen sichtbar in zwei auseinanderfliegende Hälften (zwei
+  `clip-path`-Kopien derselben `<Axe>`-Komponente, keine neue Grafik nötig)
+  mit einem kleinen Funkenkranz drumherum, der Titel schlägt wie ein Stempel
+  ein statt sanft einzublenden, die Karte knallt hart hinein statt weich
+  einzufedern. "Neuer Versuch" nutzt den bestehenden
+  `.modal-card__button--danger`-Stil aus `SettingsModal.css` (CSS ist in
+  diesem Projekt global, siehe `unlock-pop`-Kollision weiter oben) statt der
+  Standard-Orange-Farbe.
+
+Durchgetestet: Weltkarte mit teilweise gesperrten Welten (Schloss-Zustand,
+gedimmter Pfad) und Tap-Navigation, Zielscheibe mit zwei verschiedenen Skins
+(Standard-Holz und ein dunkles Legendär-Design), mehrere echte Würfe inkl.
+eines vollständigen Level-1-Durchlaufs (5 Treffer ohne Konsolenfehler) sowie
+ein echter Game Over mit Neustart – jeweils per echtem Tap, nicht nur Code-
+Review. Die Feinheiten des ~150-220ms-Mündungsblitzes selbst ließen sich per
+Screenshot nicht scharf einfangen (bekannte Automatisierungs-Limitierung bei
+kurzen Animationen, siehe rAF-Freeze-Abschnitt weiter oben) – stattdessen
+direkt per `getAnimations()`/DOM-Inspektion bestätigt, dass die neuen Klassen
+und Elemente bei einem echten Wurf zuverlässig gesetzt werden.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
@@ -724,6 +802,22 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Weltkarten-Hinweis) als Ersatz für ein Echtzeit-Durchspielen bis 100,
       das an der bekannten rAF-Freeze-Einschränkung der automatisierten
       Browser-Umgebung gescheitert wäre.
+- [x] **Grafik- und Gefühl-Ausbau** nach dem Feedback "Weltkarte wie eine
+      echte Karte, mehr Grafik-/Spielqualität, Axt wie eine Pistole, Game-
+      Over-Menü ist langweilig" (Details siehe eigener Abschnitt oben):
+      - Weltkarte als gewundener Vollbild-Reiseweg statt Karten-Liste.
+      - Zielscheibe mit mehr Speichen, zwei Strich-Ringen, Glanzlicht und
+        Bevel-Schatten – über die bestehenden Skin-Farbvariablen, kein Skin
+        musste angefasst werden.
+      - Axt-Wurf fühlt sich durch Mündungsblitz, Rückstoß, schärfere Kurve
+        und kürzere Rotation wie ein Schuss an – `FLIGHT_DURATION_MS` selbst
+        unverändert.
+      - Game-Over-Fenster mit eigener Inszenierung (rote Vignette, Riss-
+        Overlay, zersplitternde Axt, Stempel-Titel) statt Kopie des Erfolgs-
+        Screens.
+      Dabei einen echten React-Key-Kollisions-Bug gefunden und behoben
+      (drei unabhängige Zähler für Wurf-Effekte konnten denselben Zahlenwert
+      erreichen).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
