@@ -190,61 +190,61 @@
   bottom: 8%;
   animation-name: axe-fly;
   /*
-   * Scharf beschleunigend, dann sanft abbremsend: die Axt "schießt" los, statt
-   * gleichmäßig zu gleiten – genau das fehlte, als die Animation trotz kürzerer
-   * Flugzeit noch "langweilig" wirkte. Reine Dauer war nie das Hauptproblem.
+   * Extrem vorne geladen: der Großteil der Strecke ist schon in den ersten Frames
+   * zurückgelegt, der Rest ist nur noch ein kurzes Einrasten am Ziel – das soll sich
+   * wie ein direkter Schuss anfühlen (Impuls sofort da), nicht wie ein Wurf, der erst
+   * Schwung aufbaut. Reine Dauer war nie das Hauptproblem, siehe FLIGHT_DURATION_MS.
    */
-  animation-timing-function: cubic-bezier(0.11, 0.85, 0.2, 1);
+  animation-timing-function: cubic-bezier(0.05, 0.9, 0.1, 1);
   animation-fill-mode: forwards;
   pointer-events: none;
 }
 
 /*
  * Squash-and-Stretch beim Abschuss: die Axt streckt sich im Moment des Werfens kurz
- * in Flugrichtung (schneller, "geschossener" Eindruck), federt beim Durchschwingen
- * einmal über, und pendelt sich für die Landung wieder auf die normale Form ein.
- * Klassischer Trickfilm-Trick, kostet nichts an Spielzeit – nur die Zwischenschritte
- * der ohnehin vorhandenen Bewegung bekommen mehr Ausdruck.
+ * in Flugrichtung (schneller, "geschossener" Eindruck) und rastet für die Landung
+ * wieder auf die normale Form ein.
+ *
+ * Die Drehung wurde bewusst von 360° auf 190° gekürzt: eine volle Umdrehung liest
+ * sich wie eine geworfene Tomahawk-Axt, die durch die Luft trudelt – "wie ne Pistole
+ * direkt geschossen" (Feedback) meint aber eine kontrollierte, gerade Flugbahn ohne
+ * umständliches Taumeln. Die Axt dreht sich noch (bleibt als Axt erkennbar, kein
+ * reiner Strich), aber weniger als eine ganze Umdrehung – das wirkt gezielter.
  */
 @keyframes axe-fly {
   0% {
     bottom: 8%;
-    transform: translateX(-50%) scale(0.8, 1.28) rotate(0deg);
+    transform: translateX(-50%) scale(0.68, 1.42) rotate(0deg);
   }
-  14% {
-    transform: translateX(-50%) scale(1.12, 0.9) rotate(75deg);
-  }
-  55% {
-    transform: translateX(-50%) scale(0.96, 1.05) rotate(230deg);
+  12% {
+    transform: translateX(-50%) scale(1.1, 0.92) rotate(70deg);
   }
   100% {
     bottom: var(--flight-end-bottom);
-    transform: translateX(-50%) scale(1, 1) rotate(360deg);
+    transform: translateX(-50%) scale(1, 1) rotate(190deg);
   }
 }
 
 /*
- * Bewegungsschweif hinter der Axt. Sitzt IM rotierenden Element, wischt also mit der
- * Drehung – das liest sich als Rotationsunschaerfe statt als angeklebter Strich.
- * Laeuft ueber die gesamte Flugzeit statt kurz aufzublitzen, sonst sieht man ihn bei
- * so kurzem Flug praktisch gar nicht. Deutlich heller/länger als zuvor, damit der
- * Wurf selbst bei 190ms nach Tempo aussieht statt nach einem Zucken.
+ * Bewegungsschweif hinter der Axt: dünner und heller als zuvor, liest sich als
+ * Leuchtspur/Tracer statt als weicher Bewegungsschleier – passend zum "Schuss"-
+ * Charakter. Sitzt IM rotierenden Element, wischt also mit der Drehung mit.
  */
 .axe-flying__trail {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 15px;
-  height: 150px;
-  margin-left: -7.5px;
+  width: 9px;
+  height: 168px;
+  margin-left: -4.5px;
   border-radius: 50%;
   background: linear-gradient(
     180deg,
-    rgba(255, 250, 224, 0.9),
-    rgba(255, 214, 130, 0.4) 40%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 226, 160, 0.55) 32%,
     rgba(255, 190, 90, 0)
   );
-  filter: blur(3.5px);
+  filter: blur(2px);
   pointer-events: none;
   animation: axe-trail-fade 0.19s ease-out forwards;
 }
@@ -252,15 +252,98 @@
 @keyframes axe-trail-fade {
   0% {
     opacity: 0;
-    transform: scaleY(0.4);
+    transform: scaleY(0.3);
   }
-  20% {
+  15% {
     opacity: 1;
     transform: scaleY(1);
   }
   100% {
     opacity: 0;
-    transform: scaleY(0.75);
+    transform: scaleY(0.8);
+  }
+}
+
+/*
+ * ---- Mündungsblitz ----
+ * Sitzt GENAU dort, wo die Axt startet (dieselben Koordinaten wie .axe-flying),
+ * feuert aber unabhängig davon per eigenem Key (`muzzleId` in App.tsx), damit er bei
+ * jedem Wurf zuverlässig neu abspielt. Kühlweiß statt warm-orange wie der Trefferburst
+ * – Abschuss und Einschlag sollen sich unterschiedlich anfühlen.
+ */
+.muzzle-flash {
+  position: absolute;
+  z-index: 1;
+  left: calc(50% + var(--flight-x, 0px));
+  bottom: 8%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.muzzle-flash::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(200, 224, 255, 0.5) 45%, transparent 72%);
+  animation: muzzle-flash-pop 0.16s ease-out forwards;
+}
+
+.muzzle-flash::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid rgba(210, 230, 255, 0.85);
+  animation: muzzle-ring-expand 0.22s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes muzzle-flash-pop {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes muzzle-ring-expand {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+/* Winziger, schneller Rückstoß-Ruck beim Abschuss – deutlich dezenter/kürzer als
+   der Treffer-Shake, damit sich Abschuss und Einschlag unterschiedlich anfühlen. */
+.stage--recoil {
+  animation: stage-recoil 0.14s ease-out;
+}
+
+@keyframes stage-recoil {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(3px);
+  }
+  100% {
+    transform: translateY(0);
   }
 }
 
@@ -534,8 +617,14 @@
  * bleiben bewusst erhalten, ohne sie wäre das Spiel nicht spielbar.
  */
 @media (prefers-reduced-motion: reduce) {
-  .stage--shake {
+  .stage--shake,
+  .stage--recoil {
     animation: none;
+  }
+
+  .muzzle-flash::before,
+  .muzzle-flash::after {
+    animation-duration: 0.08s;
   }
 
   .stage::before,

@@ -83,6 +83,8 @@ function App() {
   const prevGemsRef = useRef(game.save.gems);
   const [burstId, setBurstId] = useState(0);
   const [clashId, setClashId] = useState(0);
+  const [muzzleId, setMuzzleId] = useState(0);
+  const prevFlightStartRef = useRef<number | null>(null);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [gemsFlash, setGemsFlash] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
@@ -149,6 +151,28 @@ function App() {
     void el.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
     el.classList.add('stage--shake');
   }, []);
+
+  // Winziger, schneller Rückstoß-Ruck im Moment des ABSCHUSSES (nicht des Treffers) –
+  // eigene, deutlich dezentere Animation als shakeStage. Zusammen mit dem Mündungsblitz
+  // soll sich das Werfen selbst wie ein direkter Schuss anfühlen, nicht nur der Einschlag.
+  const recoilStage = useCallback(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    el.classList.remove('stage--recoil');
+    void el.offsetWidth;
+    el.classList.add('stage--recoil');
+  }, []);
+
+  // Mündungsblitz + Rückstoß GENAU im Moment, in dem eine neue Axt losfliegt –
+  // erkannt an einem neuen `startedAt`-Zeitstempel (jeder Wurf bekommt einen eigenen).
+  useEffect(() => {
+    const started = game.flyingAxe?.startedAt ?? null;
+    if (started !== null && started !== prevFlightStartRef.current) {
+      setMuzzleId((id) => id + 1);
+      recoilStage();
+    }
+    prevFlightStartRef.current = started;
+  }, [game.flyingAxe, recoilStage]);
 
   // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle + kurzer Rums bei jedem Treffer.
   useEffect(() => {
@@ -362,7 +386,7 @@ function App() {
             Koordinaten wie der Axt-Flug nutzen können und genau am Treffpunkt sitzen. */}
         {burstId > 0 && (
           <div
-            key={burstId}
+            key={`burst-${burstId}`}
             className="hit-effect"
             style={{
               ['--flight-x' as string]: `${flightX}px`,
@@ -384,7 +408,7 @@ function App() {
             Niederlage nicht gleich anfühlen. */}
         {clashId > 0 && (
           <div
-            key={clashId}
+            key={`clash-${clashId}`}
             className="hit-effect hit-effect--clash"
             style={{
               ['--flight-x' as string]: `${flightX}px`,
@@ -400,6 +424,16 @@ function App() {
               />
             ))}
           </div>
+        )}
+
+        {/* Mündungsblitz am Absprungpunkt – feuert im selben Frame wie der Wurf, damit
+            sich das Abtippen selbst wie ein Schuss anfühlt, nicht nur der Einschlag. */}
+        {muzzleId > 0 && (
+          <div
+            key={`muzzle-${muzzleId}`}
+            className="muzzle-flash"
+            style={{ ['--flight-x' as string]: `${flightX}px` }}
+          />
         )}
 
         {game.phase === 'flying' && game.flyingAxe && (
