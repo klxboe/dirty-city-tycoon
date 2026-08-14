@@ -1,12 +1,13 @@
 /*
- * Die Weltkarte ist bewusst kein Modal-Fenster mehr, sondern ein eigener Vollbild-
- * Screen: ein gewundener Reiseweg, den man durchscrollt, statt eine Liste von Karten.
- * `left:0; right:0; max-width:480px; margin:auto` zentriert sie exakt wie `.app`
- * selbst (siehe index.css: `#root` zentriert `.app` per Flexbox) – sonst würde ein
- * simples `inset:0` auf breiten Fenstern über die volle Browserbreite reichen,
- * während das Spiel daneben in einer schmalen Spalte sitzt.
+ * Cartoon-Draufsicht-Weltkarte: verbundene Inseln im Ozean statt einer schlichten
+ * Knoten-Kette, angelehnt an klassische Jump'n'Run-Overworld-Karten. Eigener
+ * Vollbild-Screen (kein Modal-Fenster) – `left:0; right:0; max-width:480px;
+ * margin:auto` zentriert sie exakt wie `.app` selbst (siehe index.css: `#root`
+ * zentriert `.app` per Flexbox), sonst würde ein simples `inset:0` auf breiten
+ * Fenstern über die volle Browserbreite reichen, während das Spiel daneben in
+ * einer schmalen Spalte sitzt.
  */
-.world-path {
+.world-atlas {
   position: fixed;
   top: 0;
   bottom: 0;
@@ -17,11 +18,11 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  background: #05060a;
-  animation: world-path-in 0.3s cubic-bezier(0.22, 0.9, 0.3, 1);
+  background: #0d3a63;
+  animation: world-atlas-in 0.3s cubic-bezier(0.22, 0.9, 0.3, 1);
 }
 
-@keyframes world-path-in {
+@keyframes world-atlas-in {
   from {
     opacity: 0;
     transform: scale(1.03);
@@ -32,31 +33,31 @@
   }
 }
 
-.world-path__head {
+.world-atlas__head {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
-  background: linear-gradient(180deg, rgba(5, 6, 10, 0.92), rgba(5, 6, 10, 0.55) 80%, transparent);
+  background: linear-gradient(180deg, rgba(6, 24, 46, 0.92), rgba(6, 24, 46, 0.5) 80%, transparent);
 }
 
-.world-path__title {
+.world-atlas__title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
-  color: var(--color-text);
+  color: #fff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.world-path__close {
+.world-atlas__close {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.4);
-  color: var(--color-text);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
   font-size: 15px;
   font-weight: 800;
   line-height: 1;
@@ -65,27 +66,27 @@
   justify-content: center;
 }
 
-.world-path__close:active {
+.world-atlas__close:active {
   transform: scale(0.92);
 }
 
-.world-path__scroll {
+.world-atlas__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  margin-top: -56px; /* Kopfzeile schwebt über der Karte, statt Platz wegzunehmen. */
+  margin-top: -56px;
 }
 
-.world-path__track {
+.world-atlas__ocean {
   position: relative;
   width: 100%;
   padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
 }
 
-.world-path__svg {
+.world-atlas__svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -94,29 +95,80 @@
   z-index: 0;
 }
 
-.world-path__line {
+.world-atlas__cloud {
+  animation: world-atlas-cloud-drift 14s ease-in-out infinite;
+  animation-delay: var(--cloud-delay, 0s);
+}
+
+@keyframes world-atlas-cloud-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+/* Sandpfad in zwei Tönen: breiter dunkler Untergrund, schmalerer heller
+   "Trampelpfad" obendrauf – wirkt eingelaufen statt wie eine gemalte Linie. */
+.world-atlas__path {
   fill: none;
   vector-effect: non-scaling-stroke;
 }
 
-.world-path__line--dim {
-  stroke: rgba(255, 255, 255, 0.16);
-  stroke-width: 5;
+.world-atlas__path--dim {
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 4.5;
   stroke-linecap: round;
-  stroke-dasharray: 3 6;
+  stroke-dasharray: 2 5;
 }
 
-.world-path__line--lit {
-  stroke: var(--color-primary);
-  stroke-width: 6;
+.world-atlas__path--base {
+  stroke: #a9793f;
+  stroke-width: 6.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 6px rgba(255, 159, 28, 0.55));
 }
 
-.world-node {
+.world-atlas__path--top {
+  stroke: #e8c583;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 3.5;
+}
+
+/* Inseln: dunklere Klippen-Ebene leicht versetzt darunter für Tiefe, die farbige
+   Deckfläche (Gradient, siehe Component) obendrauf. */
+.world-atlas__island-cliff {
+  fill: #7a4f28;
+}
+
+.world-atlas__island-top {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 0.6;
+}
+
+.world-atlas__island--locked {
+  filter: grayscale(0.85) brightness(0.6);
+}
+
+.world-atlas__spot {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 1;
+}
+
+.world-atlas__decor {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.6);
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+
+/* ---- Marker (unverändert von der vorherigen Fassung: Icon + Fortschrittsring). ---- */
+.world-node {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -134,6 +186,7 @@
   white-space: nowrap;
   animation: world-node-pin-bob 1.6s ease-in-out infinite;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 
 @keyframes world-node-pin-bob {
@@ -148,22 +201,19 @@
 
 .world-node__badge {
   position: relative;
-  width: 84px;
-  height: 84px;
+  width: 68px;
+  height: 68px;
   border: none;
   border-radius: 50%;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Einfarbiger Fallback zuerst: falls color-mix() (neuere CSS-Funktion) nicht
-     unterstützt wird, ist die zweite `background`-Zeile als Ganzes ungültig und
-     wird ignoriert – ohne diese Zeile bliebe der Kreis dann unsichtbar. */
   background-color: var(--node-accent);
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--node-accent) 70%, white 30%), var(--node-accent) 55%, color-mix(in srgb, var(--node-accent) 60%, black 40%) 100%);
   box-shadow:
     0 6px 16px rgba(0, 0, 0, 0.5),
-    0 0 0 4px rgba(5, 6, 10, 0.85),
+    0 0 0 4px rgba(13, 58, 99, 0.9),
     0 0 22px 2px color-mix(in srgb, var(--node-accent) 55%, transparent);
 }
 
@@ -175,7 +225,7 @@
   background: radial-gradient(circle at 35% 30%, #4a4f58, #2a2d33 60%, #1a1c20 100%);
   box-shadow:
     0 6px 14px rgba(0, 0, 0, 0.5),
-    0 0 0 4px rgba(5, 6, 10, 0.85);
+    0 0 0 4px rgba(13, 58, 99, 0.9);
 }
 
 .world-node--current .world-node__badge {
@@ -187,13 +237,13 @@
   100% {
     box-shadow:
       0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 0 4px rgba(5, 6, 10, 0.85),
+      0 0 0 4px rgba(13, 58, 99, 0.9),
       0 0 22px 2px color-mix(in srgb, var(--node-accent) 55%, transparent);
   }
   50% {
     box-shadow:
       0 6px 16px rgba(0, 0, 0, 0.5),
-      0 0 0 4px rgba(5, 6, 10, 0.85),
+      0 0 0 4px rgba(13, 58, 99, 0.9),
       0 0 34px 10px color-mix(in srgb, var(--node-accent) 70%, transparent);
   }
 }
@@ -245,40 +295,40 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 118px;
+  width: 112px;
   display: flex;
   flex-direction: column;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: var(--radius-md);
-  background: rgba(5, 6, 10, 0.55);
+  background: rgba(6, 24, 46, 0.62);
   backdrop-filter: blur(2px);
 }
 
 .world-node__label--right {
-  left: calc(50% + 62px);
+  left: calc(50% + 54px);
   align-items: flex-start;
   text-align: left;
 }
 
 .world-node__label--left {
-  right: calc(50% + 62px);
+  right: calc(50% + 54px);
   align-items: flex-end;
   text-align: right;
 }
 
 .world-node__name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  color: var(--color-text);
+  color: #fff;
 }
 
 .world-node__sub {
-  font-size: 11px;
-  color: var(--color-text-muted);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
   font-variant-numeric: tabular-nums;
 }
 
 .world-node--locked .world-node__name,
 .world-node--locked .world-node__sub {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.55);
 }
