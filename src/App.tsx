@@ -301,7 +301,7 @@ function App() {
         />
 
         {shopOpen && (
-          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onClose={() => setShopOpen(false)} />
+          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
         )}
         {settingsOpen && (
           <SettingsModal
@@ -486,7 +486,7 @@ function App() {
       </div>
 
       {shopOpen && (
-        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onClose={() => setShopOpen(false)} />
+        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
       )}
 
       {settingsOpen && (

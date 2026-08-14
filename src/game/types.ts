@@ -16,6 +16,8 @@ export interface Apple {
   collected: boolean;
   /** Seltene Variante: bringt Diamanten statt Münzen (siehe goldenAppleIndexFor in constants.ts). */
   golden: boolean;
+  /** Heldenstadt-exklusiv: bringt eine Sammelfigur statt Münzen (siehe figurineIndexFor). */
+  figurine: boolean;
 }
 
 /** Ergebnis eines einzelnen Wurfs, für kurzes Feedback nach der Flugphase. */
@@ -54,6 +56,8 @@ export interface LevelConfig {
   bossFruitId?: string;
   /** Index in appleAngles, falls dieses Level einen goldenen Apfel hat (selten). */
   goldenAppleIndex?: number;
+  /** Index in appleAngles, falls dieses Level eine Sammelfigur hat (nur Heldenstadt). */
+  figurineIndex?: number;
 }
 
 export interface GameState {
@@ -67,6 +71,8 @@ export interface GameState {
   applesCollectedThisRun: number;
   /** Davon goldene Äpfel – zählen separat, weil sie Diamanten statt Münzen bringen. */
   gemsCollectedThisRun: number;
+  /** Davon Sammelfiguren – zählen separat, landen im Figuren-Inventar statt in Münzen. */
+  figurinesCollectedThisRun: number;
   /** Münzen aus dem gerade abgeschlossenen Level, aufgeschlüsselt für den Ergebnis-Screen. */
   reward: LevelReward | null;
   /** Level in Folge ohne Game Over. Treibt den Münz-Multiplikator. */
@@ -93,6 +99,8 @@ export interface LevelReward {
   total: number;
   /** Diamanten aus goldenen Äpfeln – eigene Währung, keine Münzen. */
   gems: number;
+  /** Sammelfiguren aus Heldenstadt – landen im Inventar, keine Münzen. */
+  figurines: number;
   /** Bei Boss-Leveln: welche Frucht besiegt wurde. */
   bossFruitId?: string;
   /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */

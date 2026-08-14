@@ -16,6 +16,7 @@ import {
   DIFFICULTY_REWARD_MULTIPLIER,
   DIFFICULTY_SPEED_MULTIPLIER,
   FLIGHT_DURATION_MS,
+  GEMS_PER_FIGURINE,
   GEMS_PER_GOLDEN_APPLE,
   LEVEL_COUNT,
   levelConfigAt,
@@ -48,9 +49,11 @@ function createLevelState(levelIndex: number): Omit<GameState, 'save' | 'streak'
       boardLocalAngleDeg: angle,
       collected: false,
       golden: i === level.goldenAppleIndex,
+      figurine: i === level.figurineIndex,
     })),
     applesCollectedThisRun: 0,
     gemsCollectedThisRun: 0,
+    figurinesCollectedThisRun: 0,
     reward: null,
     flyingAxe: null,
     lastOutcome: null,
@@ -136,12 +139,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         let apples = prev.apples;
         let applesCollectedThisRun = prev.applesCollectedThisRun;
         let gemsCollectedThisRun = prev.gemsCollectedThisRun;
+        let figurinesCollectedThisRun = prev.figurinesCollectedThisRun;
         const hitApple = findHitApple(localAngle, prev.apples);
         if (hitApple) {
           apples = prev.apples.map((apple) => (apple.id === hitApple.id ? { ...apple, collected: true } : apple));
           applesCollectedThisRun = prev.applesCollectedThisRun + 1;
           // Golden statt normal -> Diamanten statt Münzen, siehe computeReward unten.
           if (hitApple.golden) gemsCollectedThisRun = prev.gemsCollectedThisRun + 1;
+          // Sammelfigur (nur Heldenstadt) -> landet im Figuren-Inventar statt in Münzen.
+          if (hitApple.figurine) figurinesCollectedThisRun = prev.figurinesCollectedThisRun + 1;
         }
 
         const axesThrown = prev.axesThrown + 1;
@@ -158,8 +164,16 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
           apples,
           applesCollectedThisRun,
           gemsCollectedThisRun,
+          figurinesCollectedThisRun,
           reward: levelDone
-            ? computeReward(prev.levelIndex, applesCollectedThisRun, gemsCollectedThisRun, prev.streak, prev.save)
+            ? computeReward(
+                prev.levelIndex,
+                applesCollectedThisRun,
+                gemsCollectedThisRun,
+                figurinesCollectedThisRun,
+                prev.streak,
+                prev.save,
+              )
             : null,
         };
       });
@@ -188,6 +202,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...prev.save,
         coins: prev.save.coins + prev.reward.total,
         gems: prev.save.gems + prev.reward.gems,
+        figurines: prev.save.figurines + prev.reward.figurines,
         bestLevel: Math.max(prev.save.bestLevel, prev.levelIndex + 2),
         streak,
         ownedSkins: prev.reward.unlockedAxeSkinId
@@ -333,6 +348,25 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
+  /**
+   * Alle gesammelten Figuren auf einmal gegen Diamanten eintauschen (siehe Shop,
+   * Extras-Reiter). Bewusst ein simpler Gesamt-Eintausch statt Einzelauswahl – die
+   * Figuren sind ein reiner Vorrat, keine Sammlung unterschiedlicher, eindeutiger
+   * Exemplare, die einzeln verwaltet werden müssten.
+   */
+  const tradeFigurines = useCallback(() => {
+    setState((prev) => {
+      if (prev.save.figurines <= 0) return prev;
+      const nextSave: SaveData = {
+        ...prev.save,
+        figurines: 0,
+        gems: prev.save.gems + prev.save.figurines * GEMS_PER_FIGURINE,
+      };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
   const markTutorialSeen = useCallback(() => {
     setState((prev) => {
       if (prev.save.tutorialSeen) return prev;
@@ -385,6 +419,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     unlockEasterEgg,
     setSoundOn,
     setDifficulty,
+    tradeFigurines,
     markTutorialSeen,
     resetProgress,
   };
@@ -404,6 +439,7 @@ function loadSaveFresh(): SaveData {
     soundOn: true,
     tutorialSeen: true,
     difficulty: 'normal',
+    figurines: 0,
   };
 }
 
@@ -411,21 +447,24 @@ function loadSaveFresh(): SaveData {
  * Rechnet die Belohnung eines geschafften Levels aus. Reine Funktion, damit sie
  * gefahrlos in der setState-Updater-Funktion laufen kann (StrictMode-Doppelaufruf).
  *
- * `applesCollected` zählt ALLE eingesammelten Äpfel (golden + normal) – wichtig für den
- * Perfekt-Bonus, der "alle Äpfel des Levels" prüft. Für die Münzen zählen nur die
- * NICHT-goldenen; goldene bringen stattdessen Diamanten (`gemsCollected`).
+ * `applesCollected` zählt ALLE eingesammelten Äpfel (golden + normal + Sammelfigur) –
+ * wichtig für den Perfekt-Bonus, der "alle Äpfel des Levels" prüft. Für die Münzen
+ * zählen nur die GEWÖHNLICHEN; golden bringt Diamanten (`gemsCollected`), Sammelfigur
+ * bringt eine Figur ins Inventar (`figurinesCollected`) – beide sind exklusiv,
+ * ein Level hat nie beides gleichzeitig (siehe goldenAppleIndexFor/figurineIndexFor).
  */
 function computeReward(
   levelIndex: number,
   applesCollected: number,
   gemsCollected: number,
+  figurinesCollected: number,
   streak: number,
   save: SaveData,
 ): LevelReward {
   const level = levelConfigAt(levelIndex);
   const boss = bossFruitForLevel(levelIndex);
 
-  const apples = (applesCollected - gemsCollected) * COINS_PER_APPLE;
+  const apples = (applesCollected - gemsCollected - figurinesCollected) * COINS_PER_APPLE;
   const gems = gemsCollected * GEMS_PER_GOLDEN_APPLE;
   const base = levelCompletionBonus(levelIndex);
   const perfect = applesCollected === level.appleAngles.length && applesCollected > 0 ? PERFECT_APPLE_BONUS : 0;
@@ -460,6 +499,8 @@ function computeReward(
     // Diamanten laufen bewusst NICHT durch den Serien-Multiplikator – der ist eine
     // Münzen-Belohnung fürs Nicht-Sterben, goldene Äpfel sind reines Fund-Glück.
     gems,
+    // Sammelfiguren ebenso: 1:1 ohne Multiplikator, reines Fund-Glück wie die Diamanten.
+    figurines: figurinesCollected,
     bossFruitId: boss?.id,
     unlockedAxeSkinId,
   };

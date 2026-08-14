@@ -4,6 +4,8 @@ interface AppleProps {
   size?: number;
   /** Seltene Variante: golden statt rot, bringt Diamanten statt Münzen. */
   golden?: boolean;
+  /** Heldenstadt-exklusiv: eine kleine Helden-Sammelfigur statt eines Apfels. */
+  figurine?: boolean;
 }
 
 /**
@@ -14,10 +16,40 @@ interface AppleProps {
  * Golden ist bewusst dieselbe Form, nur andere Farben plus ein kleiner Funke – der
  * Wiedererkennungswert als "Apfel" muss erhalten bleiben, nur golden statt rot soll
  * ins Auge springen (~1 von 7 Leveln hat genau einen).
+ *
+ * `figurine` ersetzt die Frucht komplett durch eine kleine Chibi-Heldenfigur (rot/blau,
+ * passend zum "Netzschwinger"-Skin-Thema) – macht in der Heldenstadt-Welt keinen Sinn,
+ * eine Frucht abzuwerfen, wenn dort stattdessen Sammelfiguren zu finden sind.
  */
-export function Apple({ size = 30, golden = false }: AppleProps) {
+export function Apple({ size = 30, golden = false, figurine = false }: AppleProps) {
   const uid = useId();
   const fruitId = `apple-fruit-${uid}`;
+
+  if (figurine) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
+        <path d="M12 12 C6 14 5 22 9 27 C10 23 11 18 13 14 Z" fill="#c41e2f" opacity="0.9" />
+        <path d="M13 22 L11 29 M19 22 L21 29" stroke="#1a2a6b" strokeWidth="3.4" strokeLinecap="round" />
+        <path
+          d="M12 14 C12 12 20 12 20 14 L21 23 C18 24 14 24 11 23 Z"
+          fill="#e0242f"
+          stroke="#7a0f16"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 15 C9 15 7 13 6 10 M20 15 C23 15 24 18 24 21"
+          stroke="#1a2a6b"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="16" cy="9" r="5.4" fill="#e0242f" stroke="#7a0f16" strokeWidth="1.4" />
+        <path d="M13 8.4 C13.8 7 15 7 15.6 8.2 C15 9.4 13.6 9.4 13 8.4 Z" fill="#fff" />
+        <path d="M19 8.4 C18.2 7 17 7 16.4 8.2 C17 9.4 18.4 9.4 19 8.4 Z" fill="#fff" />
+      </svg>
+    );
+  }
 
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">

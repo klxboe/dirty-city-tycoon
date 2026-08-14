@@ -1,6 +1,6 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
 import { BOSS_FRUITS, HERO_BOSSES, type BossFruit } from './shop';
-import { HERO_WORLD_START } from './worlds';
+import { HERO_WORLD_START, WORLDS_LEVEL_COUNT } from './worlds';
 import type { Difficulty, LevelConfig, SpinPattern } from './types';
 
 /**
@@ -164,6 +164,9 @@ function appleCountFor(levelIndex: number): number {
  */
 function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
   if (appleCount <= 0) return undefined;
+  // In der Heldenstadt-Welt gibt es keine goldenen Äpfel – dort übernimmt die
+  // Sammelfigur (figurineIndexFor) dieselbe Rolle als seltenes Extra-Fundstück.
+  if (levelIndex >= HERO_WORLD_START) return undefined;
   const hasGolden = (levelIndex * 131 + 41) % 7 === 0;
   if (!hasGolden) return undefined;
   return (levelIndex * 3) % appleCount;
@@ -171,6 +174,23 @@ function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | u
 
 /** Wie viele Diamanten ein goldener Apfel bringt. */
 export const GEMS_PER_GOLDEN_APPLE = 3;
+
+/**
+ * Ob (und welcher) Apfel eines Heldenstadt-Levels eine Sammelfigur ist – exklusiv für
+ * diese Welt, spielt dieselbe Rolle wie der goldene Apfel anderswo (deterministisch
+ * aus der Levelnummer, kein `Math.random()`, damit ein Level bei jedem Versuch dieselbe
+ * Figur an derselben Stelle hat). Trifft auf jedes 4. Level der Welt zu (5 von 20).
+ */
+function figurineIndexFor(levelIndex: number, appleCount: number): number | undefined {
+  if (appleCount <= 0) return undefined;
+  if (levelIndex < HERO_WORLD_START || levelIndex >= HERO_WORLD_START + WORLDS_LEVEL_COUNT) return undefined;
+  const withinWorld = levelIndex - HERO_WORLD_START;
+  if (withinWorld % 4 !== 0) return undefined;
+  return (levelIndex * 5) % appleCount;
+}
+
+/** Wie viele Diamanten eine eingetauschte Sammelfigur bringt (siehe Shop-Eintausch). */
+export const GEMS_PER_FIGURINE = 2;
 
 /**
  * Dreh-Muster. Level 1-2 laufen gleichmäßig (Einstieg), ab Level 3 wechselt sich
@@ -232,6 +252,7 @@ function generateLevel(levelIndex: number): LevelConfig {
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
     bossFruitId: boss?.id,
     goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
+    figurineIndex: figurineIndexFor(levelIndex, appleCount),
   };
 }
 

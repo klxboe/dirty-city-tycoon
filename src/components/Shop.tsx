@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Apple } from './Apple';
 import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
@@ -15,7 +16,7 @@ import {
   isFreeSkin,
   type SkinDef,
 } from '../game/shop';
-import { BOSS_EVERY } from '../game/constants';
+import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
 import { HERO_WORLD_START } from '../game/worlds';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
@@ -26,6 +27,7 @@ interface ShopProps {
   save: SaveData;
   onBuy: (skinId: string) => void;
   onEquip: (skinId: string) => void;
+  onTradeFigurines: () => void;
   onClose: () => void;
 }
 
@@ -56,7 +58,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'extras', label: 'Extras' },
 ];
 
-export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
+export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
 
   const items =
@@ -106,6 +108,25 @@ export function Shop({ save, onBuy, onEquip, onClose }: ShopProps) {
           <p className="shop__note">
             Boss-Beute und Geheimnisse – nicht käuflich, nur zu erspielen oder zu finden.
           </p>
+        )}
+
+        {/* Sammelfiguren aus Heldenstadt: reiner Vorrat statt einzeln verwalteter
+            Sammlung, deshalb ein einfacher Gesamt-Eintausch statt einer Liste. Nur
+            sichtbar, sobald überhaupt eine Figur im Inventar ist. */}
+        {tab === 'extras' && save.figurines > 0 && (
+          <div className="shop-card shop-card--figurines">
+            <div className="shop-card__preview">
+              <Apple size={26} figurine />
+            </div>
+            <div className="shop-card__info">
+              <span className="shop-card__name">Sammelfiguren: {save.figurines}</span>
+              <span className="shop-card__blurb">Eingetauscht bringt jede Figur {GEMS_PER_FIGURINE} Diamanten.</span>
+            </div>
+            <button className="shop-card__action shop-card__action--buy" onClick={onTradeFigurines}>
+              <Gem size={15} />
+              {save.figurines * GEMS_PER_FIGURINE}
+            </button>
+          </div>
         )}
 
         <div className="shop__list">

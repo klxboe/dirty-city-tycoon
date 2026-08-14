@@ -34,6 +34,8 @@ export interface SaveData {
   tutorialSeen: boolean;
   /** Schwierigkeitsgrad – skaliert Board-Tempo und Münz-Belohnung, siehe types.ts. */
   difficulty: Difficulty;
+  /** Sammelfiguren aus der Heldenstadt-Welt, gegen Diamanten eintauschbar (siehe Shop). */
+  figurines: number;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -48,6 +50,7 @@ const EMPTY_SAVE: SaveData = {
   soundOn: true,
   tutorialSeen: false,
   difficulty: 'normal',
+  figurines: 0,
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -80,6 +83,7 @@ export function loadSave(): SaveData {
         soundOn: parsed.soundOn !== false,
         tutorialSeen: parsed.tutorialSeen === true,
         difficulty: VALID_DIFFICULTIES.includes(parsed.difficulty as Difficulty) ? (parsed.difficulty as Difficulty) : 'normal',
+        figurines: Math.max(0, Math.floor(toFiniteNumber(parsed.figurines, 0))),
       };
     }
 

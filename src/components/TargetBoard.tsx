@@ -61,6 +61,7 @@ interface FallingApple {
   x: number;
   y: number;
   golden: boolean;
+  figurine: boolean;
 }
 
 /** Wie lange ein voller Puls-Zyklus dauert (Sek.) bzw. wie lange bis zum Richtungswechsel. */
@@ -169,6 +170,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         x: APPLE_RADIUS * Math.sin(rad),
         y: -APPLE_RADIUS * Math.cos(rad),
         golden: apple.golden,
+        figurine: apple.figurine,
       };
     });
 
@@ -257,7 +259,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             className="falling-apple"
             style={{ left: `calc(50% + ${apple.x}px)`, top: `calc(50% + ${apple.y}px)` }}
           >
-            <Apple size={30} golden={apple.golden} />
+            <Apple size={30} golden={apple.golden} figurine={apple.figurine} />
           </span>
         ))}
       </div>
@@ -303,7 +305,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
                 className="target-board__apple-slot"
                 style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
               >
-                <Apple size={30} golden={apple.golden} />
+                <Apple size={30} golden={apple.golden} figurine={apple.figurine} />
               </div>
             </div>
           ))}
