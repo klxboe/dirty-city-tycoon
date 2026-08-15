@@ -55,8 +55,8 @@
   box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.6),
     0 0 50px 12px var(--board-glow),
-    inset 0 3px 5px rgba(255, 255, 255, 0.16),
-    inset 0 -8px 14px rgba(0, 0, 0, 0.4);
+    inset 0 3px 6px rgba(255, 255, 255, 0.22),
+    inset 0 -8px 15px rgba(0, 0, 0, 0.45);
 }
 
 .target-board__face {
@@ -131,6 +131,61 @@
   background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.4), transparent 48%);
   mix-blend-mode: soft-light;
   pointer-events: none;
+}
+
+/*
+ * Langsam wandernder Glanzstreifen – ein schmaler heller Keil, der per eigener
+ * Rotation (NICHT die inline gesetzte Dreh-Animation der Scheibe) einmal alle
+ * paar Sekunden herumläuft. Gibt der Fläche auch dann Leben, wenn die Scheibe
+ * zwischen Leveln pausiert (`paused`-Prop) – vorher stand in dem Moment alles still.
+ */
+.target-board__shimmer {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 255, 255, 0.28) 9deg, transparent 22deg, transparent 360deg);
+  mix-blend-mode: overlay;
+  animation: target-board-shimmer-spin 7s linear infinite;
+}
+
+@keyframes target-board-shimmer-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Kleine Glanzpunkte, die rund um den Kern aufblitzen – bricht die sonst
+   gleichmäßige Bullseye-Pulsation zusätzlich mit ein bisschen Funkeln auf. */
+.target-board__bullseye-sparkle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: #fff;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  opacity: 0;
+  pointer-events: none;
+  animation: target-board-sparkle-twinkle 2.8s ease-in-out infinite;
+}
+
+@keyframes target-board-sparkle-twinkle {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    transform: rotate(var(--sparkle-angle)) translateY(-36px) scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: rotate(var(--sparkle-angle)) translateY(-36px) scale(1);
+  }
 }
 
 .target-board__ring {
@@ -341,5 +396,11 @@
 @media (prefers-reduced-motion: reduce) {
   .target-board__apple-sway {
     animation: none;
+  }
+
+  .target-board__shimmer,
+  .target-board__bullseye-sparkle {
+    animation: none;
+    opacity: 0;
   }
 }

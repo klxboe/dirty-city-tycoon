@@ -47,6 +47,9 @@ interface TargetBoardProps {
 /** Anzahl der radialen Segmente auf der Scheibe (rein optisch, wie Stamm-Spalten). */
 const WEDGE_COUNT = 16;
 
+/** Winkel, an denen kleine Glanzpunkte um den Kern herum aufblitzen. */
+const BULLSEYE_SPARKLE_ANGLES = [20, 130, 250];
+
 /** Wie lange ein abgeworfener Apfel sichtbar herunterfällt (ms). Muss zur CSS-Animation passen. */
 const APPLE_FALL_MS = 900;
 
@@ -286,8 +289,23 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         {/* Glanzlicht: gibt der Fläche etwas Tiefe/Politur, ohne die Skin-Farben
             selbst anzufassen (sitzt als Blend-Layer oben drauf). */}
         <div className="target-board__sheen" />
+        {/* Langsam wandernder Glanz-Streifen – eigenes Element mit EIGENER Rotation,
+            damit es nicht mit der inline gesetzten Dreh-Animation der Scheibe selbst
+            kollidiert (derselbe Trick wie beim Hit-Stop). Macht die Fläche auch dann
+            lebendig, wenn die Scheibe zwischen Leveln kurz pausiert. */}
+        <div className="target-board__shimmer" />
         <div className="target-board__bullseye">
           <div className="target-board__bullseye-ring" />
+          {BULLSEYE_SPARKLE_ANGLES.map((angle, i) => (
+            <span
+              key={i}
+              className="target-board__bullseye-sparkle"
+              style={{
+                ['--sparkle-angle' as string]: `${angle}deg`,
+                animationDelay: `${i * 0.45}s`,
+              }}
+            />
+          ))}
         </div>
 
         {apples
