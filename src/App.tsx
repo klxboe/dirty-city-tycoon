@@ -9,6 +9,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
 import { StartScreen } from './components/StartScreen';
 import { WorldDecor } from './components/WorldDecor';
+import { WorldHorizon } from './components/WorldHorizon';
 import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
@@ -373,6 +374,7 @@ function App() {
         style={worldStyleVars(game.levelIndex) as React.CSSProperties}
         onPointerDown={handlePointerDown}
       >
+        <WorldHorizon decor={world.decor} />
         <WorldDecor decor={world.decor} />
 
         <AxeInventory total={game.axeCount} thrown={game.axesThrown} skin={game.save.equippedAxeSkin} />

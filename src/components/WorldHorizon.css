@@ -1,0 +1,108 @@
+.world-horizon {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.world-horizon__svg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  /* Feste Höhe statt "height: auto" – zusammen mit preserveAspectRatio="none"
+     (siehe Component) streckt sich die Silhouette exakt auf diese Box, egal wie
+     schmal/hoch das jeweilige Handy-Display ist. Ein bisschen Verzerrung bei
+     extremen Seitenverhältnissen ist für eine Silhouette unproblematisch. */
+  height: clamp(120px, 26vh, 220px);
+}
+
+/*
+ * Reines Schwarz wäre hier eine Silhouette VOR Schwarz: der Himmel-Verlauf jeder
+ * Welt geht unten (--color-bg-bottom) fast in Schwarz über, genau dort sitzt der
+ * Horizont – eine schwarze Form davor war praktisch unsichtbar. Statt Schwarz
+ * ein dunkel getönter Mix aus der Welt-Akzentfarbe: bleibt klar als Schatten/
+ * Silhouette lesbar, hebt sich aber vom fast-schwarzen Grund ab. Zusätzlich ein
+ * kräftigerer Lichtsaum an der Oberkante (drop-shadow) als zweite, vom Grund
+ * unabhängige Möglichkeit, die Kontur zu erkennen.
+ */
+.world-horizon__layer {
+  /* Einfarbiger Fallback zuerst, falls color-mix() (neuere CSS-Funktion) fehlt –
+     sonst wäre die zweite (ungültige) Zeile insgesamt ungültig und die Form
+     bliebe unsichtbar. */
+  fill: #1c1c1c;
+  fill: color-mix(in srgb, var(--world-accent, #888) 35%, #050505);
+}
+
+.world-horizon__layer--far {
+  fill: #161616;
+  fill: color-mix(in srgb, var(--world-accent, #888) 22%, #0a0a0a);
+  filter: drop-shadow(0 -1px 3px color-mix(in srgb, var(--world-accent, transparent) 40%, transparent));
+}
+
+.world-horizon__layer--near {
+  fill: #202020;
+  fill: color-mix(in srgb, var(--world-accent, #888) 40%, #050505);
+  filter: drop-shadow(0 -1.5px 4px var(--world-accent, transparent));
+}
+
+.world-horizon__layer--accent {
+  fill: #14180f;
+  fill: color-mix(in srgb, var(--world-accent, #888) 30%, #0a140a);
+}
+
+/* ---- Vulkan: glühende Linie am Fuß ---- */
+.world-horizon__lava-line {
+  fill: var(--world-accent, #ff6e28);
+  filter: drop-shadow(0 0 6px var(--world-accent, #ff6e28));
+  animation: world-horizon-lava-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes world-horizon-lava-glow {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- Heldenstadt: flackernde Fensterlichter ---- */
+.world-horizon__window {
+  fill: rgba(255, 221, 140, 0.85);
+  animation: world-horizon-window-flicker 4.5s steps(1, end) infinite;
+  animation-delay: var(--flicker-delay, 0s);
+}
+
+@keyframes world-horizon-window-flicker {
+  0%,
+  85%,
+  100% {
+    opacity: 0.85;
+  }
+  88% {
+    opacity: 0.15;
+  }
+  91% {
+    opacity: 0.85;
+  }
+  94% {
+    opacity: 0.3;
+  }
+}
+
+/* ---- Kosmos: aufgehender Mond/Planet statt Bodenlinie ---- */
+.world-horizon__moon {
+  fill: rgba(230, 225, 245, 0.5);
+  filter: drop-shadow(0 0 18px rgba(200, 190, 255, 0.35));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-horizon__lava-line,
+  .world-horizon__window {
+    animation: none;
+  }
+}
