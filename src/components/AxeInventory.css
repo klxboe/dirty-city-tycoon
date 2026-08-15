@@ -12,20 +12,58 @@
   display: flex;
   flex-direction: column-reverse;
   gap: 2px;
+  padding: var(--space-2) 3px;
   pointer-events: none;
 }
 
+/* Dezenter "Köcher"-Streifen hinter der Reihe – vorher schwebten die Äxte frei im
+   Raum, das wirkte weniger nach "Vorrat" und mehr nach zufällig verstreuten Icons.
+   Als ::before statt eigenem Element, damit es automatisch HINTER den Äxten liegt. */
+.axe-inventory::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, rgba(20, 14, 8, 0.35), rgba(20, 14, 8, 0.15));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
 .axe-inventory__slot {
+  position: relative;
   display: flex;
   /* Leicht gekippt liegend, damit die Reihe nicht wie ein Zaun wirkt. */
   transform: rotate(-32deg);
   transform-origin: center;
-  transition: opacity 0.25s, filter 0.25s, transform 0.25s;
+  transition:
+    opacity 0.3s ease-out,
+    filter 0.3s ease-out,
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  /* Leises Wippen im Bereitschafts-Zustand, mit Versatz je Reihenposition (siehe
+     App.tsx) – vorher stand die ganze Reihe zwischen den Würfen komplett still. */
+  animation: axe-inventory-bob 2.4s ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0s);
+}
+
+@keyframes axe-inventory-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: -1.5px 0;
+  }
 }
 
 .axe-inventory__slot--used {
   opacity: 0.18;
   filter: grayscale(1);
-  transform: rotate(-32deg) scale(0.88);
+  transform: rotate(-32deg) scale(0.82);
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axe-inventory__slot {
+    animation: none;
+  }
 }
