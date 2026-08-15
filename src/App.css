@@ -145,8 +145,9 @@
   gap: var(--space-3);
 }
 
-/* Die bereitliegende Axt an der Abwurfstelle – atmet leicht, damit klar ist,
-   dass das Spiel auf eine Eingabe wartet. */
+/* Die bereitliegende Axt an der Abwurfstelle – atmet leicht UND wiegt sich minimal
+   hin und her, damit klar ist, dass das Spiel auf eine Eingabe wartet (nicht nur
+   "schwebt", sondern wirkt greifbereit). */
 .stage__ready-axe {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
   animation: ready-axe-breathe 1.8s ease-in-out infinite;
@@ -155,10 +156,10 @@
 @keyframes ready-axe-breathe {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-5px) rotate(-2.5deg);
   }
 }
 

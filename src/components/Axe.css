@@ -1,0 +1,24 @@
+/* Wanderndes Glanzlicht auf der Schneide – kurze helle Striche, die per
+   stroke-dashoffset immer wieder die Klinge entlanglaufen. Rein dekorativ,
+   macht die Axt lebendiger, wenn sie gerade nicht fliegt. */
+.axe__edge-glint {
+  stroke-dasharray: 3 11;
+  opacity: 0.85;
+  animation: axe-edge-shimmer 2.2s linear infinite;
+}
+
+@keyframes axe-edge-shimmer {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axe__edge-glint {
+    animation: none;
+    opacity: 0;
+  }
+}

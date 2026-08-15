@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { DEFAULT_AXE_SKIN, getAxeStyle } from '../game/shop';
+import './Axe.css';
 
 interface AxeProps {
   size?: number;
@@ -22,6 +23,7 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
   const uid = useId().replace(/:/g, '');
   const bladeId = `axe-blade-${uid}`;
   const woodId = `axe-wood-${uid}`;
+  const wrapId = `axe-wrap-${uid}`;
   const style = getAxeStyle(skin);
 
   return (
@@ -35,13 +37,20 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
     >
       <defs>
         <linearGradient id={bladeId} x1="0" y1="0" x2="1" y2="0.35">
-          <stop offset="0%" stopColor={style.steel[0]} />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="14%" stopColor={style.steel[0]} />
           <stop offset="52%" stopColor={style.steel[1]} />
           <stop offset="100%" stopColor={style.steel[2]} />
         </linearGradient>
         <linearGradient id={woodId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={style.wood[0]} />
           <stop offset="100%" stopColor={style.wood[1]} />
+        </linearGradient>
+        <linearGradient id={wrapId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#000000" stopOpacity="0.35" />
+          <stop offset="35%" stopColor={style.wrap} />
+          <stop offset="70%" stopColor={style.wrap} />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.35" />
         </linearGradient>
       </defs>
 
@@ -53,10 +62,11 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
-      {/* Wicklung am Griff – drei kräftige Ringe, wie beim Vorbild */}
-      <rect x="12.2" y="26" width="7.6" height="3.6" rx="1.6" fill={style.wrap} />
-      <rect x="12.3" y="33" width="7.4" height="3.6" rx="1.6" fill={style.wrap} />
-      <rect x="12.4" y="40" width="7.2" height="3.6" rx="1.6" fill={style.wrap} />
+      {/* Wicklung am Griff – drei kräftige Ringe, wie beim Vorbild. Gradient statt
+          Flachfarbe (dunkler an den Rändern) lässt sie leicht rund/gewölbt wirken. */}
+      <rect x="12.2" y="26" width="7.6" height="3.6" rx="1.6" fill={`url(#${wrapId})`} />
+      <rect x="12.3" y="33" width="7.4" height="3.6" rx="1.6" fill={`url(#${wrapId})`} />
+      <rect x="12.4" y="40" width="7.2" height="3.6" rx="1.6" fill={`url(#${wrapId})`} />
 
       {/* Hammer-Sporn hinten links. Zusammen mit dem Blatt rechts wird der Kopf breit
           und flach – erst dadurch liest sich die Silhouette klein noch als Axt und
@@ -88,6 +98,18 @@ export function Axe({ size = 40, className, skin = DEFAULT_AXE_SKIN }: AxeProps)
         strokeWidth="2.4"
         strokeLinecap="round"
         opacity="0.95"
+      />
+      {/* Wanderndes Glanzlicht auf der Schneide – ein kurzer heller Strich, der per
+          stroke-dashoffset-Animation immer wieder die Klinge entlangläuft. Macht die
+          bereitliegende Axt am Startbildschirm/vor dem Wurf lebendiger, ohne die Form
+          selbst anzufassen. */}
+      <path
+        className="axe__edge-glint"
+        d="M15.5 5 C22.8 4.2 28.6 7.8 29.2 12.8"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="1.6"
+        strokeLinecap="round"
       />
     </svg>
   );
