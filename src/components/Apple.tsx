@@ -53,15 +53,23 @@ export function Apple({ size = 30, golden = false, figurine = false }: AppleProp
 
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
-      {golden && (
-        <defs>
-          <radialGradient id={fruitId} cx="0.35" cy="0.3" r="0.85">
-            <stop offset="0%" stopColor="#fff6c8" />
-            <stop offset="55%" stopColor="#ffce3d" />
-            <stop offset="100%" stopColor="#c98a00" />
-          </radialGradient>
-        </defs>
-      )}
+      <defs>
+        <radialGradient id={fruitId} cx="0.35" cy="0.3" r="0.85">
+          {golden ? (
+            <>
+              <stop offset="0%" stopColor="#fff6c8" />
+              <stop offset="55%" stopColor="#ffce3d" />
+              <stop offset="100%" stopColor="#c98a00" />
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor="#ff8a92" />
+              <stop offset="55%" stopColor="#e63946" />
+              <stop offset="100%" stopColor="#a01824" />
+            </>
+          )}
+        </radialGradient>
+      </defs>
       {/* Frucht: zwei verschmolzene Rundungen mit Kerbe oben */}
       <path
         d="M16 10.5
@@ -71,7 +79,7 @@ export function Apple({ size = 30, golden = false, figurine = false }: AppleProp
            C16.8 27.4 17.8 28 19.2 28
            C23.4 28 28 21.2 27 15
            C26 8.8 19.5 7.8 16 10.5 Z"
-        fill={golden ? `url(#${fruitId})` : '#e63946'}
+        fill={`url(#${fruitId})`}
         stroke={golden ? '#8a5c00' : '#7a1119'}
         strokeWidth="1.6"
         strokeLinejoin="round"
@@ -85,6 +93,8 @@ export function Apple({ size = 30, golden = false, figurine = false }: AppleProp
         strokeLinecap="round"
         opacity="0.75"
       />
+      {/* Kleiner Tau-/Glanzpunkt oben – gibt der Rundung mehr Volumen. */}
+      <circle cx="11.5" cy="13" r="1.5" fill="#fff" opacity={golden ? 0.55 : 0.4} />
       {/* Stiel */}
       <path d="M16 10 C15.6 7 15.9 5.4 16.8 4" stroke="#5c3a1a" strokeWidth="2" fill="none" strokeLinecap="round" />
       {/* Blatt */}

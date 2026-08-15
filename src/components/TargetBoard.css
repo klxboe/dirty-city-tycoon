@@ -262,18 +262,70 @@
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
 }
 
+/* Kleiner Blatt-/Saft-Spritzer GENAU am Abwurf-Moment – sitzt an derselben Stelle
+   wie der fallende Apfel, läuft aber viel kürzer und unabhängig von dessen
+   Fall-Animation (eigenes Element statt eines Extra-Keyframes auf dem Apfel selbst,
+   sonst müssten beide Bewegungen in einer Animation kombiniert werden). */
+.falling-apple__burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.falling-apple__bit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 6px;
+  margin: -3px 0 0 -2px;
+  border-radius: 1px 6px;
+  background: #6fbf5c;
+  transform-origin: center;
+  animation: falling-apple-burst 0.5s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
+}
+
+@keyframes falling-apple-burst {
+  0% {
+    transform: rotate(var(--bit-angle)) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--bit-angle)) translateY(-26px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/*
+ * Etwas mehr "Physik-Gefühl" als ein reines Geradeaus-Fallen: leichte seitliche
+ * Drift (translateX pendelt hin und her, wie Luftwiderstand beim Taumeln) und mehr
+ * Gesamtdrehung (430° statt 190° – über eine ganze Umdrehung, nicht nur gut die
+ * Hälfte), zusätzliche Zwischenschritte statt nur Start/Ende, damit die
+ * Beschleunigung nach unten sichtbar wird statt linear zu wirken.
+ */
 @keyframes apple-fall {
   0% {
-    transform: translate(-50%, -50%) rotate(0deg) scale(1.15);
+    transform: translate(-50%, -50%) translateX(0) rotate(0deg) scale(1.15);
     opacity: 1;
   }
   15% {
     /* kurzer Hüpfer nach oben, als würde die Axt ihn losschlagen */
-    transform: translate(-50%, calc(-50% - 16px)) rotate(-25deg) scale(1.1);
+    transform: translate(-50%, calc(-50% - 16px)) translateX(2px) rotate(-25deg) scale(1.1);
     opacity: 1;
   }
+  45% {
+    transform: translate(-50%, calc(-50% + 55px)) translateX(-6px) rotate(75deg) scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(-50%, calc(-50% + 128px)) translateX(4px) rotate(270deg) scale(0.88);
+    opacity: 0.85;
+  }
   100% {
-    transform: translate(-50%, calc(-50% + 190px)) rotate(190deg) scale(0.8);
+    transform: translate(-50%, calc(-50% + 190px)) translateX(-3px) rotate(430deg) scale(0.75);
     opacity: 0;
   }
 }
@@ -400,6 +452,11 @@
 
   .target-board__shimmer,
   .target-board__bullseye-sparkle {
+    animation: none;
+    opacity: 0;
+  }
+
+  .falling-apple__bit {
     animation: none;
     opacity: 0;
   }

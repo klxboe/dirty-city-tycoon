@@ -50,6 +50,9 @@ const WEDGE_COUNT = 16;
 /** Winkel, an denen kleine Glanzpunkte um den Kern herum aufblitzen. */
 const BULLSEYE_SPARKLE_ANGLES = [20, 130, 250];
 
+/** Winkel für den kleinen Blatt-/Saft-Spritzer beim Apfel-Abwurf. */
+const APPLE_BURST_ANGLES = [-60, -10, 40, 100, 160, 220];
+
 /** Wie lange ein abgeworfener Apfel sichtbar herunterfällt (ms). Muss zur CSS-Animation passen. */
 const APPLE_FALL_MS = 900;
 
@@ -262,6 +265,16 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             className="falling-apple"
             style={{ left: `calc(50% + ${apple.x}px)`, top: `calc(50% + ${apple.y}px)` }}
           >
+            {/* Kleiner Blatt-/Saft-Spritzer im Moment des Abfallens – nur bei echten
+                Früchten, eine Sammelfigur "spritzt" nicht. Läuft einmalig und kürzer
+                als der Fall selbst, dieselbe Herkunfts-Koordinate wie der Apfel. */}
+            {!apple.figurine && (
+              <span className="falling-apple__burst">
+                {APPLE_BURST_ANGLES.map((angle, i) => (
+                  <span key={i} className="falling-apple__bit" style={{ ['--bit-angle' as string]: `${angle}deg` }} />
+                ))}
+              </span>
+            )}
             <Apple size={30} golden={apple.golden} figurine={apple.figurine} />
           </span>
         ))}
