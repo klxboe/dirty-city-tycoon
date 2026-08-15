@@ -386,6 +386,51 @@ Alle drei respektieren `prefers-reduced-motion`. Per DOM-Inspektion bestätigt
 `animation-delay`) für Wald (grün) und Heldenstadt (rot/Flacker-Keyframe) –
 keine Konsolenfehler.
 
+### Vierter Grafik-Durchgang: Welt-Kulissen, Zielscheibe, Axt, Vorrat, Äpfel
+
+Auf das Feedback "der Hintergrund ist bei jeder Welt null passend, mach die
+Scheibe/Axt/den Vorrat/die Äpfel lebendiger" fünf gezielte Bausteine:
+
+- **WorldHorizon – echte Kulisse statt Farbtönung** (`WorldHorizon.tsx`/`.css`,
+  NEUE Komponente, ergänzt `WorldDecor` statt sie zu ersetzen): eine volle
+  Horizont-Silhouette am Bühnenfuß statt nur getönter Hintergrundfläche + zwei
+  kleiner Ecken-Icons. Wald=zweischichtige Baumreihe, Wüste=Dünen+Kakteen,
+  Eis=schroffe Bergkette, Vulkan=Kegel mit glühender Lava-Linie,
+  Heldenstadt=Skyline mit flackernden Fenstern, Kosmos=aufgehender Mond.
+  Formen prozedural per Seed (`spikes()`/`ridge()`/`dunes()`/`buildings()`),
+  dieselbe Technik wie die Weltkarten-Inseln. **Kontrast-Bug dabei gefunden
+  und behoben:** reine schwarze Silhouetten waren praktisch unsichtbar, weil
+  `--color-bg-bottom` jeder Welt ohnehin fast Schwarz ist (Silhouette vor
+  Schwarz). Fix: Füllung über `color-mix()` aus `--world-accent` statt
+  reinem Schwarz, dazu ein kräftigerer Lichtsaum an der Oberkante – beides
+  vom Hintergrund unabhängige Wege, die Kontur erkennbar zu machen.
+- **Zielscheibe**: wandernder Glanzstreifen (eigenes Element mit eigener
+  `conic-gradient`-Rotation statt der inline gesetzten Dreh-Animation der
+  Scheibe – hält die Fläche auch bei pausierter Scheibe lebendig), drei
+  zeitversetzt aufblitzende Funkelpunkte um den Kern, kräftigerer Rand-Bevel.
+- **Axt**: zusätzlicher heller Gradient-Stop auf der Klinge für ein
+  deutlicheres Specular-Highlight, Griffwicklung mit Gradient statt
+  Flachfarbe (wirkt rund/gewölbt), wanderndes Glanzlicht auf der Schneide
+  (`stroke-dashoffset`-Animation, eigene `Axe.css`), bereitliegende Axt wiegt
+  sich beim Atmen jetzt zusätzlich leicht hin und her.
+- **Axt-Vorrat-Leiste**: dezenter Köcher-Hintergrund (`::before`, liegt
+  automatisch hinter den Äxten), wartende Äxte wippen leicht (über die
+  separate CSS-`translate`-Property, damit es nicht mit dem bestehenden
+  `rotate(-32deg)` auf `transform` kollidiert), Verbrauchs-Übergang mit
+  federnder statt linearer Kurve.
+- **Äpfel**: normale Frucht bekommt denselben radialen Gradient-Aufbau wie
+  die goldene Variante (vorher flache Einzelfarbe) plus einen kleinen
+  Tau-Glanzpunkt. Fall-Animation um Zwischenschritte erweitert (leichte
+  seitliche Drift statt geradem Fallen, mehr Gesamtdrehung), dazu ein kurzer
+  Blatt-Spritzer-Burst genau im Abwurf-Moment (nur bei echten Früchten, nicht
+  bei der Heldenstadt-Sammelfigur).
+
+Alle neuen Animationen respektieren `prefers-reduced-motion`. Durchgetestet:
+alle 6 Welten-Horizonte im Browser (Baumreihe, Dünen+Kakteen, Bergkette,
+Vulkankegel, Skyline, Mond), Glanzstreifen/Funkeln/Wippen per
+`getComputedStyle`-Inspektion bestätigt, keine Konsolenfehler bei mehreren
+echten Würfen.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
@@ -625,13 +670,17 @@ src/
                           (forwardRef + useImperativeHandle, siehe Performance-
                           Abschnitt unten)
     AxeInventory.tsx     Senkrechte Reihe der verbleibenden Äxte am linken Rand
-    VineDecoration.tsx   Rein dekorative Ranken in den Bühnen-Ecken
+    WorldHorizon.tsx     Welt-passende Horizont-Silhouette am Bühnenfuß (Baumreihe/
+                          Dünen/Bergkette/Vulkan/Skyline/Mond, siehe Grafik-Abschnitt)
+    WorldDecor.tsx       Kleine animierte Ecken-Deko passend zur Welt (Ergänzung zu
+                          WorldHorizon, nicht dasselbe)
+    WorldMap.tsx         Cartoon-Insel-Weltkarte mit Reise-Animation
     HUD.tsx              Levelnummer / Block-Punktreihe / Münzen oben. Der
                           Münzstand ist zugleich der Werkstatt-Button.
     Shop.tsx             Die Werkstatt: Skins kaufen und ausrüsten
     LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
-    GameOverModal.tsx    Screen nach Treffer auf die eigene Axt (nutzt dieselbe
-                          LevelCompleteModal.css)
+    GameOverModal.tsx    Screen nach Treffer auf die eigene Axt (eigene Optik,
+                          nutzt aber gemeinsame Klassen aus LevelCompleteModal.css)
   styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
 ```
 
@@ -1034,6 +1083,20 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Titel/Regeln-Karte noch konsequenter blau.
       Dabei eine fehlende Anzeige nachgezogen: die Sammelfiguren-Belohnung
       wurde berechnet, aber zunächst nicht im Ergebnis-Screen gezeigt.
+- [x] **Balancing nachgeschärft + Spiel-Bühne belebt** (Details siehe eigene
+      Abschnitte oben): Apfel-Trefferfenster 24°→30° (nachgerechnet, nicht nur
+      geschätzt), Boss-Level spürbar härter (Tempo, Hindernis, erzwungenes
+      `pulse`-Muster). Staub-Partikel tönen sich jetzt pro Welt, Ecken-Deko war
+      bei 6% Deckkraft praktisch unsichtbar und komplett regungslos – auf 13%
+      angehoben und je Welt animiert, Äpfel pendeln sanft am Stiel.
+- [x] **Vierter Grafik-Durchgang: Welt-Kulissen, Zielscheibe, Axt, Vorrat,
+      Äpfel** (Details siehe eigener Abschnitt oben): neue WorldHorizon-
+      Komponente mit welt-passender Horizont-Silhouette (vorher nur Farbtönung
+      ohne jeden Bezug zur Welt), dabei einen Kontrast-Bug behoben (schwarze
+      Silhouetten vor fast-schwarzem Bühnenfuß waren unsichtbar). Zielscheibe,
+      Axt und Axt-Vorrat bekamen je einen wandernden Glanz-/Funkel-Effekt für
+      mehr Leben auch außerhalb des eigentlichen Wurfs, Äpfel einen volleren
+      Farbverlauf und eine natürlichere Fall-Animation mit Blatt-Spritzer.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
