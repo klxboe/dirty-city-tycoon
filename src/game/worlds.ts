@@ -128,7 +128,9 @@ export const WORLDS: World[] = [
 ];
 
 export function worldForLevel(levelIndex: number): World {
-  // Level jenseits der Kampagne (Endlos-Modus) bleiben optisch in der letzten Welt (Kosmos).
+  // Level jenseits der Kampagne (Endlos-Modus) bleiben optisch in der letzten Welt
+  // (aktuell Heldenstadt) – generisch über WORLDS.length, nicht auf eine bestimmte
+  // Welt fest verdrahtet, damit eine neue letzte Welt hier nichts ändern muss.
   const clamped = Math.max(0, Math.min(levelIndex, WORLDS.length * WORLDS_LEVEL_COUNT - 1));
   const index = Math.min(WORLDS.length - 1, Math.floor(clamped / WORLDS_LEVEL_COUNT));
   return WORLDS[index];
@@ -143,5 +145,8 @@ export function worldStyleVars(levelIndex: number): Record<string, string> {
     '--color-shard-light': w.shardLight,
     '--color-shard-dark': w.shardDark,
     '--stage-glow': w.glow,
+    /** Für Deko, die sich an der Welt orientieren soll (z.B. Staub-Tönung) statt
+     *  überall gleich amberfarben zu wirken – siehe .stage__dust in App.css. */
+    '--world-accent': w.accent,
   };
 }

@@ -244,6 +244,25 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
+/* Sanftes Pendeln am Stiel – macht das Brett zwischen den Würfen lebendig statt
+   komplett reglos. `transform-origin: 50% 0` lässt den Apfel von OBEN (am Stiel)
+   aus schwingen statt um seine eigene Mitte zu kippen. */
+.target-board__apple-sway {
+  display: block;
+  transform-origin: 50% 0%;
+  animation: apple-sway 2.6s ease-in-out infinite;
+}
+
+@keyframes apple-sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
 .target-board__axe-flip {
   transform: rotate(180deg);
 }
@@ -314,5 +333,13 @@
     opacity: 1;
     stroke-dasharray: 260;
     stroke-dashoffset: 0;
+  }
+}
+
+/* Die Scheiben-Drehung selbst bleibt bewusst erhalten (Spielmechanik, siehe
+   App.css) – nur das rein dekorative Apfel-Pendeln stoppt. */
+@media (prefers-reduced-motion: reduce) {
+  .target-board__apple-sway {
+    animation: none;
   }
 }

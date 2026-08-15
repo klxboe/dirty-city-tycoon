@@ -350,6 +350,42 @@ Levelnummer stiegen über zwei Level hinweg ohne manuellen Tap), Startbildschirm
 mit neuem Welt-Badge in Wald (grün) und Heldenstadt (rot) sowie sichtbarer
 Sammelfiguren-Pille.
 
+### Spiel-Bühne belebt (Feedback: "sieht tot aus statt lebendig")
+
+Nach dem ganzen Menü-/Weltkarten-Ausbau blieb die eigentliche Spiel-Ansicht
+(`.stage`) optisch beim ursprünglichen, flachen "Knife Hit"-Arcade-Look – kein
+Wunder, dass sie neben dem inzwischen lebendigen Startbildschirm und der
+Cartoon-Weltkarte tot wirkte. Drei gezielte Korrekturen statt eines
+kompletten Neu-Looks:
+
+- **Staub-Partikel tönen sich nach Welt** (`App.css`, `worlds.ts`): vorher
+  trieb überall derselbe amberfarbene Staub, auch in der Eis- oder
+  Kosmos-Welt – passte farblich nicht. `worldStyleVars()` exportiert jetzt
+  zusätzlich `--world-accent`, `.stage__dust span` nutzt die Variable statt
+  eines festen Werts.
+- **Ecken-Deko war praktisch unsichtbar UND komplett regungslos**
+  (`WorldDecor.tsx`/`.css`): `color: rgba(255,255,255,0.06)` war so blass,
+  dass eine Animation sowieso niemand gesehen hätte – erst auf 0.13 angehoben
+  (immer noch klar Hintergrund), dann eine zur Deko-Art passende Idle-
+  Animation ergänzt: Bäume schwanken, Kakteen wackeln minimal, Eiszapfen
+  glänzen auf, Lava pulsiert, Heldenstadt-Fensterlichter flackern
+  unregelmäßig (`steps(1, end)` statt weichem Überblenden). Braucht eine neue
+  Modifier-Klasse `world-decor--<art>` auf dem äußeren Container, weil die
+  Deko-Art vorher nirgends als CSS-Klasse verfügbar war (nur als SVG-Auswahl
+  in der Komponente).
+- **Äpfel pendeln sanft am Stiel** (`TargetBoard.tsx`/`.css`): vorher hingen
+  sie zwischen den Würfen komplett reglos. Neues Kind-Element
+  `.target-board__apple-sway` MIT EIGENER Rotation, damit die Animation nicht
+  mit dem inline gesetzten Positionierungs-`transform` auf dem Eltern-Element
+  kollidiert (derselbe Trick wie beim Axt-Zusammenzucken/Hit-Stop). Versatz
+  je Apfel aus der ID (`apple.id % 4`), damit nicht alle im Gleichtakt
+  schwingen.
+
+Alle drei respektieren `prefers-reduced-motion`. Per DOM-Inspektion bestätigt
+(`getComputedStyle` auf `--world-accent`, `animation-name`,
+`animation-delay`) für Wald (grün) und Heldenstadt (rot/Flacker-Keyframe) –
+keine Konsolenfehler.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
@@ -359,7 +395,9 @@ Sammelfiguren-Pille.
   Die Liste wiederholt sich, Level 5-50 decken alle zehn ab. Ab Level 101
   (Heldenstadt) läuft eine GETRENNTE Boss-Rotation, siehe eigener Abschnitt
   weiter unten.
-- Boss-Level sind eine Prüfung: eine Axt mehr und +12°/Sek. Tempo. Das
+- Boss-Level sind eine Prüfung: eine Axt mehr, +20°/Sek. Tempo, ein
+  zusätzliches Hindernis und ein fest auf `pulse` gesetztes Dreh-Muster
+  (siehe Nachschärf-Kommentar in `generateLevel()`, `constants.ts`). Das
   Frucht-Design überschreibt für dieses Level das ausgerüstete Scheiben-Design.
 - **Belohnung:** die passende Frucht-Axt, geschenkt. Hat man sie schon (ab der
   zweiten Runde durch die Liste), gibt es stattdessen Münzen
@@ -1013,10 +1051,19 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
   Schätzungen. Konkret unklar:
   - **Münz-Tempo.** ~15-25 Münzen pro Level plus Boni. Der erste kaufbare Skin
     (150) kommt nach ~7-10 Leveln, der teuerste (5000) sehr viel später.
-  - **Sind Boss-Level hart genug?** Aktuell +1 Axt und +12°/Sek. Sie sollen sich
-    wie eine Prüfung anfühlen, nicht wie ein normales Level mit anderer Farbe.
-  - **Apfel-Ausbeute:** mit `APPLE_HIT_TOLERANCE_DEG = 24` erwischt man oft nur
-    1 von 2 Äpfeln – der Perfekt-Bonus ist dadurch selten.
+  - ~~**Sind Boss-Level hart genug?**~~ Nachgeschärft: Tempo-Bonus 12→20°/Sek.,
+    zusätzlich ein Hindernis mehr, und das Dreh-Muster ist jetzt für Boss-Level
+    fest auf `pulse` gesetzt (`spinPatternFor()` hätte sonst z.B. den allerersten
+    Boss auf `steady` gesetzt – ausgerechnet der erste hätte sich dann nicht
+    schwerer angefühlt). Per Code-Rechnung begründet (siehe Kommentar in
+    `generateLevel()`), NICHT durch echtes Vielspielen bestätigt – falls
+    "immer noch zu leicht"/"jetzt zu hart" als Feedback kommt, hier ansetzen.
+  - ~~**Apfel-Ausbeute:**~~ `APPLE_HIT_TOLERANCE_DEG` von 24° auf 30° angehoben.
+    Nachgerechnet statt nur geraten: bei 4 Äpfeln (90° auseinander, die engste
+    Situation ab Level 51) berühren sich die Fangfenster bei 30° gerade so
+    nicht (2×30°=60° < 90°) – mehr Großzügigkeit ohne dass sich Äpfel
+    gegenseitig die Fenster stehlen können. Ebenfalls noch nicht durch
+    echtes Spielen verifiziert.
 - Mehr Shop-Inhalte denkbar (Spuren/Trails der Axt, Hintergrund-Kulissen,
   Sound-Sets) – die Struktur trägt das jetzt, Farben sind reine Daten.
 - Idee für später: Level-Auswahl statt nur "weiter" – die Bestmarke ist da, ein

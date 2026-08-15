@@ -60,8 +60,16 @@ export const GAME_OVER_DELAY_MS = 650;
  */
 export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 
-/** Wie nah eine Axt an einem Apfel landen muss, damit er abfällt (Grad). Großzügiger als die Kollisions-Hitbox. */
-export const APPLE_HIT_TOLERANCE_DEG = 24;
+/**
+ * Wie nah eine Axt an einem Apfel landen muss, damit er abfällt (Grad). Großzügiger
+ * als die Kollisions-Hitbox. Stand lange bei 24° – nie wirklich durchgespielt
+ * verifiziert, im offenen TODO als Verdacht vermerkt ("erwischt man oft nur 1 von 2").
+ * Auf 30° angehoben: bei 2 Äpfeln (180° auseinander) bleibt zwischen den beiden
+ * Fangfenstern noch reichlich Lücke (2×30° = 60° von 360°, keine Überlappung), bei
+ * 4 Äpfeln (90° auseinander, ab Level 51) berühren sich die Fenster gerade eben nicht
+ * (2×30° = 60° < 90°) – großzügiger, ohne dass sich Äpfel gegenseitig "stehlen" können.
+ */
+export const APPLE_HIT_TOLERANCE_DEG = 30;
 
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten
@@ -229,9 +237,19 @@ export function bossFruitForLevel(levelIndex: number): BossFruit | null {
 function generateLevel(levelIndex: number): LevelConfig {
   const boss = bossFruitForLevel(levelIndex);
 
-  // Boss-Level: eine Axt mehr und etwas flotter – soll sich wie eine Prüfung anfühlen.
+  /*
+   * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
+   * Level mit anderer Farbe – das war ein offener Verdacht im TODO, nie wirklich
+   * gegengeprüft. Drei Stellschrauben statt nur einer:
+   *  - Tempo-Bonus von 12 auf 20°/Sek. angehoben (spürbar mehr als die übliche
+   *    Steigerung von ~1,4°/Level, statt nur wenigen Leveln vorauszueilen).
+   *  - Ein zusätzliches Hindernis obendrauf – volleres Brett, engere Lücken.
+   *  - Erzwungenes `pulse`-Muster: `spinPatternFor()` allein hätte z.B. das erste
+   *    Boss-Level (Index 4) auf `steady` gesetzt – ausgerechnet der erste Boss
+   *    hätte sich dann NICHT schwerer angefühlt als das Level davor.
+   */
   const axeCount = axeCountFor(levelIndex) + (boss ? 1 : 0);
-  const speedBonus = boss ? 12 : 0;
+  const speedBonus = boss ? 20 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
@@ -241,13 +259,13 @@ function generateLevel(levelIndex: number): LevelConfig {
   const appleSeed = normalizeDeg(levelIndex * 47 + 31);
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113);
 
-  const obstacleCount = obstacleCountFor(levelIndex);
+  const obstacleCount = obstacleCountFor(levelIndex) + (boss ? 1 : 0);
   const appleCount = appleCountFor(levelIndex);
 
   return {
     axeCount,
     boardSpeedDegPerSec,
-    spinPattern: spinPatternFor(levelIndex),
+    spinPattern: boss ? 'pulse' : spinPatternFor(levelIndex),
     appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
     bossFruitId: boss?.id,

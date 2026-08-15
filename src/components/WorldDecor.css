@@ -9,7 +9,9 @@
 .world-decor__corner {
   position: absolute;
   bottom: 0;
-  color: rgba(255, 255, 255, 0.06);
+  /* Vorher 0.06 – bei der Deko-Animation (siehe unten) sonst praktisch unsichtbar,
+     die Bewegung hätte niemand gesehen. Immer noch klar Hintergrund, nicht Vordergrund. */
+  color: rgba(255, 255, 255, 0.13);
   filter: drop-shadow(0 -2px 6px rgba(0, 0, 0, 0.3));
 }
 
@@ -26,6 +28,99 @@
   width: 52px;
   height: 78px;
   display: block;
+}
+
+/*
+ * Idle-Animationen je Deko-Art – vorher standen die Ecken-Silhouetten komplett
+ * still, während der Rest des Spiels (Weltkarte, Startbildschirm) inzwischen
+ * spürbar lebendig ist. Jede Welt bekommt eine zur Deko passende Bewegung statt
+ * einer generischen Pulsation. `transform-origin: 50% 100%` lässt Bäume/Kakteen
+ * von der "Wurzel" aus schwanken statt um die eigene Mitte zu kippen.
+ */
+.world-decor--trees .world-decor__shape {
+  transform-origin: 50% 100%;
+  animation: world-decor-sway 4.5s ease-in-out infinite;
+}
+
+.world-decor--cacti .world-decor__shape {
+  transform-origin: 50% 100%;
+  animation: world-decor-sway-subtle 6s ease-in-out infinite;
+}
+
+.world-decor--icicles .world-decor__shape {
+  animation: world-decor-glint 3.2s ease-in-out infinite;
+}
+
+.world-decor--lava .world-decor__shape {
+  transform-origin: 50% 100%;
+  animation: world-decor-pulse 2.4s ease-in-out infinite;
+}
+
+.world-decor--city .world-decor__shape {
+  animation: world-decor-flicker 5s steps(1, end) infinite;
+}
+
+@keyframes world-decor-sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes world-decor-sway-subtle {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+
+@keyframes world-decor-glint {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    filter: brightness(1.5);
+  }
+}
+
+@keyframes world-decor-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.045);
+    filter: brightness(1.35);
+  }
+}
+
+/* Städtische Fensterlichter flackern unregelmäßig statt gleichmäßig zu pulsieren –
+   `steps(1, end)` springt hart zwischen den Werten statt weich zu überblenden. */
+@keyframes world-decor-flicker {
+  0%,
+  92%,
+  100% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.55;
+  }
+  96% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 0.7;
+  }
 }
 
 /* Kosmos: statt Ecken-Silhouetten ein paar leise funkelnde Sterne im oberen Himmel. */
@@ -53,5 +148,9 @@
   .world-decor__star {
     animation: none;
     opacity: 0.5;
+  }
+
+  .world-decor__shape {
+    animation: none;
   }
 }

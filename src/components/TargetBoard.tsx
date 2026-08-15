@@ -305,7 +305,17 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
                 className="target-board__apple-slot"
                 style={{ transform: `translate(-50%, -50%) rotate(${apple.boardLocalAngleDeg}deg) translateY(-${APPLE_RADIUS}px)` }}
               >
-                <Apple size={30} golden={apple.golden} figurine={apple.figurine} />
+                {/* Leichtes Pendeln am Stiel, mit Versatz je Apfel (aus der ID), damit
+                    sie nicht alle im Gleichtakt schwingen – sonst wirkt das Brett
+                    zwischen den Würfen komplett reglos. Eigenes Kind-Element, damit die
+                    Animation NICHT mit dem inline gesetzten Positionierungs-Transform
+                    oben kollidiert (derselbe Trick wie beim Axt-Zusammenzucken). */}
+                <span
+                  className="target-board__apple-sway"
+                  style={{ animationDelay: `${(apple.id % 4) * 0.35}s` }}
+                >
+                  <Apple size={30} golden={apple.golden} figurine={apple.figurine} />
+                </span>
               </div>
             </div>
           ))}

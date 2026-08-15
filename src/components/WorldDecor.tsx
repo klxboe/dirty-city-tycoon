@@ -97,7 +97,7 @@ export function WorldDecor({ decor }: WorldDecorProps) {
   }
 
   return (
-    <div className="world-decor" aria-hidden="true">
+    <div className={`world-decor world-decor--${decor}`} aria-hidden="true">
       <div className="world-decor__corner world-decor__corner--left">
         <CornerShape decor={decor} />
       </div>

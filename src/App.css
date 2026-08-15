@@ -81,7 +81,10 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(255, 190, 110, 0.6);
+  /* Tönt sich per --world-accent (worldStyleVars in worlds.ts) nach der jeweiligen
+     Welt statt überall gleich amberfarben zu treiben – vorher driftete in der Eis-
+     oder Kosmos-Welt derselbe orangene Staub wie im Wald, das passte optisch nicht. */
+  background: var(--world-accent, rgba(255, 190, 110, 1));
   animation: dust-float linear infinite;
 }
 
