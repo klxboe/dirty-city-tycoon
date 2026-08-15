@@ -334,6 +334,22 @@ export function streakMultiplier(streak: number): number {
 export const BOSS_REPEAT_BONUS = 150;
 
 /**
+ * Tägliche Belohnung: 7-Tage-Zyklus, der sich danach wiederholt (Tag 8 = wieder
+ * Tag-1-Belohnung). Steigt bewusst nicht linear ins Unermessliche – am Wochenende
+ * (Tag 4 und 6) gibt es schon mal einen Diamanten als kleinen Vorgeschmack, Tag 7
+ * ist der große Abschluss. Siehe game/daily.ts für die Serien-Berechnung.
+ */
+export const DAILY_REWARDS: { coins: number; gems: number }[] = [
+  { coins: 20, gems: 0 },
+  { coins: 30, gems: 0 },
+  { coins: 40, gems: 0 },
+  { coins: 0, gems: 1 },
+  { coins: 60, gems: 0 },
+  { coins: 0, gems: 2 },
+  { coins: 100, gems: 3 },
+];
+
+/**
  * Schwierigkeitsgrad (Einstellungen). Rührt bewusst NICHT an `generateLevel()` selbst –
  * die 100 Level bleiben eine einzige, für alle geltende Formel. Stattdessen skaliert der
  * Hook (`useAxeGame.ts`) zwei Werte nachträglich: wie schnell sich die Scheibe dreht und

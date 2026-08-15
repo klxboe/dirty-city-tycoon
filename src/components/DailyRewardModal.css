@@ -1,0 +1,144 @@
+/*
+ * Blauer Cartoon-Stil wie Startbildschirm/Weltkarte statt der neutralen
+ * Standard-Modal-Karte – die tägliche Belohnung soll sich wie ein kleines
+ * Geschenk anfühlen, nicht wie ein Systemdialog.
+ */
+.daily-reward {
+  width: 100%;
+  max-width: 320px;
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(165deg, rgba(30, 80, 145, 0.95), rgba(8, 30, 58, 0.98));
+  border: 1px solid rgba(140, 195, 255, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(94, 200, 255, 0.15),
+    0 20px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  animation: daily-reward-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes daily-reward-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.daily-reward__title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(94, 200, 255, 0.6), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.daily-reward__streak {
+  margin: -4px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5ce1ff;
+}
+
+.daily-reward__track {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.daily-reward__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 62px;
+  padding: var(--space-2) 4px;
+  border-radius: var(--radius-md);
+  background: rgba(6, 20, 40, 0.45);
+  border: 1px solid rgba(140, 195, 255, 0.2);
+}
+
+.daily-reward__day--today {
+  background: rgba(94, 200, 255, 0.18);
+  border-color: #5ce1ff;
+  box-shadow: 0 0 14px 1px rgba(94, 200, 255, 0.35);
+  animation: daily-reward-today-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes daily-reward-today-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 14px 1px rgba(94, 200, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(94, 200, 255, 0.55);
+  }
+}
+
+.daily-reward__day-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+}
+
+.daily-reward__day--today .daily-reward__day-label {
+  color: #fff;
+}
+
+.daily-reward__day-amount {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-reward__claim {
+  width: 100%;
+  margin-top: var(--space-1);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #2a1400;
+  box-shadow: 0 4px 0 var(--color-primary-dark);
+}
+
+.daily-reward__claim:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-dark);
+}
+
+.daily-reward__claim-amount {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-reward {
+    animation: none;
+  }
+
+  .daily-reward__day--today {
+    animation: none;
+  }
+}

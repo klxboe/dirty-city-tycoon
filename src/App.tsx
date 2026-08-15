@@ -5,6 +5,7 @@ import { HUD } from './components/HUD';
 import { AXE_STICK_RATIO, BOARD_SIZE, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { GameOverModal } from './components/GameOverModal';
+import { DailyRewardModal } from './components/DailyRewardModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
 import { StartScreen } from './components/StartScreen';
@@ -348,6 +349,16 @@ function App() {
               startPlaying();
             }}
             onClose={() => setWorldMapOpen(false)}
+          />
+        )}
+
+        {/* Nur auf dem Startbildschirm und wenn gerade kein anderes Fenster offen ist –
+            sonst würde die Belohnung mitten in der Werkstatt o.ä. aufpoppen. */}
+        {!overlayOpen && game.dailyReward && (
+          <DailyRewardModal
+            streak={game.dailyReward.streak}
+            reward={game.dailyReward.reward}
+            onClaim={game.claimDailyReward}
           />
         )}
       </div>

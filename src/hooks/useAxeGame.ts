@@ -26,6 +26,7 @@ import {
   streakMultiplier,
 } from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
+import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
 import { setMuted } from '../game/sound';
 import type { Difficulty, GameState, LevelReward, StuckAxe } from '../game/types';
@@ -367,6 +368,29 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
+  /**
+   * Tägliche Belohnung abholen. Rechnet die Serie ganz bewusst NOCHMAL selbst aus
+   * `prev.save` aus (statt den zuvor per `pendingDailyReward()` fürs Rendern
+   * berechneten Wert reinzureichen) – das hält die Update-Funktion rein und
+   * unabhängig vom Render-Zeitpunkt, falls z.B. die Mitternacht mitten in einer
+   * offenen Session überschritten wird.
+   */
+  const claimDailyReward = useCallback(() => {
+    setState((prev) => {
+      const pending = pendingDailyReward(prev.save.lastDailyClaim, prev.save.dailyStreak);
+      if (!pending) return prev;
+      const nextSave: SaveData = {
+        ...prev.save,
+        coins: prev.save.coins + pending.reward.coins,
+        gems: prev.save.gems + pending.reward.gems,
+        dailyStreak: pending.streak,
+        lastDailyClaim: todayDateString(),
+      };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
   const markTutorialSeen = useCallback(() => {
     setState((prev) => {
       if (prev.save.tutorialSeen) return prev;
@@ -410,6 +434,11 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     bossFruit,
     /** Im Boss-Level zeigt die Scheibe die Frucht statt des ausgerüsteten Designs. */
     activeBoardSkin: bossFruit ? bossFruit.boardSkinId : state.save.equippedBoardSkin,
+    /** Wartende tägliche Belohnung, `null` wenn heute schon abgeholt. Reine Ableitung
+     *  aus dem Spielstand, kein eigener State – berechnet sich bei jedem Render neu
+     *  aus der aktuellen Uhrzeit, damit ein Tageswechsel mitten in der Session sofort
+     *  sichtbar wird. */
+    dailyReward: pendingDailyReward(state.save.lastDailyClaim, state.save.dailyStreak),
     throwAxe,
     restartRun,
     nextLevel,
@@ -420,6 +449,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     setSoundOn,
     setDifficulty,
     tradeFigurines,
+    claimDailyReward,
     markTutorialSeen,
     resetProgress,
   };
@@ -440,6 +470,8 @@ function loadSaveFresh(): SaveData {
     tutorialSeen: true,
     difficulty: 'normal',
     figurines: 0,
+    dailyStreak: 0,
+    lastDailyClaim: '',
   };
 }
 

@@ -574,6 +574,37 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   (siehe Ende von `App.css`). Spielmechanik-Animationen wie Axt-Flug und
   Scheibendrehung bleiben bewusst – ohne sie wäre das Spiel nicht spielbar.
 
+### Tägliche Belohnung
+
+Kleiner Baustein fürs Wiederkommen, bewusst NICHT als eigener React-State
+gebaut, sondern als reine Ableitung aus dem Spielstand:
+
+- `game/daily.ts` (`pendingDailyReward(lastClaim, streak)`) vergleicht das
+  heutige Datum (`todayDateString()`, lokale Zeit, `YYYY-MM-DD`) mit
+  `SaveData.lastDailyClaim`. Genau EIN Tag Abstand -> Serie geht weiter
+  (`+1`). Länger her, in der Zukunft (Systemuhr manipuliert) oder nie
+  abgeholt -> Serie beginnt neu bei 1. `useAxeGame.ts` berechnet daraus bei
+  JEDEM Render `dailyReward` neu (kein eigener Timer nötig) – überschreitet
+  eine offene Session Mitternacht, taucht die nächste Belohnung von selbst
+  auf, sobald die Ableitung neu läuft.
+- **7-Tage-Zyklus** (`DAILY_REWARDS` in `constants.ts`), der sich danach
+  wiederholt (Tag 8 = wieder Tag-1-Belohnung), aber die ANGEZEIGTE Serie
+  zählt unbegrenzt weiter (fürs Prahlen "12 Tage in Folge"). Tag 4 und 6
+  geben schon einen kleinen Diamanten-Vorgeschmack, Tag 7 ist der große
+  Abschluss (100 Münzen + 3 Diamanten).
+- `DailyRewardModal.tsx` erscheint automatisch auf dem Startbildschirm,
+  sobald `game.dailyReward` nicht `null` ist (und kein anderes Fenster
+  offen ist) – zeigt den ganzen 7-Tage-Zyklus mit dem heutigen Tag
+  hervorgehoben. `claimDailyReward()` schreibt Münzen/Diamanten gut und setzt
+  `lastDailyClaim` auf heute; danach liefert `pendingDailyReward()` beim
+  nächsten Render `null` und das Modal verschwindet von selbst – kein
+  Auf/Zu-State nötig.
+- Verifiziert per direktem Setzen von `lastDailyClaim`/`dailyStreak` im
+  Spielstand: frischer Stand (Tag 1, +20), "gestern abgeholt" (Serie geht auf
+  2 weiter, Tag 2 markiert), "vor 4 Tagen abgeholt bei Serie 6" (fällt trotz
+  hoher gespeicherter Serie korrekt auf Tag 1 zurück) – alle drei Fälle mit
+  echtem Tap auf "Abholen" durchgespielt, keine Konsolenfehler.
+
 ## Auf dem Handy spielen (ohne App Store)
 
 Das Spiel läuft komplett im Browser – man braucht keinen Build und keinen Mac,
@@ -655,6 +686,8 @@ src/
                    playBreakSound/playBossSound + vibrate(). unlockAudio() muss
                    innerhalb einer echten Nutzer-Interaktion aufgerufen werden
                    (Browser-Autoplay-Regel). setMuted() schaltet beides ab.
+    daily.ts      Tägliche Belohnung: reiner Datums-Vergleich (pendingDailyReward),
+                   siehe eigener Abschnitt oben
   hooks/
     useAxeGame.ts  Verbindet engine.ts mit React: Werfen per Antippen,
                     Zustandsmaschine ready -> flying -> ready, nach der letzten
@@ -681,6 +714,8 @@ src/
     LevelCompleteModal.tsx  Ergebnis-Screen nach der letzten Axt
     GameOverModal.tsx    Screen nach Treffer auf die eigene Axt (eigene Optik,
                           nutzt aber gemeinsame Klassen aus LevelCompleteModal.css)
+    DailyRewardModal.tsx Tägliche Belohnung, erscheint automatisch auf dem
+                          Startbildschirm (siehe eigener Abschnitt oben)
   styles/theme.css  Alle Design-Werte als CSS-Variablen (Farben, Radien, Abstände)
 ```
 
@@ -1097,6 +1132,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Axt und Axt-Vorrat bekamen je einen wandernden Glanz-/Funkel-Effekt für
       mehr Leben auch außerhalb des eigentlichen Wurfs, Äpfel einen volleren
       Farbverlauf und eine natürlichere Fall-Animation mit Blatt-Spritzer.
+- [x] **Tägliche Belohnung** (Details siehe eigener Abschnitt oben): 7-Tage-
+      Belohnungs-Zyklus, der sich wiederholt, mit unbegrenzt weiterzählender
+      Serie. Reine Ableitung aus dem Spielstand (kein eigener Auf-/Zu-State) –
+      `DailyRewardModal.tsx` erscheint von selbst auf dem Startbildschirm,
+      sobald eine Belohnung wartet, und verschwindet von selbst nach dem
+      Abholen. Serien-Fortsetzung, Serien-Reset nach verpasstem Tag und
+      Erstlauf alle drei per echtem Tap durchgespielt.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
