@@ -537,6 +537,54 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   Boss-Beute-, Legendär- und Oster-Ei-Äxte sind ein getrenntes Sortiment und
   unberührt. Geprüft: Werkstatt lädt alle verbliebenen Äxte ohne
   Konsolenfehler, `tsc -b` läuft sauber durch.
+- **Axt-Skins: individuelle Silhouetten, dann echte Bild-Assets** (neue Datei
+  `game/axeShapes.ts`, `Axe.tsx`): zwei Nachschärf-Runden auf dasselbe
+  Feedback ("sieht noch wie eine Axt aus, nicht wie das Bild").
+  1. Erste Runde: jede der 12 neuen Äxte bekam eine EIGENE Hand-gezeichnete
+     SVG-Form (`AXE_SHAPES`) statt nur einer anderen Farbe auf der
+     Standard-Silhouette – Doppelaxt (Runenbeil/Königsbeil, durch Spiegeln
+     der Standard-Klinge an x=16), lange Sichel (Dornengift), Zahnrad-Rundung
+     (Dampfschmiede), Wellen-Kontur (Gezeitenklinge) usw., dazu kleine
+     Zier-Ebenen (Edelstein, Totenkopf, Schaltkreis-Linien, Gift-Tropfen, ...
+     über `accentFills`/`accentStrokes`). WICHTIGE LEHRE dabei: die Werkstatt
+     zeigt Äxte nur bei 26px (`Shop.tsx`), das Inventar bei 30px – feine
+     Kurven-Unterschiede und kleine Zier-Details gehen bei der Größe unter,
+     nur GROSSFLÄCHIGE Silhouetten-Unterschiede (breit/schmal, mittig/
+     einseitig, kompakt/langgezogen) bleiben erkennbar. Erste Fassung war zu
+     zaghaft (alle Formen noch zu ähnlich der Standard-Axt) und musste
+     nachgeschärft werden. Per DOM-Analyse (Bounding-Box-Breite/-Höhe/-Fläche
+     aller 12 Formen per `getBBox()`) verifiziert, dass sie sich danach
+     deutlich unterscheiden – Screenshot-Vergleich war bei mir technisch
+     nicht möglich (Browser-Pane nicht sichtbar), deshalb DOM-Messung statt
+     visueller Prüfung.
+  2. Trotzdem reichte das Klaus nicht – seine Gemini-Bilder sind gemalte
+     Konzept-Kunst mit deutlich mehr Detail, als eine Hand-Vektor-
+     Nachzeichnung treffen kann ("schaut VIEL besser und anders aus als in
+     der App"). Zweite Runde: `AXE_IMAGES` in `axeShapes.ts` + neuer
+     Rendering-Zweig in `Axe.tsx` – Skins mit echtem Bild rendern jetzt ein
+     `<img>` statt der SVG-Pfade. **Wichtige Einschränkung, die zum Umbau
+     führte:** ein Bild, das Klaus im Chat einfügt, kann ich nur VISUELL
+     beschreiben, aber nicht als Datei verarbeiten (kein Zuschneiden, kein
+     Hintergrund entfernen, kein Einbau als echtes Asset) – dafür muss die
+     Datei auf der Festplatte liegen. Verarbeitung des ersten gelieferten
+     Bilds (Python/Pillow, Skript im Scratchpad, nicht im Repo): weißer
+     Hintergrund per Helligkeits-Schwellwert mit weichem Rand transparent
+     gemacht, auf den Inhalt zugeschnitten, auf max. 900px Höhe begrenzt,
+     liegt in `public/axes/`. Gleiche Bounding-Box wie die Vektor-Variante
+     (`size` × `size*1.5`), damit Wurf-Rotation/Positionierung an allen
+     Aufruf-Stellen unverändert bleiben – die Transforms hängen an den
+     umgebenden Wrapper-Divs (`.axe-flying`, `.stage__ready-axe`,
+     `.gameover-axe__half`), nie an der Axt-Komponente selbst, deshalb war
+     der Root-Element-Tausch (svg -> div) gefahrlos möglich. Kompromiss:
+     Bild-Skins lassen sich nicht mehr per Farbwerte einfärben oder mit dem
+     Glanzlicht-Wander-Effekt versehen – die komplette Optik steckt im Bild.
+  3. Bislang nur **Runenbeil** auf ein echtes Bild umgestellt (erstes Bild,
+     das als Datei geliefert wurde). Die anderen 11 behalten vorerst ihre
+     Hand-Vektor-Form aus Schritt 1, bis weitere Bilder als Dateien (nicht
+     nur im Chat) geliefert werden – beide Rendering-Wege laufen parallel,
+     `getAxeImage()` hat Vorrang vor `getAxeShape()`. Bei 26px
+     (Werkstatt-Icon-Größe) per Downscale-Test geprüft: Silhouette,
+     Runen-Glut und Griff bleiben erkennbar.
 - **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
   Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
   schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
@@ -1159,7 +1207,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 - [x] **Axt-Sortiment ausgetauscht** (Details siehe Werkstatt-Abschnitt oben):
       die alten 7 Kauf-Äxte raus, ein neues Zwölfer-Set mit Farbpaletten aus
       Gemini-Konzeptbildern rein, Start-Axt "Holzfäller" blieb unverändert.
-      Gleiche SVG-Form für alle, nur Farben neu.
+- [x] **Axt-Skins: individuelle Silhouetten + erstes echtes Bild-Asset**
+      (Details siehe Werkstatt-Abschnitt oben): die 12 neuen Äxte bekamen erst
+      eigene Hand-Vektor-Formen statt einer gemeinsamen Silhouette, dann für
+      Runenbeil ein echtes, freigestelltes Gemini-Bild statt Vektor-Nachbau
+      (`AXE_IMAGES` in `axeShapes.ts`, neuer Bild-Rendering-Zweig in
+      `Axe.tsx`). Die restlichen 11 folgen, sobald weitere Bilder als Dateien
+      geliefert werden – Chat-Bilder allein reichen dafür nicht (siehe
+      Werkstatt-Abschnitt für die Begründung).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
