@@ -270,6 +270,14 @@ export const AXE_IMAGES: Record<string, string> = {
   'axe-berry': '/axes/axe-berry.png',
   'axe-pomegranate': '/axes/axe-pomegranate.png',
   'axe-coconut': '/axes/axe-coconut.png',
+  'axe-legendary-meteor': '/axes/axe-legendary-meteor.png',
+  'axe-legendary-phoenix': '/axes/axe-legendary-phoenix.png',
+  'axe-grape': '/axes/axe-grape.png',
+  'axe-drone': '/axes/axe-drone.png',
+  'axe-neon': '/axes/axe-neon.png',
+  'axe-gargoyle': '/axes/axe-gargoyle.png',
+  'axe-antenna': '/axes/axe-antenna.png',
+  'axe-egg-duck': '/axes/axe-egg-duck.png',
 };
 
 export function getAxeImage(id: string): string | undefined {

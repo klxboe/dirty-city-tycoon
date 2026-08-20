@@ -4,6 +4,7 @@ import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
 import { HIT_STOP_MS } from '../game/constants';
 import { boardStyleVars } from '../game/shop';
+import { getBoardImage } from '../game/boardImages';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
 import './TargetBoard.css';
 
@@ -135,6 +136,8 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
   const pausedRef = useRef(paused);
   /** Laufzeit seit Level-Start (Sek.), Basis für Puls und Richtungswechsel. */
   const elapsedRef = useRef(0);
+
+  const boardImage = getBoardImage(boardSkin);
 
   const [fallingApples, setFallingApples] = useState<FallingApple[]>([]);
   const collectedIdsRef = useRef<Set<number>>(new Set());
@@ -285,41 +288,51 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         className="target-board"
         style={boardStyleVars(boardSkin) as React.CSSProperties}
       >
-        {/* Holzfläche mit radialen Segmenten – wie ein aufgeschnittener Stamm. */}
-        <div className="target-board__face" />
-        <div className="target-board__wedges">
-          {Array.from({ length: WEDGE_COUNT }).map((_, i) => (
-            <span key={i} style={{ transform: `rotate(${(360 / WEDGE_COUNT) * i}deg)` }} />
-          ))}
-        </div>
-        {/* Zwei Muster-Ringe aus feinen/groben Strichen (per repeating-conic-gradient +
-            Masken-Ring – kostet keine zusätzlichen DOM-Knoten pro Strich) für mehr
-            Detail, wie Gradeinteilungen auf einer Zielscheibe/einem Kompass. */}
-        <div className="target-board__ticks target-board__ticks--fine" />
-        <div className="target-board__ring target-board__ring--outer" />
-        <div className="target-board__ring target-board__ring--mid" />
-        <div className="target-board__ticks target-board__ticks--rim" />
-        {/* Glanzlicht: gibt der Fläche etwas Tiefe/Politur, ohne die Skin-Farben
-            selbst anzufassen (sitzt als Blend-Layer oben drauf). */}
-        <div className="target-board__sheen" />
-        {/* Langsam wandernder Glanz-Streifen – eigenes Element mit EIGENER Rotation,
-            damit es nicht mit der inline gesetzten Dreh-Animation der Scheibe selbst
-            kollidiert (derselbe Trick wie beim Hit-Stop). Macht die Fläche auch dann
-            lebendig, wenn die Scheibe zwischen Leveln kurz pausiert. */}
-        <div className="target-board__shimmer" />
-        <div className="target-board__bullseye">
-          <div className="target-board__bullseye-ring" />
-          {BULLSEYE_SPARKLE_ANGLES.map((angle, i) => (
-            <span
-              key={i}
-              className="target-board__bullseye-sparkle"
-              style={{
-                ['--sparkle-angle' as string]: `${angle}deg`,
-                animationDelay: `${i * 0.45}s`,
-              }}
-            />
-          ))}
-        </div>
+        {boardImage ? (
+          /* Echter Bild-Skin (siehe game/boardImages.ts): ersetzt die komplette
+             CSS-gezeichnete Fläche (Holz/Ringe/Kern) durch ein Bild. Rotation,
+             steckende Äxte, hängende Äpfel und der Riss-Effekt sind eigene
+             Ebenen darüber/danach und bleiben unverändert. */
+          <img className="target-board__image" src={boardImage} alt="" draggable={false} />
+        ) : (
+          <>
+            {/* Holzfläche mit radialen Segmenten – wie ein aufgeschnittener Stamm. */}
+            <div className="target-board__face" />
+            <div className="target-board__wedges">
+              {Array.from({ length: WEDGE_COUNT }).map((_, i) => (
+                <span key={i} style={{ transform: `rotate(${(360 / WEDGE_COUNT) * i}deg)` }} />
+              ))}
+            </div>
+            {/* Zwei Muster-Ringe aus feinen/groben Strichen (per repeating-conic-gradient +
+                Masken-Ring – kostet keine zusätzlichen DOM-Knoten pro Strich) für mehr
+                Detail, wie Gradeinteilungen auf einer Zielscheibe/einem Kompass. */}
+            <div className="target-board__ticks target-board__ticks--fine" />
+            <div className="target-board__ring target-board__ring--outer" />
+            <div className="target-board__ring target-board__ring--mid" />
+            <div className="target-board__ticks target-board__ticks--rim" />
+            {/* Glanzlicht: gibt der Fläche etwas Tiefe/Politur, ohne die Skin-Farben
+                selbst anzufassen (sitzt als Blend-Layer oben drauf). */}
+            <div className="target-board__sheen" />
+            {/* Langsam wandernder Glanz-Streifen – eigenes Element mit EIGENER Rotation,
+                damit es nicht mit der inline gesetzten Dreh-Animation der Scheibe selbst
+                kollidiert (derselbe Trick wie beim Hit-Stop). Macht die Fläche auch dann
+                lebendig, wenn die Scheibe zwischen Leveln kurz pausiert. */}
+            <div className="target-board__shimmer" />
+            <div className="target-board__bullseye">
+              <div className="target-board__bullseye-ring" />
+              {BULLSEYE_SPARKLE_ANGLES.map((angle, i) => (
+                <span
+                  key={i}
+                  className="target-board__bullseye-sparkle"
+                  style={{
+                    ['--sparkle-angle' as string]: `${angle}deg`,
+                    animationDelay: `${i * 0.45}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {apples
           .filter((apple) => !apple.collected)

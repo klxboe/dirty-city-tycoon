@@ -16,6 +16,7 @@ import {
   isFreeSkin,
   type SkinDef,
 } from '../game/shop';
+import { getBoardImage } from '../game/boardImages';
 import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
 import { HERO_WORLD_START } from '../game/worlds';
 import type { SaveData } from '../game/storage';
@@ -40,13 +41,18 @@ function SkinPreview({ skin }: { skin: SkinDef }) {
       </div>
     );
   }
+  const boardImage = getBoardImage(skin.id);
   return (
     <div className="shop-card__preview">
-      <div className="shop-card__board" style={boardStyleVars(skin.id) as React.CSSProperties}>
-        <div className="shop-card__board-face" />
-        <div className="shop-card__board-ring" />
-        <div className="shop-card__board-eye" />
-      </div>
+      {boardImage ? (
+        <img className="shop-card__board-image" src={boardImage} alt="" draggable={false} />
+      ) : (
+        <div className="shop-card__board" style={boardStyleVars(skin.id) as React.CSSProperties}>
+          <div className="shop-card__board-face" />
+          <div className="shop-card__board-ring" />
+          <div className="shop-card__board-eye" />
+        </div>
+      )}
     </div>
   );
 }

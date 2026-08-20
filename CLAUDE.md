@@ -578,26 +578,62 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
      der Root-Element-Tausch (svg -> div) gefahrlos möglich. Kompromiss:
      Bild-Skins lassen sich nicht mehr per Farbwerte einfärben oder mit dem
      Glanzlicht-Wander-Effekt versehen – die komplette Optik steckt im Bild.
-  3. **Alle 12 Zwölfer-Set-Äxte, die Start-Axt "Holzfäller" UND die ersten 9
-     Boss-Beute-Früchte-Äxte laufen jetzt auf echten Bildern** (22 Skins
-     insgesamt, `AXE_IMAGES` in `axeShapes.ts`). Bei der Start-Axt zusätzlich
-     bestätigt, dass Bild-Skins auch außerhalb des Zwölfer-Sets funktionieren
-     – `axe-standard` hatte vorher gar keinen `AXE_SHAPES`-Eintrag (nutzte den
-     `DEFAULT_SHAPE`-Fallback), das Bild überschreibt trotzdem sauber darüber.
-     Beide Rendering-Wege laufen parallel, `getAxeImage()` hat Vorrang vor
-     `getAxeShape()` – die verbliebenen Boss-/Helden-/Legendär-/Oster-Ei-Äxte
-     nutzen weiter Vektor-Formen, bis auch dafür Bilder geliefert werden. Bei
-     26px (Werkstatt-Icon-Größe) per Downscale-Test geprüft: Silhouette und
-     Farbthema bleiben bei allen erkennbar.
-     **Überraschung beim Massen-Import:** Klaus hatte für die 20 Prompts aus
-     dem Prompt-Artifact (siehe unten) angenommen, er müsse jedes Bild einzeln
-     manuell speichern. Tatsächlich reicht es, Bilder direkt in den Chat
-     einzufügen – die Umgebung legt dabei automatisch Kopien als
-     UUID-benannte `.jpeg`-Dateien im Projekt-Root ab, die genauso lesbar sind
-     wie eine "richtig" gespeicherte Datei. Erkannt, weil `git status` nach
-     dem Chat-Einfügen plötzlich 20 unbekannte UUID-Dateien zeigte. Diese
-     Dateien NICHT committen (gehören nicht ins Repo, sind nur der
-     Chat-Upload-Mechanismus) – nur die verarbeiteten PNGs in `public/axes/`.
+  3. **Inzwischen ALLE 30 Äxte im Spiel laufen auf echten Bildern** –
+     Zwölfer-Set, Start-Axt, alle 10 Boss-Beute-Früchte, alle 4
+     Heldenstadt-Bosse, beide Legendär-Äxte und das Oster-Ei (`AXE_IMAGES` in
+     `axeShapes.ts`). Bei der Start-Axt zusätzlich bestätigt, dass Bild-Skins
+     auch außerhalb des Zwölfer-Sets funktionieren – `axe-standard` hatte
+     vorher gar keinen `AXE_SHAPES`-Eintrag (nutzte den `DEFAULT_SHAPE`-
+     Fallback), das Bild überschreibt trotzdem sauber darüber. Beide
+     Rendering-Wege laufen parallel, `getAxeImage()` hat Vorrang vor
+     `getAxeShape()` – der Vektor-Zweig bleibt im Code als Fallback für
+     etwaige künftige Skins ohne Bild. Bei 26px (Werkstatt-Icon-Größe) per
+     Downscale-Test geprüft: Silhouette und Farbthema bleiben bei allen
+     erkennbar.
+  4. **Scheiben ziehen nach: ALLE 22 Zielscheiben-Designs laufen jetzt
+     ebenfalls auf echten Bildern** (Details siehe Werkstatt-Abschnitt weiter
+     unten für die technische Umsetzung in `TargetBoard.tsx`) – die 6
+     kaufbaren Scheiben, beide Legendär-Scheiben, UND alle 14 Boss-Beute-
+     Scheiben (10 Früchte + 4 Heldenstadt-Bosse), die die Scheibe nur
+     automatisch WÄHREND des jeweiligen Boss-Levels annimmt (kein eigener
+     Shop-Eintrag). Per direktem Setzen von `currentLevel` auf einen
+     Boss-Index verifiziert (Level 5 = Wassermelone, Level 50 = Traube),
+     jeweils korrektes Bild ohne Konsolenfehler.
+     **Überraschung beim Massen-Import:** Klaus hatte angenommen, er müsse
+     jedes Gemini-Bild einzeln manuell als Datei speichern. Tatsächlich
+     reicht es, Bilder direkt in den Chat einzufügen – die Umgebung legt
+     dabei automatisch Kopien als UUID-benannte `.jpeg`-Dateien im
+     Projekt-Root ab, die genauso lesbar sind wie eine "richtig"
+     gespeicherte Datei. Erkannt, weil `git status` nach dem Chat-Einfügen
+     plötzlich einen Schwung unbekannter UUID-Dateien zeigte. Diese Dateien
+     NICHT committen (gehören nicht ins Repo, sind nur der
+     Chat-Upload-Mechanismus) – nur die verarbeiteten PNGs in `public/axes/`
+     bzw. `public/boards/`.
+- **Zielscheiben: echte Bild-Assets statt CSS-gezeichneter Fläche**
+  (`game/boardImages.ts`, `TargetBoard.tsx`, `Shop.tsx`): analog zu den
+  Äxten, aber technisch anders gelöst, weil die Scheibe kein einfaches Icon
+  ist, sondern ein komplexes Objekt aus mehreren unabhängigen Ebenen
+  (rotierende Holzfläche, steckende Äxte, hängende Äpfel, Riss-Effekt beim
+  Level-Abschluss). Ein Bild-Skin ersetzt in `TargetBoard.tsx` NUR die
+  dekorativen CSS-Ebenen (`__face`, `__wedges`, `__ticks`, `__ring`,
+  `__sheen`, `__shimmer`, `__bullseye`) durch ein einzelnes `<img>` – Rotation
+  (eigener rAF-Loop, unverändert), steckende Äxte/hängende Äpfel (eigene
+  absolut positionierte Kind-Elemente auf demselben Radius wie vorher) und
+  der Riss-Effekt bleiben komplett unangetastet, weil sie ohnehin schon
+  unabhängige Ebenen OBEN AUF der Fläche waren. `Shop.tsx` hat für die
+  Werkstatt-Liste eine KOMPLETT SEPARATE Mini-Vorschau (`SkinPreview`,
+  eigene 38px-CSS-Scheibe) – die wurde beim ersten Board-Bild (Eiche)
+  übersehen und musste extra auf Bild-Unterstützung umgestellt werden, sonst
+  hätte die Liste weiter die alte Optik gezeigt, obwohl das echte Spiel
+  schon das Bild nutzt.
+  Deckt am Ende ALLE 22 Scheiben-IDs ab, nicht nur die 8 kaufbaren
+  (`BOARD_SKINS` + `LEGENDARY_BOARD_SKINS`): die 14 Boss-Beute-Scheiben
+  (`board-melon` usw., `board-drone` usw.) sind keine eigenen Shop-Skins,
+  sondern werden nur als `bossFruit.boardSkinId` direkt an die `boardSkin`-
+  Prop von `TargetBoard` durchgereicht, solange man IM jeweiligen
+  Boss-Level ist (`activeBoardSkin` in `useAxeGame.ts`) – dieselbe
+  `getBoardImage()`-Zuordnung greift deshalb automatisch, ohne dass dafür
+  irgendwo zusätzlicher Code nötig war.
 - **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
   Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
   schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
@@ -1220,15 +1256,18 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 - [x] **Axt-Sortiment ausgetauscht** (Details siehe Werkstatt-Abschnitt oben):
       die alten 7 Kauf-Äxte raus, ein neues Zwölfer-Set mit Farbpaletten aus
       Gemini-Konzeptbildern rein, Start-Axt "Holzfäller" blieb unverändert.
-- [x] **Axt-Skins: individuelle Silhouetten + echte Bild-Assets für 22 Äxte**
-      (Details siehe Werkstatt-Abschnitt oben): die 12 neuen Äxte bekamen erst
-      eigene Hand-Vektor-Formen statt einer gemeinsamen Silhouette. Dann
-      echte, freigestellte Gemini-Bilder statt Vektor-Nachbau für das
-      komplette Zwölfer-Set, die Start-Axt "Holzfäller" und die ersten 9
-      Boss-Beute-Früchte-Äxte (`AXE_IMAGES` in `axeShapes.ts`, neuer
-      Bild-Rendering-Zweig in `Axe.tsx`). Restliche Boss-/Helden-/Legendär-/
-      Oster-Ei-Äxte nutzen weiter Vektor-Formen, bis auch dafür Bilder
-      kommen.
+- [x] **Alle Werkstatt-Grafiken auf echte Bild-Assets umgestellt: 30 Äxte +
+      22 Scheiben** (Details siehe Werkstatt-Abschnitt oben): Zwischenschritt
+      waren individuelle Hand-Vektor-Formen pro Axt statt einer gemeinsamen
+      Silhouette, dann Schritt für Schritt echte, freigestellte
+      Gemini-Bilder für buchstäblich jede Axt (Zwölfer-Set, Start-Axt, alle
+      Boss-Beute-Früchte, Heldenstadt-Bosse, Legendär, Oster-Ei) und jede
+      Scheibe (die 8 kaufbaren + 14 automatische Boss-Level-Scheiben)
+      (`AXE_IMAGES`/`getAxeImage()` in `axeShapes.ts`,
+      `BOARD_IMAGES`/`getBoardImage()` in `boardImages.ts`, neue
+      Bild-Rendering-Zweige in `Axe.tsx`/`TargetBoard.tsx`/`Shop.tsx`). Per
+      Skript gegen `shop.ts` gegengecheckt: keine einzige Axt- oder
+      Scheiben-ID mehr ohne Bild.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

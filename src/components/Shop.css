@@ -144,6 +144,14 @@
   background: var(--board-rim);
 }
 
+.shop-card__board-image {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 .shop-card__board-face {
   position: absolute;
   inset: 3px;
