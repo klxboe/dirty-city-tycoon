@@ -578,13 +578,16 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
      der Root-Element-Tausch (svg -> div) gefahrlos möglich. Kompromiss:
      Bild-Skins lassen sich nicht mehr per Farbwerte einfärben oder mit dem
      Glanzlicht-Wander-Effekt versehen – die komplette Optik steckt im Bild.
-  3. Bislang nur **Runenbeil** auf ein echtes Bild umgestellt (erstes Bild,
-     das als Datei geliefert wurde). Die anderen 11 behalten vorerst ihre
-     Hand-Vektor-Form aus Schritt 1, bis weitere Bilder als Dateien (nicht
-     nur im Chat) geliefert werden – beide Rendering-Wege laufen parallel,
-     `getAxeImage()` hat Vorrang vor `getAxeShape()`. Bei 26px
-     (Werkstatt-Icon-Größe) per Downscale-Test geprüft: Silhouette,
-     Runen-Glut und Griff bleiben erkennbar.
+  3. **Runenbeil** und die **Start-Axt "Holzfäller"** (`axe-standard`) laufen
+     inzwischen auf echten Bildern. Bei der Start-Axt zusätzlich bestätigt,
+     dass Bild-Skins auch außerhalb des Zwölfer-Sets funktionieren –
+     `axe-standard` hatte vorher gar keinen `AXE_SHAPES`-Eintrag (nutzte den
+     `DEFAULT_SHAPE`-Fallback), das Bild überschreibt trotzdem sauber darüber.
+     Die restlichen 11 behalten vorerst ihre Hand-Vektor-Form aus Schritt 1,
+     bis weitere Bilder als Dateien (nicht nur im Chat) geliefert werden –
+     beide Rendering-Wege laufen parallel, `getAxeImage()` hat Vorrang vor
+     `getAxeShape()`. Bei 26px (Werkstatt-Icon-Größe) per Downscale-Test
+     geprüft: Silhouette, Runen-Glut/Holzmaserung und Griff bleiben erkennbar.
 - **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
   Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
   schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
@@ -1207,13 +1210,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 - [x] **Axt-Sortiment ausgetauscht** (Details siehe Werkstatt-Abschnitt oben):
       die alten 7 Kauf-Äxte raus, ein neues Zwölfer-Set mit Farbpaletten aus
       Gemini-Konzeptbildern rein, Start-Axt "Holzfäller" blieb unverändert.
-- [x] **Axt-Skins: individuelle Silhouetten + erstes echtes Bild-Asset**
+- [x] **Axt-Skins: individuelle Silhouetten + erste echte Bild-Assets**
       (Details siehe Werkstatt-Abschnitt oben): die 12 neuen Äxte bekamen erst
       eigene Hand-Vektor-Formen statt einer gemeinsamen Silhouette, dann für
-      Runenbeil ein echtes, freigestelltes Gemini-Bild statt Vektor-Nachbau
-      (`AXE_IMAGES` in `axeShapes.ts`, neuer Bild-Rendering-Zweig in
-      `Axe.tsx`). Die restlichen 11 folgen, sobald weitere Bilder als Dateien
-      geliefert werden – Chat-Bilder allein reichen dafür nicht (siehe
+      Runenbeil UND die Start-Axt "Holzfäller" echte, freigestellte
+      Gemini-Bilder statt Vektor-Nachbau (`AXE_IMAGES` in `axeShapes.ts`,
+      neuer Bild-Rendering-Zweig in `Axe.tsx`). Die restlichen 11 folgen,
+      sobald weitere Bilder als Dateien geliefert werden – Chat-Bilder allein
+      reichen dafür nicht (siehe
       Werkstatt-Abschnitt für die Begründung).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.

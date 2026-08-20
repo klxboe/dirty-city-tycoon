@@ -248,6 +248,7 @@ export function getAxeShape(id: string): AxeShape {
 // SVG-Rendering aus Axe.tsx (kein Recolor/Glanz-Effekt mehr möglich – die
 // Farbe steckt im Bild selbst).
 export const AXE_IMAGES: Record<string, string> = {
+  'axe-standard': '/axes/axe-standard.png',
   'axe-rune': '/axes/axe-rune.png',
 };
 
