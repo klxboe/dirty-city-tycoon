@@ -927,11 +927,47 @@ das Spiel automatisiert testet.)
   aber unlesbar ("fliegt einfach drüber"). Über 300ms und 220ms ("langweilig und
   zu langsam") liegt der aktuelle Wert bei 190ms. Der eigentliche Fix war NICHT
   die Zahl allein, sondern die Animation selbst mit mehr Energie zu versehen
-  (Squash-and-Stretch beim Abschuss, schärferes Easing, kräftigerer Trail –
-  siehe `axe-fly`-Keyframes in App.css) – reine Dauer war nie das Hauptproblem.
+  (Squash-and-Stretch beim Abschuss, schärferes Easing – siehe
+  `axe-fly-*`-Keyframes in App.css) – reine Dauer war nie das Hauptproblem.
   190ms liegen bei 55°/Sek. knapp über der 10°-Kollisions-Toleranz, Dauertippen
   bleibt also riskant. Stellschrauben, falls es zu leicht wird:
   `COLLISION_ANGLE_TOLERANCE_DEG` erhöhen oder den Levelstart verlangsamen.
+- **Echter "hängt kurz vor dem Treffer"-Bug gefunden und behoben – eine
+  CSS-Timing-Falle, keine Physik/Kollisions-Sache.** `bottom` (die Position)
+  stand im `axe-fly`-Keyframe früher nur bei 0%/100%, `transform`
+  (Drehung/Squash) zusätzlich bei 12%. CSS interpoliert jede Eigenschaft
+  unabhängig über ihre EIGENEN Stützstellen – dadurch lief `bottom` über die
+  komplette, stark vorne-geladene `cubic-bezier(0.05, 0.9, 0.1, 1)`-Kurve
+  gestreckt auf die GESAMTE Flugzeit: ~90-100% der Strecke waren nach ~10% der
+  Zeit (≈19ms von 190ms) schon zurückgelegt, der Rest war sichtbarer
+  Stillstand. Fix: Position bekam eine eigene, lineare (= konstante
+  Geschwindigkeit) Animation `axe-fly-position`, komplett getrennt vom
+  `axe-fly-transform`-Keyframe (Drehung + Squash bleiben dort bewusst
+  ZUSAMMEN in einem `transform`, nicht in einzelne `rotate`/`scale`-
+  Eigenschaften aufgeteilt).
+  **Dabei eine eigene Regression gefunden und wieder zurückgenommen:** eine
+  erste Fassung hatte Drehung UND Squash ebenfalls in einzelne CSS-
+  Eigenschaften (`rotate`, `scale`) aufgeteilt. Einzelne Transform-
+  Eigenschaften komponieren aber in einer FESTEN Browser-Reihenfolge
+  (translate → rotate → scale), während das kombinierte `transform` in der
+  geschriebenen Reihenfolge angewendet wird (hier: translate → scale →
+  rotate) – dadurch drehte sich die Streck-Verzerrung MIT der Axt statt fest
+  zur Bildschirmachse zu bleiben, sichtbar als unnatürlich langer Stiel
+  ("Screenshot-Feedback: sieht aus, als wäre der Henkel weit lang"). Zurück
+  zur ursprünglichen Kombination aus Drehung+Squash in einem `transform`,
+  nur `bottom` bleibt separat.
+  Per `getComputedStyle` verifiziert (animation-name/-timing-function korrekt
+  gesetzt, `transform`-Matrix entspricht wieder der Original-Komposition),
+  ECHTE Bildrate-Messung war in der automatisierten Browser-Umgebung nicht
+  möglich (Browser-Pane rendert dort keine Frames, siehe rAF-Freeze-Abschnitt
+  weiter unten) – deshalb final durch Klaus selbst am echten Gerät bestätigt.
+  Dabei auch den Bewegungsschweif (`axe-flying__trail`, heller Leuchtstreifen
+  hinter der Axt) auf Wunsch ("nervt, es soll nur die Axt sein") ganz entfernt.
+- **Abschuss-Sound ergänzt** (`playThrowSound()` in `sound.ts`): es gab bereits
+  Sounds fürs Einschlagen (Treffer/Fehlschlag/Apfel/Boss), aber keinen fürs
+  Abschießen selbst. Kurzes, per Bandpass-Filter aufsteigendes Rauschen
+  (1100→3400Hz über 90ms), feuert synchron mit Mündungsblitz und Rückstoß im
+  selben Effekt.
 - Es gab früher eine Halten-und-Loslassen-Timing-Mechanik (Lade-Regler mit
   "Sweet Spot") UND zwischenzeitlich eine Ziel-Mechanik (Tippposition bestimmte
   den Einschlagpunkt). Beides wieder entfernt, auf ausdrücklichen Wunsch: "mach
@@ -1268,6 +1304,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Bild-Rendering-Zweige in `Axe.tsx`/`TargetBoard.tsx`/`Shop.tsx`). Per
       Skript gegen `shop.ts` gegengecheckt: keine einzige Axt- oder
       Scheiben-ID mehr ohne Bild.
+- [x] **Wurf-Gefühl gezielt nachgeschärft** (Details siehe Winkel-Logik-
+      Abschnitt oben): echten CSS-Timing-Bug behoben, der die Axt kurz vor
+      dem Einschlag sichtbar "hängen" ließ (Position lief über eine
+      vorne-geladene Kurve, die nach ~10% der Flugzeit schon fast fertig
+      war). Dabei eine eigene Regression (Transform-Eigenschaften einzeln
+      aufgeteilt -> Streck-Verzerrung drehte sich mit der Axt, sah wie ein
+      langer Stiel aus) gefunden und zurückgenommen. Bewegungsschweif hinter
+      der Axt entfernt, Abschuss-Sound ergänzt (gab vorher nur Einschlag-
+      Sounds).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

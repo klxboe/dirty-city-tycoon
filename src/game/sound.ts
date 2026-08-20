@@ -86,6 +86,36 @@ function playNoiseBurst(ctx: AudioContext, startTime: number, duration: number, 
   noise.start(startTime);
 }
 
+/** Axt wird abgeschossen: kurzes, aufsteigendes Schwirren, synchron zum Mündungsblitz. */
+export function playThrowSound(): void {
+  const ctx = getContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const duration = 0.09;
+  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = 1.1;
+  filter.frequency.setValueAtTime(1100, now);
+  filter.frequency.exponentialRampToValueAtTime(3400, now + duration);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  noise.start(now);
+}
+
 /** Axt steckt sauber im Holz: kurzer, dumpfer "Thunk". */
 export function playHitSound(): void {
   const ctx = getContext();

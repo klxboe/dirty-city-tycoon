@@ -22,6 +22,7 @@ import {
   playBreakSound,
   playHitSound,
   playMissSound,
+  playThrowSound,
   unlockAudio,
   vibrate,
 } from './game/sound';
@@ -195,6 +196,7 @@ function App() {
     if (started !== null && started !== prevFlightStartRef.current) {
       setMuzzleId((id) => id + 1);
       recoilStage();
+      playThrowSound();
     }
     prevFlightStartRef.current = started;
   }, [game.flyingAxe, recoilStage]);
@@ -483,7 +485,6 @@ function App() {
               ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
             }}
           >
-            <span className="axe-flying__trail" />
             <Axe size={42} skin={game.save.equippedAxeSkin} />
           </div>
         )}
