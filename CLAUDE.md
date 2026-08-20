@@ -520,6 +520,23 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   den gemischten Legendär-Reiter falsch war (eine Scheibe konnte fälschlich als
   "ausgerüstete Axt" markiert erscheinen). Jetzt wird pro Karte einzeln anhand
   von `skin.kind` verglichen.
+- **Axt-Auswahl im Äxte-Reiter komplett getauscht** (`shop.ts`, Klaus'
+  Wunsch): die ursprünglichen 7 Kauf-Äxte (Bronzeklinge, Frostkante,
+  Glutspalter, Goldrausch, Jadeschneide, Leerenzahn, Netzschwinger) sind raus,
+  ersetzt durch ein neues Zwölfer-Set – Wurzelhieb, Korallenschneide,
+  Dampfschmiede, Runenbeil, Gezeitenklinge, Sternenschneide, Dornengift,
+  Lavabruch, Pestbeil, Königsbeil, Datenbeil, Lichtschwinge (700-8300 Münzen,
+  aufsteigend). Nur die kostenlose Start-Axt "Holzfäller" blieb unangetastet.
+  Die Farbpaletten stammen aus zwölf per Gemini erzeugten Konzeptbildern –
+  übernommen wurde NUR die Farbgebung (Stahl-/Holz-/Wicklungs-/Kontur-/
+  Glüh-Werte in `AXE_STYLES`), nicht die Form: jede Axt nutzt weiterhin
+  dieselbe gemeinsame SVG-Silhouette aus `Axe.tsx`. Bewusste Entscheidung
+  gegen echte Bild-Assets pro Axt – hätte die Wurf-Rotation, den
+  Glanzlicht-Effekt und vor allem die Lesbarkeit bei 22px im Vorrat riskiert
+  (siehe Kommentar in `Axe.tsx` zur Kontur-Notwendigkeit bei kleiner Größe).
+  Boss-Beute-, Legendär- und Oster-Ei-Äxte sind ein getrenntes Sortiment und
+  unberührt. Geprüft: Werkstatt lädt alle verbliebenen Äxte ohne
+  Konsolenfehler, `tsc -b` läuft sauber durch.
 - **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
   Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
   schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
@@ -1139,6 +1156,10 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       sobald eine Belohnung wartet, und verschwindet von selbst nach dem
       Abholen. Serien-Fortsetzung, Serien-Reset nach verpasstem Tag und
       Erstlauf alle drei per echtem Tap durchgespielt.
+- [x] **Axt-Sortiment ausgetauscht** (Details siehe Werkstatt-Abschnitt oben):
+      die alten 7 Kauf-Äxte raus, ein neues Zwölfer-Set mit Farbpaletten aus
+      Gemini-Konzeptbildern rein, Start-Axt "Holzfäller" blieb unverändert.
+      Gleiche SVG-Form für alle, nur Farben neu.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

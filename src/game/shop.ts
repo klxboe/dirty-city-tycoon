@@ -61,20 +61,21 @@ export interface AxeStyle {
 
 export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-standard', kind: 'axe', name: 'Holzfäller', blurb: 'Die treue Standard-Axt.', price: 0, source: 'shop' },
-  { id: 'axe-bronze', kind: 'axe', name: 'Bronzeklinge', blurb: 'Warmer Bronzeschimmer, dunkles Nussholz.', price: 150, source: 'shop' },
-  { id: 'axe-frost', kind: 'axe', name: 'Frostkante', blurb: 'Eisblaue Klinge mit Raureif am Stiel.', price: 400, source: 'shop' },
-  { id: 'axe-ember', kind: 'axe', name: 'Glutspalter', blurb: 'Glühende Schneide, rußgeschwärzter Griff.', price: 900, source: 'shop' },
-  { id: 'axe-gold', kind: 'axe', name: 'Goldrausch', blurb: 'Massives Gold. Wirft sich erstaunlich gut.', price: 2000, source: 'shop' },
-  { id: 'axe-jade', kind: 'axe', name: 'Jadeschneide', blurb: 'Polierter Jadestein auf schwarzem Schaft.', price: 3200, source: 'shop' },
-  { id: 'axe-void', kind: 'axe', name: 'Leerenzahn', blurb: 'Schluckt das Licht, statt es zu spiegeln.', price: 5000, source: 'shop' },
-  {
-    id: 'axe-webslinger',
-    kind: 'axe',
-    name: 'Netzschwinger',
-    blurb: 'Rot, blau, schwingt sich durch die Straßen – Ähnlichkeit rein zufällig.',
-    price: 1100,
-    source: 'shop',
-  },
+
+  // --- Zwölfer-Set, nach Gemini-Konzeptbildern gestaltet (Farben übernommen,
+  // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx) ---
+  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 700, source: 'shop' },
+  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 1300, source: 'shop' },
+  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 1900, source: 'shop' },
+  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 2500, source: 'shop' },
+  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 3000, source: 'shop' },
+  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 3400, source: 'shop' },
+  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 3800, source: 'shop' },
+  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 4400, source: 'shop' },
+  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 5300, source: 'shop' },
+  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 6200, source: 'shop' },
+  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 7200, source: 'shop' },
+  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 8300, source: 'shop' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -536,46 +537,90 @@ export const AXE_STYLES: Record<string, AxeStyle> = {
     wrap: '#4a2c14',
     outline: '#141820',
   },
-  'axe-bronze': {
-    steel: ['#ffeec2', '#e0a959', '#9d5f24'],
-    wood: ['#6b4a30', '#3a2417'],
-    wrap: '#241509',
+  // --- Zwölfer-Set, nach Gemini-Konzeptbildern gestaltet ---
+  'axe-nature': {
+    steel: ['#e0f0b8', '#8aae52', '#3f5222'],
+    wood: ['#6b4a2e', '#3a2818'],
+    wrap: '#2f4a1a',
+    outline: '#1a140a',
+    glow: 'rgba(140, 220, 90, 0.55)',
+  },
+  'axe-coral': {
+    steel: ['#ffe4d6', '#ff8a6b', '#c9432c'],
+    wood: ['#5aa8a0', '#2e6b64'],
+    wrap: '#3a8a82',
+    outline: '#1a2e2c',
+    glow: 'rgba(255, 138, 107, 0.6)',
+  },
+  'axe-steampunk': {
+    steel: ['#ffe9b0', '#c48a3a', '#6b4a12'],
+    wood: ['#8a5a2e', '#4a2f14'],
+    wrap: '#5c3a18',
+    outline: '#2a1a08',
+    glow: 'rgba(255, 200, 120, 0.45)',
+  },
+  'axe-rune': {
+    steel: ['#dfe6ee', '#8b96a6', '#3a4250'],
+    wood: ['#8a6440', '#4a3320'],
+    wrap: '#2a1c10',
+    outline: '#12141a',
+    glow: 'rgba(140, 200, 255, 0.55)',
+  },
+  'axe-tide': {
+    steel: ['#eafffb', '#4fd9c9', '#12726b'],
+    wood: ['#3a5c50', '#1c2e28'],
+    wrap: '#2e6b60',
+    outline: '#0a1a18',
+    glow: 'rgba(79, 217, 201, 0.7)',
+  },
+  'axe-cosmic': {
+    steel: ['#eaf2ff', '#5a7fd9', '#12204a'],
+    wood: ['#e8e8ec', '#a8a8b4'],
+    wrap: '#3a5fd9',
+    outline: '#0a0e1e',
+    glow: 'rgba(120, 160, 255, 0.85)',
+  },
+  'axe-thorn': {
+    steel: ['#9dffb0', '#2f8f2a', '#0a1f08'],
+    wood: ['#3a2f1a', '#1a140a'],
+    wrap: '#2f6b1a',
+    outline: '#0a0f06',
+    glow: 'rgba(80, 255, 90, 0.8)',
+  },
+  'axe-magma': {
+    steel: ['#ff8a3d', '#2a1410', '#0a0503'],
+    wood: ['#2a2420', '#100d0a'],
+    wrap: '#1a1512',
+    outline: '#080503',
+    glow: 'rgba(255, 110, 40, 0.9)',
+  },
+  'axe-plague': {
+    steel: ['#d0d8b0', '#6b7a4a', '#2e3a1e'],
+    wood: ['#8a7a5c', '#4a4030'],
+    wrap: '#c4b89a',
+    outline: '#141810',
+    glow: 'rgba(150, 90, 200, 0.6)',
+  },
+  'axe-royal': {
+    steel: ['#fff8d0', '#e8b830', '#a67a0a'],
+    wood: ['#3a281a', '#1e130c'],
+    wrap: '#2a1c10',
     outline: '#140d06',
+    glow: 'rgba(90, 150, 255, 0.5)',
   },
-  'axe-frost': {
-    steel: ['#ffffff', '#bfe7f8', '#5b9dc4'],
-    wood: ['#8fa8b5', '#4a5c68'],
-    wrap: '#2c3f49',
-    outline: '#0e1d26',
-    glow: 'rgba(130, 215, 255, 0.9)',
+  'axe-cyber': {
+    steel: ['#eafcff', '#4fc8ff', '#1a4a8a'],
+    wood: ['#3a4550', '#1c2228'],
+    wrap: '#2fa8e0',
+    outline: '#0a1218',
+    glow: 'rgba(79, 200, 255, 0.9)',
   },
-  'axe-ember': {
-    steel: ['#fff4d0', '#ff9a4d', '#b23412'],
-    wood: ['#4a3a33', '#1e1512'],
-    wrap: '#150e0b',
-    outline: '#180a04',
-    glow: 'rgba(255, 138, 61, 0.95)',
-  },
-  'axe-gold': {
-    steel: ['#fffce8', '#ffd756', '#bf8c0d'],
-    wood: ['#8a6b3a', '#4a361a'],
-    wrap: '#2f2210',
-    outline: '#17110a',
-    glow: 'rgba(255, 210, 74, 0.8)',
-  },
-  'axe-jade': {
-    steel: ['#eafff4', '#7fd9b0', '#2e8a63'],
-    wood: ['#2a2a2e', '#131316'],
-    wrap: '#0a0a0c',
-    outline: '#08201a',
-    glow: 'rgba(127, 217, 176, 0.75)',
-  },
-  'axe-void': {
-    steel: ['#8a7fd4', '#3a2f6b', '#140f2e'],
-    wood: ['#241f3a', '#0e0b1a'],
-    wrap: '#06040e',
-    outline: '#05030c',
-    glow: 'rgba(138, 127, 212, 0.9)',
+  'axe-holy': {
+    steel: ['#ffffff', '#fff0b0', '#e0b03a'],
+    wood: ['#e8e4d8', '#b8b0a0'],
+    wrap: '#fff0c0',
+    outline: '#8a7020',
+    glow: 'rgba(255, 230, 150, 0.95)',
   },
 
   // --- Boss-Beute: passend zur jeweiligen Frucht ---
@@ -678,16 +723,6 @@ export const AXE_STYLES: Record<string, AxeStyle> = {
     wrap: '#0a0a0c',
     outline: '#0a0604',
     glow: 'rgba(255, 154, 46, 0.85)',
-  },
-
-  // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded
-  // (siehe CLAUDE.md) ---
-  'axe-webslinger': {
-    steel: ['#ffb3b8', '#e0242f', '#8a0f16'],
-    wood: ['#3a5fd9', '#16215a'],
-    wrap: '#0a0a0a',
-    outline: '#0a0a0a',
-    glow: 'rgba(224, 36, 47, 0.85)',
   },
 
   // --- Legendär (Diamanten) ---
