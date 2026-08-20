@@ -250,6 +250,26 @@ export function getAxeShape(id: string): AxeShape {
 export const AXE_IMAGES: Record<string, string> = {
   'axe-standard': '/axes/axe-standard.png',
   'axe-rune': '/axes/axe-rune.png',
+  'axe-nature': '/axes/axe-nature.png',
+  'axe-coral': '/axes/axe-coral.png',
+  'axe-steampunk': '/axes/axe-steampunk.png',
+  'axe-tide': '/axes/axe-tide.png',
+  'axe-cosmic': '/axes/axe-cosmic.png',
+  'axe-thorn': '/axes/axe-thorn.png',
+  'axe-magma': '/axes/axe-magma.png',
+  'axe-plague': '/axes/axe-plague.png',
+  'axe-royal': '/axes/axe-royal.png',
+  'axe-cyber': '/axes/axe-cyber.png',
+  'axe-holy': '/axes/axe-holy.png',
+  'axe-melon': '/axes/axe-melon.png',
+  'axe-orange': '/axes/axe-orange.png',
+  'axe-kiwi': '/axes/axe-kiwi.png',
+  'axe-dragon': '/axes/axe-dragon.png',
+  'axe-pineapple': '/axes/axe-pineapple.png',
+  'axe-lemon': '/axes/axe-lemon.png',
+  'axe-berry': '/axes/axe-berry.png',
+  'axe-pomegranate': '/axes/axe-pomegranate.png',
+  'axe-coconut': '/axes/axe-coconut.png',
 };
 
 export function getAxeImage(id: string): string | undefined {
