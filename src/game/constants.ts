@@ -497,11 +497,21 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
  * eine reine Multiplikator-Funktion statt zusätzlicher Hindernisse – Hindernisse liegen
  * seit Levelstart fest, das Tempo lässt sich dagegen sauber ohne Struktur-Änderung pro
  * Wurf variieren (siehe `boardSpeedDegPerSec` in `useAxeGame.ts`).
+ *
+ * WICHTIG (beim Gegenlesen gefunden, bevor es zum Bug wurde): dieser Multiplikator
+ * wirkt in `useAxeGame.ts` NACH `BOARD_SPEED_MULTIPLIER` (1,25, seit der entfernten
+ * Schwierigkeitsgrad-Auswahl immer aktiv) UND nach dem `MAX_SPEED_DEG_PER_SEC`-Deckel
+ * in `generateLevel()` – beide Deckel greifen hier also nicht mehr, die Werte
+ * multiplizieren sich stattdessen. Beim schwersten Weltboss (Heldenstadt/Turmbrecher,
+ * Level 101) wäre Phase 3 mit den ursprünglich geplanten ×1,7 auf über 600°/Sek.
+ * gekommen (mehr als 90° Board-Drehung während einer einzelnen 140ms-Flugzeit) – das
+ * hätte sich nicht mehr nach "schwer, aber lernbar" angefühlt, sondern nach reinem
+ * Zufall. Deshalb bewusst konservativer: ×1 / ×1,15 / ×1,3 statt ×1 / ×1,35 / ×1,7.
  */
 export function worldBossPhaseSpeedMultiplier(progress: number): number {
   if (progress < 0.4) return 1;
-  if (progress < 0.75) return 1.35;
-  return 1.7;
+  if (progress < 0.75) return 1.15;
+  return 1.3;
 }
 
 export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;

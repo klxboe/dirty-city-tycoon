@@ -1749,11 +1749,21 @@ Ausgabe genau an diesen sechs Level-Indizes – keine zusätzliche
   angewendet in `useAxeGame.ts`s abgeleitetem `boardSpeedDegPerSec`): das
   Tempo zieht WÄHREND des Kampfes an, abhängig vom Fortschritt
   (`axesThrown / axeCount`) – Phase 1 (<40%) beim regulären Weltboss-Tempo
-  ("Muster lernen"), Phase 2 (<75%) ×1,35 ("schneller, mehr Druck"), Phase 3
-  (Rest) ×1,7 ("hoher Druck, anspruchsvolles Timing"). Bewusst eine reine
+  ("Muster lernen"), Phase 2 (<75%) ×1,15 ("schneller, mehr Druck"), Phase 3
+  (Rest) ×1,3 ("hoher Druck, anspruchsvolles Timing"). Bewusst eine reine
   Tempo-Eskalation statt zusätzlicher Hindernisse – die liegen seit
   Levelstart fest, das Tempo lässt sich dagegen sauber pro Wurf variieren,
   ohne die (explizit geschützte) Kollisions-/Impact-Logik anzufassen.
+  **Beim Gegenlesen gefunden und korrigiert, bevor es zum echten Bug wurde:**
+  der Multiplikator wirkt NACH `BOARD_SPEED_MULTIPLIER` (1,25, seit der
+  entfernten Schwierigkeitsgrad-Auswahl immer aktiv) und nach dem
+  `MAX_SPEED_DEG_PER_SEC`-Deckel – beide Deckel greifen an dieser Stelle
+  also nicht mehr, die Werte multiplizieren sich. Mit den ursprünglich
+  geplanten ×1,35/×1,7 wäre der schwerste Weltboss (Heldenstadt/Turmbrecher)
+  in Phase 3 auf über 600°/Sek. gekommen (mehr als 90° Board-Drehung
+  innerhalb einer einzelnen 140ms-Flugzeit) – das hätte sich nicht mehr nach
+  "schwer, aber lernbar" angefühlt, sondern nach Zufall. Deshalb die
+  konservativeren ×1,15/×1,3 oben.
   Berührt NICHTS von der geschützten Wurfmechanik: `boardSpeedDegPerSec` ist
   seit jeher ein reiner Eingabewert für `TargetBoard`s Rotation, komplett
   getrennt von Fluggeschwindigkeit/Flugbahn/Kollisionsprüfung/Impact/
