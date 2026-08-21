@@ -130,14 +130,36 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   Hindernis-Äxten, Level 64 mit 7 (`.target-board__axe-slot`-Elemente
   gezählt) – unterschiedliche Level, unterschiedliche Werte, keine
   Konsolenfehler.
-  Bewusst NICHT angefasst: `COLLISION_ANGLE_TOLERANCE_DEG` (10°) – der Wert
-  ist eng an `FLIGHT_DURATION_MS` gekoppelt (190ms Flugzeit bei 55°/Sek.
-  Level-1-Tempo ergeben ~10,5° Drehung, also knapp ÜBER der Toleranz, siehe
-  Kommentar in `constants.ts`), ihn isoliert zu erhöhen hätte diese fein
+  Bewusst NICHT angefasst (zu diesem Zeitpunkt): `COLLISION_ANGLE_TOLERANCE_DEG`
+  (10°) – der Wert war eng an `FLIGHT_DURATION_MS` gekoppelt (190ms Flugzeit bei
+  damals 55°/Sek. Level-1-Tempo ergaben ~10,5° Drehung, knapp ÜBER der Toleranz,
+  siehe Kommentar in `constants.ts`), ihn isoliert zu erhöhen hätte diese fein
   austarierte Kalibrierung verschoben, ohne dass das der eigentliche Hebel
   für "die Level fühlen sich zu leicht an" ist. Ebenfalls unangetastet:
   `APPLE_HIT_TOLERANCE_DEG` – das reguliert das Apfel-Sammeln (Belohnung),
   nicht das Überleben.
+  **Fünfte Runde (Klaus: "Level 1-5 sind sehr einfach und es ist nervig, weil
+  sich das Brett so langsam dreht und man es eh schafft, aber nicht so
+  schnell werfen kann"):** hier war nicht die Erfolgschance das Problem
+  (0-1 Hindernisse in Level 1-5 sind Absicht, siehe Level-System-Tabelle oben),
+  sondern das TEMPO-GEFÜHL – bei 55°/Sek. dauert es lange, bis eine gute Lücke
+  wieder am Einschlagpunkt vorbeikommt, obwohl praktisch jeder Wurf sitzt.
+  `BASE_SPEED_DEG_PER_SEC` von 55 auf 70°/Sek. angehoben (einzige Änderung,
+  wirkt als flacher Sockel unter der ganzen Kurve – Level 100 rutscht dadurch
+  von ~245 auf ~258°/Sek., der Tempo-Deckel wird bei Level ~175 statt ~182
+  erreicht, beides marginal). `FLIGHT_DURATION_MS` (190ms) bewusst NICHT
+  angefasst – das ist die separate, ausführlich hergeleitete
+  Wurf-Fluganimation/Cooldown-Dauer, nicht der eigentliche Hebel hier. Netter
+  Nebeneffekt: bei 70°/Sek. dreht sich die Scheibe in den 190ms jetzt um
+  ~13,3° statt ~10,5° – Dauertippen kollidiert in Level 1-5 damit nicht mehr
+  zuverlässig mit der eigenen letzten Axt, passend dazu, dass man dort ohnehin
+  kaum sterben kann ("kann nicht so schnell werfen" wird damit adressiert,
+  ohne den separat kalibrierten `FLIGHT_DURATION_MS`-Wert anzufassen).
+  Verifiziert: `tsc -b` sauber, Level 1 direkt aus einem Spielstand geladen
+  (0 Hindernisse wie erwartet), keine Konsolenfehler. Das tatsächliche
+  Tempo-GEFÜHL ließ sich wie bei allen Geschwindigkeits-Änderungen nicht per
+  Browser-Automatisierung nachspielen (rAF-Freeze, siehe eigener Abschnitt) –
+  Bestätigung am echten Gerät steht noch aus.
   Verifiziert: `tsc -b` läuft sauber durch, die Seite lädt ohne
   Konsolenfehler (Level 51 aus einem vorhandenen Spielstand direkt
   geladen, 7 Hindernis-Äxte korrekt vorplatziert – passt zur neuen
@@ -1541,6 +1563,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Fünfte Runde: Basis-Tempo angehoben, Level 1-5 fühlen sich weniger
+      zäh an** (Details siehe Level-System-Abschnitt oben, 2026-08-21):
+      Klaus' Feedback "Level 1-5 nervig, Brett dreht zu langsam, kann nicht
+      schnell werfen" – `BASE_SPEED_DEG_PER_SEC` von 55 auf 70°/Sek.
+      angehoben, `FLIGHT_DURATION_MS` bewusst unangetastet. Nebeneffekt:
+      Dauertippen kollidiert in den ersten Leveln jetzt nicht mehr
+      zuverlässig mit der eigenen Axt (passend, da dort kaum Hindernisse
+      sind). `tsc -b` sauber, Level 1 lädt fehlerfrei.
 - [x] **Echte Foto-Bühnenhintergründe verworfen, Startbildschirm-Foto bleibt**
       (Details siehe eigener Abschnitt oben, 2026-08-21): realistische
       Welt-Fotos passten laut Klaus nicht zum Kinderspiel-Look, Bühnen-Wiring

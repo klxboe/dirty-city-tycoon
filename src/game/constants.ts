@@ -19,13 +19,19 @@ import type { Difficulty, LevelConfig, SpinPattern } from './types';
  * Schritt war deshalb NICHT nur die Zahl weiter zu senken (die Dauer war nie das
  * Hauptproblem), sondern vor allem die Animation selbst mit mehr Energie zu versehen
  * (Squash-and-Stretch beim Abschuss, schärferes Easing, kräftigerer Trail – siehe
- * `axe-fly`-Keyframes in App.css). 190ms sind trotzdem spürbar knackiger als 220ms und
- * bei 55°/Sek. Grundtempo dreht sich die Scheibe in dieser Zeit um ~10.5°, knapp ÜBER
- * der 10°-Kollisions-Toleranz – Dauertippen bleibt also riskant, siehe unten.
- * Das ist verkraftbar, weil das Brett sich ohnehin füllt und ab Level 3 Hindernisse
- * dazukommen – wer stumpf spammt, läuft trotzdem in eine steckende Axt. Sollte es zu
- * leicht werden, sind die Stellschrauben COLLISION_ANGLE_TOLERANCE_DEG (größer =
- * strenger) oder ein langsamerer Levelstart.
+ * `axe-fly`-Keyframes in App.css). 190ms sind trotzdem spürbar knackiger als 220ms.
+ * Bei `BASE_SPEED_DEG_PER_SEC` (70°/Sek., siehe dort) dreht sich die Scheibe in dieser
+ * Zeit um ~13,3° – über der 10°-Kollisions-Toleranz, Dauertippen kollidiert also in
+ * Level 1-5 NICHT mehr zuverlässig mit der eigenen letzten Axt (bewusst so seit Klaus'
+ * Feedback "Level 1-5 nervig, Brett dreht zu langsam, kann nicht schnell werfen" – dort
+ * gibt es ohnehin kaum Hindernisse, siehe `obstacleBaseFor`, also darf Dauertippen dort
+ * auch mal einfach funktionieren). Ab dem Level, wo `boardSpeedDegPerSec` wieder unter
+ * ~53°/Sek. läge, wäre das umgekehrt der Fall – kommt in der aktuellen Kurve aber nicht
+ * vor, `BASE_SPEED_DEG_PER_SEC` ist der niedrigste Wert im ganzen Spiel. Weiter oben im
+ * Spiel bleibt Dauertippen riskant, weil das Brett voller wird (mehr Hindernisse/Äxte,
+ * siehe `obstacleBaseFor`/`axeCountFor`) – wer stumpf spammt, läuft dort trotzdem in
+ * eine steckende Axt. Sollte es zu leicht werden, sind die Stellschrauben
+ * COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein langsamerer Levelstart.
  *
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
@@ -115,8 +121,8 @@ export function blockStartIndex(levelIndex: number): number {
  * pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist das Zeitfenster, in
  * dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das macht das gezielte
  * Apfel-Sammeln nach oben hin schwerer.
- * Level 1 = 55°/Sek., Level 100 = ~245°/Sek. (zweiter Härte-Durchgang, siehe unten),
- * Deckel erst bei Level ~182 (400°/Sek.).
+ * Level 1 = 70°/Sek., Level 100 = ~258°/Sek. (Werte nach dem Basis-Tempo-Anhub unten),
+ * Deckel erst bei Level ~175 (400°/Sek.).
  *
  * Der Deckel lag früher bei 200°/Sek. (erreicht um Level 100) – seit dem Umstieg aufs
  * Highscore-Prinzip (Klaus' Wunsch: "je höher, desto schwerer", ein Lauf geht potenziell
@@ -125,7 +131,21 @@ export function blockStartIndex(levelIndex: number): number {
  * des Laufs würde sich nicht mehr steigern. Deckel deshalb deutlich höher UND weiter
  * hinten, damit die Schwierigkeit auch in einem sehr guten Lauf noch spürbar weiterwächst.
  */
-export const BASE_SPEED_DEG_PER_SEC = 55;
+/**
+ * Von 55 auf 70°/Sek. angehoben (Klaus: "Level 1-5 sind nervig, weil sich das Brett so
+ * langsam dreht – man schafft es eh, kann aber nicht schnell werfen"). Das eigentliche
+ * Problem war nicht die Erfolgschance (die ist in den ersten Leveln absichtlich hoch,
+ * 0-1 Hindernisse, siehe `obstacleBaseFor`), sondern das TEMPO-GEFÜHL: bei 55°/Sek.
+ * dauert es lange, bis die Scheibe wieder an einer guten Lücke vorbeikommt, obwohl
+ * praktisch jeder Treffer sitzt – das fühlt sich nach Warten an, nicht nach Spielen.
+ * `FLIGHT_DURATION_MS` (190ms, siehe dort) bewusst NICHT angetastet – das ist die
+ * separate, ausführlich hergeleitete Wurf-Fluganimation/Cooldown-Dauer. Netter
+ * Nebeneffekt der höheren Basis: bei 70°/Sek. dreht sich die Scheibe in 190ms um
+ * ~13,3° (vorher bei 55°/Sek. nur ~10,5°) – Dauertippen ist in den ersten Leveln damit
+ * jetzt tatsächlich sicher möglich (kollidiert nicht mehr mit der eigenen letzten
+ * Axt), passend dazu, dass man in Level 1-5 ohnehin kaum sterben kann.
+ */
+export const BASE_SPEED_DEG_PER_SEC = 70;
 /**
  * Angehoben von 1.45 auf 1.9 (Klaus' Feedback: "immer noch zu einfach, deutlich
  * schwerer machen"). Level 50 lag vorher bei ~126°/Sek., jetzt bei ~150°/Sek.;
@@ -161,19 +181,25 @@ function spreadAngles(count: number, startDeg: number): number[] {
 /**
  * Wie viele Äxte pro Level (mehr Äxte = voller wird das Brett = enger die Lücken).
  *
- * Zweiter Härte-Durchgang (Klaus: "immer noch zu einfach, deutlich schwerer"):
- * Deckel von 10 auf 12 angehoben UND alle Stufen früher erreicht (vorher 71, jetzt
- * bereits ab 81 – aber die Zwischenstufen kommen jetzt alle 8-15 Level statt 10-25).
+ * Fünfter Härte-Durchgang (Klaus: "Durchschnitt Äxte-Anzahl deutlich höher, es ist
+ * viel zu einfach die Level"): jede Stufe angehoben (Start 5→6, Deckel 12→19) UND die
+ * Stufen erneut früher erreicht. Schnitt über alle 100 vorbereiteten Level springt von
+ * ~8,7 auf ~12,7 Äxten – kein Sonderfall nötig, `axeCount` ist überall sonst nur eine
+ * Zahl aus `level.axeCount` (siehe `useAxeGame.ts`), die Wurf-/Kollisionslogik selbst
+ * bleibt unverändert. Bei sehr hohen Leveln (Deckel 19 + Boss-Bonus 1 = 20, auf ein
+ * Brett mit COLLISION_ANGLE_TOLERANCE_DEG=10° pro Axt) wird eine Lücke irgendwann
+ * rechnerisch unvermeidbar eng – genau das ist im Highscore-Prinzip (irgendwann
+ * stirbt man garantiert) der gewünschte Effekt, kein Bug.
  */
 function axeCountFor(levelIndex: number): number {
-  if (levelIndex < 6) return 5; // Level 1-6
-  if (levelIndex < 14) return 6; // Level 7-14
-  if (levelIndex < 22) return 7; // Level 15-22
-  if (levelIndex < 32) return 8; // Level 23-32
-  if (levelIndex < 45) return 9; // Level 33-45
-  if (levelIndex < 60) return 10; // Level 46-60
-  if (levelIndex < 80) return 11; // Level 61-80
-  return 12; // ab Level 81
+  if (levelIndex < 5) return 6; // Level 1-5
+  if (levelIndex < 12) return 7; // Level 6-12
+  if (levelIndex < 20) return 9; // Level 13-20
+  if (levelIndex < 30) return 11; // Level 21-30
+  if (levelIndex < 42) return 13; // Level 31-42
+  if (levelIndex < 55) return 15; // Level 43-55
+  if (levelIndex < 70) return 17; // Level 56-70
+  return 19; // ab Level 71
 }
 
 /**
