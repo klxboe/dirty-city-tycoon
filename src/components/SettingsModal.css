@@ -65,24 +65,3 @@
 .settings-toggle--on .settings-toggle__knob {
   transform: translateX(22px);
 }
-
-.settings-confirm {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.settings-confirm__text {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-danger);
-  text-align: center;
-}
-
-.modal-card__button--danger {
-  background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
-  color: #fff;
-  box-shadow: 0 4px 0 var(--color-danger-dark);
-}

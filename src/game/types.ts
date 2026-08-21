@@ -71,6 +71,13 @@ export interface GameState {
   streak: number;
   flyingAxe: FlyingAxe | null;
   lastOutcome: ThrowOutcome | null;
+  /**
+   * Ob die einmalige Video-Rettung in DIESEM Lauf (seit dem letzten Sprung zu Level 1)
+   * schon verbraucht ist. Wie `streak` bewusst AUSSERHALB von `createLevelState()`
+   * gepflegt (siehe useAxeGame.ts) – bleibt beim Levelaufstieg (`nextLevel`) erhalten,
+   * wird nur bei einem echten Neustart (Level 0) wieder auf `false` gesetzt.
+   */
+  rescueUsedThisRun: boolean;
   /** Dauerhafter Spielstand: Münzen, Skins, bestes Level. */
   save: SaveData;
 }

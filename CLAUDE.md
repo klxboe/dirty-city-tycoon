@@ -1629,6 +1629,86 @@ Start jetzt sauber statt "kurz verdreht") lässt sich wie immer nicht in der
 automatisierten Umgebung beobachten (kein echtes Compositing) – bitte am
 Gerät gegenprüfen.
 
+### Große Ausbaustufe: Pause, Game-Over, Video-Rettung, Logo-Farbe, UI-Aufräumen
+
+Klaus' bislang größte Anfrage in einem Rutsch – ausdrücklich mit der Ansage,
+die inzwischen flüssige Wurfmechanik NICHT anzufassen (Fluggeschwindigkeit,
+Flugzeit, Flugbahn, Kollisionslogik, Impact, Axtrotation während des Flugs
+blieben komplett unberührt – nichts davon war in dieser Runde überhaupt Teil
+der Änderungen). Erster Teil-Batch, kleinere/klar abgegrenzte Punkte zuerst:
+
+- **Pause-System** (neu, `PauseModal.tsx`): Pause-Button oben rechts auf der
+  Bühne (`.stage__pause-button`), NUR sichtbar/aktiv während `phase ===
+  'ready'` (zwischen zwei Würfen) – bewusst nie während eine Axt fliegt,
+  damit Pausieren die Flug-/Kollisionslogik nie berühren muss. Der Button
+  liegt INNERHALB von `.stage` (dessen `onPointerDown` sonst einen Wurf
+  auslösen würde) – braucht deshalb `e.stopPropagation()` im eigenen
+  Klick-Handler. Das Pause-Menü selbst rendert als Geschwister-Overlay
+  (wie Shop/Einstellungen/Weltkarte), blockt Klicks auf `.stage` also schon
+  durch die DOM-Struktur (kein gemeinsamer Elternknoten mit `onPointerDown`).
+  `TargetBoard`s `paused`-Prop bekam den neuen `paused`-State einfach dazu
+  (`... || paused`) – Board-Rotation/Axt-Bewegung waren dafür schon vorbereitet.
+  Schließt sich automatisch, wenn sich Bildschirm oder Phase ändern (verhindert
+  ein "hängendes" Pause-Menü nach einem Level-Wechsel).
+- **Game-Over auf genau zwei Buttons reduziert** (`GameOverModal.tsx`):
+  vorher "Neuer Versuch" + "Zurück zum Menü" + "Werkstatt öffnen" (drei
+  Buttons). Jetzt: "📺 Fortschritt mit Video" (nur sichtbar, wenn die
+  einmalige Rettung in diesem Lauf noch nicht verbraucht ist) + "Zurück zum
+  Menü" (immer). Kein Neustart-Button mehr auf diesem Screen – ein
+  Neustart läuft jetzt ausschließlich über "Zurück zum Menü" -> Startbildschirm
+  ("Weiter – Level N" springt nach einem Game Over ohnehin automatisch auf
+  Level 1, da `currentLevel` beim Game Over auf 0 zurückgesetzt wird, siehe
+  Münzen/Läufe-Abschnitt) bzw. die Weltkarte.
+- **Einmalige Video-Rettung** (`rescueRun()` in `useAxeGame.ts`, neu
+  `VideoRescueModal.tsx`): setzt den Lauf GENAU im Level fort, in dem er
+  endete (`state.levelIndex`, NICHT auf 0 zurückgesetzt wie bei
+  `restartRun()`). Getrackt über ein neues `rescueUsedThisRun`-Flag im
+  `GameState` – wie `streak` bewusst AUSSERHALB von `createLevelState()`
+  gepflegt (bleibt bei `nextLevel()` erhalten, wird nur bei einem echten
+  Neustart auf Level 0 – `goToLevel(0)`/`restartRun()` – wieder freigegeben).
+  **Es gibt in diesem Projekt noch KEINE echte Rewarded-Ad-SDK-Anbindung**
+  (kein AdMob verdrahtet, siehe STATUS.md-Historie) – `VideoRescueModal.tsx`
+  ist deshalb bewusst ein klar erkennbarer PLATZHALTER (3-Sekunden-Zähler,
+  kein echtes Video), der die Spiel-Logik (einmalige Rettung, Fortsetzen im
+  selben Level) schon jetzt vollständig funktionsfähig macht. Austausch gegen
+  eine echte Anzeige später betrifft NUR diese eine Komponente, der Rest der
+  App (State-Machine, `rescueRun()`) ändert sich dabei nicht.
+  Bekannte, bewusste Vereinfachung: die Serie (`streak`) wird beim
+  automatischen Game-Over-Effekt schon auf 0 gesetzt, BEVOR das
+  Game-Over-Fenster überhaupt erscheint – eine Rettung bewahrt deshalb
+  Level-Fortschritt und Münzen, aber NICHT die Serie (bräuchte einen
+  separaten "Serie vor dem Fehlwurf"-Zwischenspeicher, den es noch nicht
+  gibt). Ebenfalls bewusst vereinfacht: `rescueUsedThisRun` lebt nur im
+  React-State, nicht im persistenten Spielstand – ein App-Neustart mitten in
+  einem Lauf gibt technisch eine neue Rettung frei. Für ein Solo-Handyspiel
+  ohne Anti-Cheat-Anspruch akzeptabel, aber erwähnenswert.
+- **Logo-Farbe**: "Throw" in `StartScreen.tsx` nutzt jetzt `var(--color-primary)`
+  (dieselbe Orange-Leitfarbe wie die UI-Buttons unten, `theme.css`) statt der
+  vorherigen Cyan-Farbe (`#5ce1ff`) – die kam aus einem früheren "mehr Blau"-
+  Grafik-Durchgang (siehe Cartoon-Ozean-Abschnitt weiter oben: "Throw von
+  Orange auf Zyan"). Diese Änderung dreht GENAU das wieder zurück.
+- **"Von Level 1 starten" entfernt** (`StartScreen.tsx`): Button + Prop +
+  Handler restlos raus (nicht nur versteckt). Die Weltkarte (eigener,
+  weiterhin vorhandener Button direkt darunter) ist jetzt der einzige Weg,
+  gezielt zu einer bestimmten Welt/Level 1 zu springen – `goToLevel(0)`
+  bleibt dafür intern unverändert (wird vom Weltkarten-Sprung auf die erste
+  Welt "Wald" weiterhin genutzt).
+- **"Fortschritt zurücksetzen" restlos entfernt** (`SettingsModal.tsx`):
+  Button, Bestätigungs-Dialog-UI (`settings-confirm`/`--danger`-CSS) UND die
+  komplette `resetProgress()`-Funktion samt `loadSaveFresh()`-Helfer in
+  `useAxeGame.ts` gelöscht (waren ausschließlich dafür da, keine andere
+  Stelle nutzte sie). Andere Einstellungen (Ton/Vibration, Highscore-Anzeige)
+  unverändert.
+
+Verifiziert (echter Klick-/Event-Durchlauf, kein reines Code-Lesen): Pause
+öffnet/schließt korrekt ohne einen Wurf auszulösen (Axt-Anzahl vor/nach
+Pause-Klick identisch geprüft), Game-Over zeigt exakt die zwei erwarteten
+Buttons, Video-Rettung läuft durch (Countdown -> "Belohnung erhalten" ->
+Fortsetzen bei EXAKT demselben Level statt Rückwurf auf Level 1), ein
+zweites Game Over im selben Lauf zeigt korrekt NUR noch "Zurück zum Menü"
+(keine zweite Rettung). `tsc -b` sauber, keine Konsolenfehler. "Von Level 1
+starten" und "Fortschritt zurücksetzen" bestätigt aus der UI verschwunden.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)

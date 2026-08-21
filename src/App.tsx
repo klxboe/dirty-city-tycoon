@@ -5,6 +5,8 @@ import { HUD } from './components/HUD';
 import { AXE_STICK_RATIO, BOARD_SIZE, TargetBoard, type TargetBoardHandle } from './components/TargetBoard';
 import { LevelCompleteModal } from './components/LevelCompleteModal';
 import { GameOverModal } from './components/GameOverModal';
+import { VideoRescueModal } from './components/VideoRescueModal';
+import { PauseModal } from './components/PauseModal';
 import { DailyRewardModal } from './components/DailyRewardModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Shop } from './components/Shop';
@@ -114,6 +116,28 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worldMapOpen, setWorldMapOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
+  /**
+   * Pause-Menü während eines laufenden Levels. Der Pause-BUTTON selbst ist nur
+   * sichtbar/aktivierbar, während `game.phase === 'ready'` ist – bewusst NICHT während
+   * eine Axt fliegt, damit die Pause-Funktion die Flug-/Kollisions-Logik nie berühren
+   * muss (siehe PauseModal.tsx). Wird automatisch geschlossen, sobald sich Bildschirm
+   * oder Level-Phase ändern (Level-Ende, Zurück zum Menü etc.), damit sie nie über
+   * einen Bildschirmwechsel hinweg "hängen bleibt".
+   */
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (screen !== 'game' || game.phase !== 'ready') setPaused(false);
+  }, [screen, game.phase]);
+  /**
+   * Einmalige Video-Rettung im Game-Over-Fenster (siehe rescueRun() in useAxeGame.ts).
+   * Zeigt zunächst GameOverModal (mit dem Button, falls verfügbar), dann bei Klick
+   * dieses Platzhalter-Video (VideoRescueModal.tsx), erst danach wird tatsächlich
+   * gerettet.
+   */
+  const [videoRescueOpen, setVideoRescueOpen] = useState(false);
+  useEffect(() => {
+    if (game.phase !== 'gameOver') setVideoRescueOpen(false);
+  }, [game.phase]);
   const [boardGeom, setBoardGeom] = useState<BoardGeometry | null>(null);
   /**
    * Ob das große Ergebnis-Fenster schon sichtbar sein darf. Ohne diese Verzögerung
@@ -329,10 +353,6 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
           onPlay={startPlaying}
-          onRestartFromOne={() => {
-            game.goToLevel(0);
-            startPlaying();
-          }}
           onOpenShop={() => setShopOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenWorldMap={() => setWorldMapOpen(true)}
@@ -347,7 +367,6 @@ function App() {
             soundOn={game.save.soundOn}
             bestLevel={game.save.bestLevel}
             onToggleSound={game.setSoundOn}
-            onResetProgress={game.resetProgress}
             onClose={() => setSettingsOpen(false)}
           />
         )}
@@ -408,6 +427,24 @@ function App() {
           ))}
         </div>
 
+        {/*
+         * Pause-Button: nur sichtbar, während `phase === 'ready'` ist (zwischen zwei
+         * Würfen) – bewusst NICHT während eine Axt fliegt, damit Pausieren nie mit der
+         * Flug-/Kollisions-Logik interagieren muss. `stopPropagation` ist nötig, weil
+         * der Button INNERHALB von `.stage` liegt, dessen `onPointerDown` sonst einen
+         * Wurf auslösen würde.
+         */}
+        {game.phase === 'ready' && !overlayOpen && !paused && (
+          <button
+            className="stage__pause-button"
+            aria-label="Pause"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => setPaused(true)}
+          >
+            ⏸
+          </button>
+        )}
+
         {/* Boss-Level bekommen ein eigenes Schild, damit der Moment klar erkennbar ist. */}
         {game.bossFruit && (
           <div className="stage__boss-tag">
@@ -421,7 +458,7 @@ function App() {
             ref={boardHandleRef}
             speedDegPerSec={game.boardSpeedDegPerSec}
             spinPattern={game.spinPattern}
-            paused={game.phase === 'levelComplete' || game.phase === 'gameOver' || overlayOpen}
+            paused={game.phase === 'levelComplete' || game.phase === 'gameOver' || overlayOpen || paused}
             stuckAxes={game.stuckAxes}
             apples={game.apples}
             boardSkin={game.activeBoardSkin}
@@ -565,10 +602,6 @@ function App() {
           soundOn={game.save.soundOn}
           bestLevel={game.save.bestLevel}
           onToggleSound={game.setSoundOn}
-          onResetProgress={() => {
-            game.resetProgress();
-            setScreen('start');
-          }}
           onClose={() => setSettingsOpen(false)}
         />
       )}
@@ -592,19 +625,30 @@ function App() {
         />
       )}
 
-      {!overlayOpen && modalVisible && game.phase === 'gameOver' && (
+      {!overlayOpen && modalVisible && game.phase === 'gameOver' && !videoRescueOpen && (
         <GameOverModal
           level={game.levelIndex + 1}
-          restartLevel={1}
           bestLevel={game.save.bestLevel}
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}
           axeSkin={game.save.equippedAxeSkin}
-          onRestart={game.restartRun}
-          onOpenShop={() => setShopOpen(true)}
+          rescueAvailable={!game.rescueUsedThisRun}
+          onWatchVideo={() => setVideoRescueOpen(true)}
           onBackToMenu={() => setScreen('start')}
         />
       )}
+
+      {videoRescueOpen && (
+        <VideoRescueModal
+          onFinished={() => {
+            game.rescueRun();
+            setVideoRescueOpen(false);
+          }}
+          onCancel={() => setVideoRescueOpen(false)}
+        />
+      )}
+
+      {paused && <PauseModal onResume={() => setPaused(false)} onBackToMenu={() => setScreen('start')} />}
     </div>
   );
 }

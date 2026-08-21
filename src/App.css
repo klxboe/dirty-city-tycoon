@@ -632,6 +632,31 @@
   }
 }
 
+/* Gut sichtbar, aber klein und in die Ecke gerückt – soll auffindbar sein, ohne die
+   Bühne beim eigentlichen Spielen zuzustellen. */
+.stage__pause-button {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: rgba(20, 22, 28, 0.65);
+  color: var(--color-text);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+}
+
+.stage__pause-button:active {
+  transform: scale(0.92);
+}
+
 /* ---- Boss-Level: eigenes Schild oben in der Bühne ---- */
 .stage--boss::before {
   /* rötlicher Lichtkegel statt des warmen – signalisiert "hier ist etwas anders" */

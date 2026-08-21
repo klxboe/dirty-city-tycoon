@@ -5,9 +5,6 @@ import './GameOverModal.css';
 
 interface GameOverModalProps {
   level: number;
-  /** Level, bei dem der neue Versuch startet – immer 1: das Ziel ist ein möglichst
-   *  hoher Highscore in einem Lauf, kein Kampagnen-Fortschritt mit Teil-Rückwurf. */
-  restartLevel: number;
   /** Höchstes je erreichtes Level – bleibt als Highscore stehen. */
   bestLevel: number;
   /** Münzen, die dieser Lauf gekostet hat (gesammelte Äpfel des laufenden Levels). */
@@ -15,8 +12,10 @@ interface GameOverModalProps {
   totalCoins: number;
   /** Nur fürs Icon oben im Fenster – zerspringt in zwei Hälften beim Erscheinen. */
   axeSkin: string;
-  onRestart: () => void;
-  onOpenShop: () => void;
+  /** Ob die einmalige Video-Rettung in diesem Lauf noch verfügbar ist (siehe useAxeGame.ts). */
+  rescueAvailable: boolean;
+  /** Öffnet den (simulierten) Rettungs-Video-Flow, siehe VideoRescueModal.tsx. */
+  onWatchVideo: () => void;
   /** Zurück zum Startbildschirm, ohne einen neuen Versuch zu starten. */
   onBackToMenu: () => void;
 }
@@ -26,26 +25,21 @@ const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
 /**
  * Erscheint, wenn eine Axt eine bereits steckende Axt trifft. Das beendet den Lauf –
  * weiter geht es immer bei Level 1 (Highscore-Prinzip: ein Fehler irgendwo wirft
- * konsequent auf Los zurück). Münzen, XP und Skins aus früher abgeschlossenen Leveln
- * bleiben erhalten, nur das angefangene Level bringt nichts ein.
+ * konsequent auf Los zurück), ES SEI DENN der Spieler nutzt die Video-Rettung.
  *
- * Bekommt bewusst eine EIGENE Inszenierung als das Erfolgs-Fenster (`LevelCompleteModal`)
- * – vorher teilten sich beide dieselbe sanfte Pop-in-Animation, nur in Rot statt Orange,
- * und wirkten dadurch wie dieselbe Karte zweimal. Jetzt: ein Bottom-Sheet, das von unten
- * hereinschiebt statt mittig einzublenden, blau statt rot getönt (passend zum neuen
- * Ozean-Look der Weltkarte), Riss-Overlay, die Axt zerspringt beim Erscheinen sichtbar
- * in zwei Hälften, und drei klare Wege weiter: neuer Versuch, zurück zum Startbildschirm,
- * oder direkt in die Werkstatt.
+ * Bewusst auf GENAU zwei mögliche Buttons reduziert (Klaus: "extrem klare UI, keine
+ * dritten Buttons") – vorher gab es zusätzlich "Neuer Versuch" und "Werkstatt öffnen".
+ * Ein Neustart läuft jetzt ausschließlich über "Zurück zum Menü" -> Weltkarte/Start,
+ * die Werkstatt ist über den Münzstand im HUD ohnehin einen Tap entfernt.
  */
 export function GameOverModal({
   level,
-  restartLevel,
   bestLevel,
   coinsLost,
   totalCoins,
   axeSkin,
-  onRestart,
-  onOpenShop,
+  rescueAvailable,
+  onWatchVideo,
   onBackToMenu,
 }: GameOverModalProps) {
   return (
@@ -78,12 +72,7 @@ export function GameOverModal({
         </div>
 
         <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">Axt zersplittert!</div>
-        <div className="modal-card__body">
-          Du hast deine eigene Axt getroffen – in Level {level}.
-          {restartLevel === level
-            ? ' Noch einmal von vorn.'
-            : ` Weiter geht es bei Level ${restartLevel}.`}
-        </div>
+        <div className="modal-card__body">Du hast deine eigene Axt getroffen – in Level {level}.</div>
 
         <div className="modal-card__record">
           Highscore: <strong>Level {bestLevel}</strong>
@@ -98,17 +87,14 @@ export function GameOverModal({
           <Coin size={15} /> Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
 
-        <button className="modal-card__button modal-card__button--ocean" onClick={onRestart}>
-          {restartLevel === level ? 'Neuer Versuch' : `Zurück zu Level ${restartLevel}`}
+        {rescueAvailable && (
+          <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
+            📺 Fortschritt mit Video
+          </button>
+        )}
+        <button className="modal-card__button modal-card__button--secondary" onClick={onBackToMenu}>
+          Zurück zum Menü
         </button>
-        <div className="modal-card__button-row">
-          <button className="modal-card__button modal-card__button--secondary" onClick={onBackToMenu}>
-            Zurück zum Menü
-          </button>
-          <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
-            Werkstatt öffnen
-          </button>
-        </div>
       </div>
     </div>
   );

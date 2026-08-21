@@ -156,8 +156,10 @@
 
 /* "Throw" in kräftigem Zyan statt Orange – der Name soll insgesamt blau lesen,
    nicht nur der Hintergrund drumherum. */
+/* "Throw" in derselben Orange-Leitfarbe wie die unteren UI-Buttons (--color-primary,
+   theme.css) – auf Klaus' Wunsch zurück von Cyan (frühere blaue Ozean-Anpassung). */
 .start__title-accent {
-  color: #5ce1ff;
+  color: var(--color-primary);
 }
 
 @keyframes start-title-pop {

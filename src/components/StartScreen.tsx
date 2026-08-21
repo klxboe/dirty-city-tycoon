@@ -20,7 +20,6 @@ interface StartScreenProps {
   /** Beim allerersten Start zeigen wir zusätzlich die Regeln. */
   showTutorial: boolean;
   onPlay: () => void;
-  onRestartFromOne: () => void;
   onOpenShop: () => void;
   onOpenSettings: () => void;
   onOpenWorldMap: () => void;
@@ -43,7 +42,6 @@ export function StartScreen({
   axeSkin,
   showTutorial,
   onPlay,
-  onRestartFromOne,
   onOpenShop,
   onOpenSettings,
   onOpenWorldMap,
@@ -158,11 +156,6 @@ export function StartScreen({
         <button className="start__button start__button--main" onClick={onPlay}>
           {continueLevel > 1 ? `Weiter – Level ${continueLevel}` : 'Los geht’s'}
         </button>
-        {continueLevel > 1 && (
-          <button className="start__button start__button--ghost" onClick={onRestartFromOne}>
-            Von Level 1 starten
-          </button>
-        )}
         <button className="start__button start__button--ghost" onClick={onOpenWorldMap}>
           Weltkarte
         </button>

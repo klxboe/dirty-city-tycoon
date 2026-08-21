@@ -213,18 +213,6 @@
   box-shadow: 0 2px 0 #123f94;
 }
 
-/* Zwei gleich breite Buttons nebeneinander für "Zurück zum Menü" / "Werkstatt öffnen". */
-.modal-card__button-row {
-  display: flex;
-  gap: var(--space-2);
-  width: 100%;
-}
-
-.modal-card__button-row .modal-card__button {
-  flex: 1;
-  margin-top: 0;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop--danger::before {
     animation: none;

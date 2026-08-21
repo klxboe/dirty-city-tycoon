@@ -31,7 +31,7 @@ import { getSkin, isFreeSkin } from '../game/shop';
 import { setMuted } from '../game/sound';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
-function createLevelState(levelIndex: number, runSeed: number): Omit<GameState, 'save' | 'streak'> {
+function createLevelState(levelIndex: number, runSeed: number): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun'> {
   const level = levelConfigAt(levelIndex, runSeed);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
@@ -65,7 +65,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const [state, setState] = useState<GameState>(() => {
     const save = loadSave();
     setMuted(!save.soundOn);
-    return { ...createLevelState(Math.max(0, save.currentLevel), save.runSeed), streak: save.streak, save };
+    return {
+      ...createLevelState(Math.max(0, save.currentLevel), save.runSeed),
+      streak: save.streak,
+      rescueUsedThisRun: false,
+      save,
+    };
   });
 
   /**
@@ -260,23 +265,30 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, [state.phase]);
 
   /**
-   * Springt zu einem Level – über die Weltkarte (beliebiges Ziel) oder als "Von Level 1
-   * starten" auf dem Startbildschirm (Ziel 0). Nur der Fall "Ziel 0" zählt als Beginn
-   * einer neuen Runde und erhöht `runSeed` (Boss-/Level-Rotation, siehe
-   * `bossFruitForLevel`/`generateLevel` in constants.ts) – ein Sprung zu einer bereits
+   * Springt zu einem Level – über die Weltkarte (beliebiges Ziel), das einzige verbliebene
+   * Ziel-0 zu erreichen (Sprung auf die erste Welt "Wald" in der Weltkarte). Nur der Fall
+   * "Ziel 0" zählt als Beginn einer neuen Runde und erhöht `runSeed` (Boss-/Level-Rotation,
+   * siehe `bossFruitForLevel`/`generateLevel` in constants.ts) sowie setzt die einmalige
+   * Video-Rettung (`rescueUsedThisRun`) zurück – ein Sprung zu einer bereits
    * freigeschalteten Welt mitten in einem laufenden Highscore-Versuch ist kein Neustart.
    */
   const goToLevel = useCallback((levelIndex: number) => {
     pendingThrowRef.current = false;
     setState((prev) => {
       const target = Math.max(0, levelIndex);
+      const isNewRun = target === 0;
       const nextSave: SaveData = {
         ...prev.save,
         currentLevel: target,
-        runSeed: target === 0 ? prev.save.runSeed + 1 : prev.save.runSeed,
+        runSeed: isNewRun ? prev.save.runSeed + 1 : prev.save.runSeed,
       };
       saveSave(nextSave);
-      return { ...createLevelState(target, nextSave.runSeed), streak: prev.streak, save: nextSave };
+      return {
+        ...createLevelState(target, nextSave.runSeed),
+        streak: prev.streak,
+        rescueUsedThisRun: isNewRun ? false : prev.rescueUsedThisRun,
+        save: nextSave,
+      };
     });
   }, []);
 
@@ -291,7 +303,36 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);
-      return { ...createLevelState(target, nextSave.runSeed), streak: 0, save: nextSave };
+      return { ...createLevelState(target, nextSave.runSeed), streak: 0, rescueUsedThisRun: false, save: nextSave };
+    });
+  }, []);
+
+  /**
+   * Einmalige Video-Rettung im Game-Over-Fenster (siehe GameOverModal.tsx): setzt den
+   * Lauf GENAU im Level fort, in dem er geendet hat – anders als `restartRun()` bleibt
+   * `currentLevel` also NICHT auf 0 zurückgesetzt. Nur einmal pro Lauf möglich
+   * (`rescueUsedThisRun`), erst durch `goToLevel(0)`/`restartRun()` wieder freigeschaltet.
+   * Bewusst kein Undo der Serie (`streak`) – die wird vom automatischen Game-Over-Effekt
+   * oben schon auf 0 gesetzt, bevor das Fenster überhaupt erscheint, ein Rückgängigmachen
+   * dafür bräuchte einen separaten "Serie vor dem Fehlwurf"-Zwischenspeicher, den es
+   * (noch) nicht gibt – die Rettung bewahrt also Level-Fortschritt und Münzen, nicht die
+   * Serie. Läuft rein clientseitig als Platzhalter für eine echte Rewarded-Video-Anzeige
+   * (siehe `VideoRescueModal.tsx`) – hier wird nur der Spielzustand zurückgesetzt, das
+   * eigentliche Video/Ad-SDK ist noch nicht angebunden.
+   */
+  const rescueRun = useCallback(() => {
+    setState((prev) => {
+      if (prev.phase !== 'gameOver' || prev.rescueUsedThisRun) return prev;
+      pendingThrowRef.current = false;
+      const target = prev.levelIndex;
+      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      saveSave(nextSave);
+      return {
+        ...createLevelState(target, nextSave.runSeed),
+        streak: prev.streak,
+        rescueUsedThisRun: true,
+        save: nextSave,
+      };
     });
   }, []);
 
@@ -306,7 +347,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
-      return { ...createLevelState(target, nextSave.runSeed), streak: prev.streak, save: nextSave };
+      return {
+        ...createLevelState(target, nextSave.runSeed),
+        streak: prev.streak,
+        rescueUsedThisRun: prev.rescueUsedThisRun,
+        save: nextSave,
+      };
     });
   }, []);
 
@@ -435,17 +481,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  /** Kompletter Neuanfang: Münzen, Skins und Fortschritt weg. Nur über die Einstellungen. */
-  const resetProgress = useCallback(() => {
-    pendingThrowRef.current = false;
-    setState(() => {
-      const fresh = loadSaveFresh();
-      saveSave(fresh);
-      setMuted(!fresh.soundOn);
-      return { ...createLevelState(0, fresh.runSeed), streak: 0, save: fresh };
-    });
-  }, []);
-
   const level = levelConfigAt(state.levelIndex, state.save.runSeed);
   // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
   // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
@@ -486,28 +521,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     tradeFigurines,
     claimDailyReward,
     markTutorialSeen,
-    resetProgress,
-  };
-}
-
-/** Frischer Spielstand für "Fortschritt zurücksetzen". */
-function loadSaveFresh(): SaveData {
-  return {
-    coins: 0,
-    gems: 0,
-    xp: 0,
-    ownedSkins: [],
-    equippedAxeSkin: 'axe-standard',
-    equippedBoardSkin: 'board-oak',
-    bestLevel: 1,
-    currentLevel: 0,
-    streak: 0,
-    soundOn: true,
-    tutorialSeen: true,
-    figurines: 0,
-    dailyStreak: 0,
-    lastDailyClaim: '',
-    runSeed: 0,
+    rescueRun,
   };
 }
 
