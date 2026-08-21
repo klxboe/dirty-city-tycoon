@@ -1117,6 +1117,37 @@ Spiel läuft dann normal, **der Fortschritt wird aber eventuell nicht
 gespeichert** (Lesen und Schreiben sind in `storage.ts` abgesichert, es stürzt
 also nichts ab). Wer Fortschritt behalten will, braucht den WLAN-Weg oben.
 
+### Jemandem außerhalb des eigenen WLANs zeigen (z.B. einem Kollegen)
+
+Der WLAN-Weg oben reicht nicht, wenn die andere Person in einem anderen
+Netzwerk sitzt. Zwei Wege, je nach Bedarf:
+
+- **Schnappschuss-Link (ein Artifact):** `npm run build:single` bauen, den
+  `<style>`/`<div id="root">`/`<script>`-Teil aus `dist-single/axe-throw.html`
+  (ohne `<!doctype>`/`<html>`/`<head>`/`<body>`) als Artifact veröffentlichen.
+  Läuft komplett im Browser der anderen Person, unabhängig vom eigenen PC –
+  aber ein FESTER Stand vom Bauzeitpunkt, kein Live-Zugriff auf spätere
+  Änderungen, und Artifacts sind standardmäßig privat (muss über den
+  Teilen-Button erst freigegeben werden).
+- **Live-Tunnel (Cloudflare Quick Tunnel):** zeigt den ECHTEN, laufenden
+  `npm run dev`-Server nach außen, ohne Account/Domain nötig:
+  ```bash
+  cloudflared tunnel --url http://localhost:5173
+  ```
+  Gibt eine zufällige `https://<drei-woerter>.trycloudflare.com`-Adresse aus,
+  von überall erreichbar, sofort einsatzbereit, kein Freigabe-Schritt nötig.
+  **Braucht `allowedHosts: ['.trycloudflare.com']` in `vite.config.ts`** – Vite
+  blockt sonst jeden Host-Header außer localhost/eigener IP (Schutz vor
+  DNS-Rebinding), genau das würde die trycloudflare.com-Adresse treffen
+  (Vite antwortet dann mit "Blocked request... not allowed" statt der Seite).
+  Grenzen: läuft nur, solange sowohl der `npm run dev`-Server ALS AUCH der
+  `cloudflared`-Prozess auf dem PC laufen; die Adresse ändert sich bei jedem
+  Neustart des Tunnels (kein fester Link); "Quick Tunnels" laufen laut
+  Cloudflare selbst ohne Uptime-Garantie, gedacht zum kurzen Ausprobieren,
+  nicht für Dauerbetrieb. `cloudflared` selbst per `winget install
+  Cloudflare.cloudflared` installiert (einmalig, danach nur noch der Befehl
+  oben nötig).
+
 ## Tech-Stack
 
 - Vite + React + TypeScript
