@@ -170,6 +170,110 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   Browser-Pane komponiert hier keine Frames, `requestAnimationFrame`
   bleibt aus, die Scheibe dreht sich in dieser Umgebung schlicht nicht).
   Bestätigung durch echtes Spielen auf dem Gerät steht noch aus.
+  **Sechste Runde (Klaus, 2026-08-21: "Durchschnitt Äxte-Anzahl deutlich
+  höher, es ist viel zu einfach die Level"):** diesmal gezielt NUR
+  `axeCountFor` (Anzahl Äxte pro Level – voller wird das Brett, enger die
+  Lücken zum Werfen), nicht Tempo oder Hindernisse, die waren gerade erst
+  dran. Jede Stufe angehoben (Start 5→6, Deckel 12→19) und wieder früher
+  erreicht als vorher; Schnitt über alle 100 vorbereiteten Level springt von
+  ~8,7 auf ~12,7 Äxten (per Kopfrechnung über beide Stufenlisten). Bei den
+  höchsten Leveln (Deckel 19 + Boss-Bonus 1 = 20 Würfe auf ein Brett mit
+  `COLLISION_ANGLE_TOLERANCE_DEG`=10° pro Axt, macht 36 theoretische
+  Steckplätze) wird gegen Levelende eine freie Lücke irgendwann rechnerisch
+  unvermeidbar eng – im Highscore-Prinzip (irgendwann stirbt man garantiert,
+  siehe Münzen/Läufe-Abschnitt) ist das der gewünschte Effekt, kein Bug.
+  Verifiziert per echtem Spielstand: Level 51 direkt geladen, Axt-Vorrat
+  zeigt 15 Äxte (`.axe-inventory__slot`-Elemente gezählt) – passt exakt zur
+  neuen `axeCountFor(50) === 15`-Stufe (vorher 10). `tsc -b` sauber, keine
+  Konsolenfehler. Das tatsächliche Schwierigkeitsgefühl ließ sich wie bei
+  allen bisherigen Balancing-Runden nicht per Browser-Automatisierung
+  nachspielen (rAF-Freeze) – Bestätigung durch echtes Spielen steht noch aus.
+  **Siebte Runde – bewusste WALL bei Level 20-25 (Klaus: "es soll wirklich
+  schwer sein, über Level 20-25 zu kommen, sehr schwer"):** statt die Kurve
+  nochmal überall gleichmäßig anzuheben, diesmal ein klar spürbares
+  Nadelöhr genau in diesem Fenster gebaut – Level 20 UND Level 25 sind
+  ohnehin schon Boss-Level (`isBoss()`, `BOSS_EVERY=5`), die Lücke
+  dazwischen war aber bisher nur eine normale Zwischenstufe. `axeCountFor`
+  springt dort von 9-11 auf 16 (Wert, der sonst erst ab Level ~43 kommt),
+  `obstacleBaseFor` von 4 auf 8 (mit der Schwankung effektiv 7-10 Hindernisse
+  – nah am `OBSTACLE_COUNT_CAP`). Level 26-30 fällt danach bewusst auf die
+  alten Werte zurück (11 Äxte / Basis 5 Hindernisse), bevor die ursprüngliche
+  Kurve unverändert weiterläuft – kein neues Dauer-Plateau, sondern ein
+  Nadelöhr, das man entweder übersteht oder eben nicht. Verifiziert per
+  echtem Spielstand (Save-Feld `currentLevel` direkt gesetzt, da die
+  Weltkarten-Reise-Animation denselben rAF-Freeze wie alle Dreh-Effekte hat
+  und in der Sandbox nicht durchläuft): Level 20 (Boss) lädt mit 17 Äxten /
+  10 Hindernissen (16+1 Boss-Bonus, 8+0-Schwankung+2 Boss-Bonus), Level 21
+  mit 16 Äxten / 9 Hindernissen (8+1-Schwankung, kein Boss) – beide exakt
+  wie von den neuen Formeln erwartet. `tsc -b` sauber, keine Konsolenfehler.
+  Das tatsächliche Schwierigkeitsgefühl (wie brutal sich das Nadelöhr
+  anfühlt) ließ sich wie immer nicht per Browser-Automatisierung nachspielen
+  – Bestätigung durch echtes Spielen steht noch aus.
+  **Achter Härte-Durchgang – Level 1-10 härter OHNE mehr Äxte, plus
+  Boss-/Level-Rotation pro Runde (Klaus: "die Anfangs-Level 1-10 noch ein
+  Stück schwerer, und es müssen nicht immer mehr Äxte werden, sondern
+  einfach nur immer schwerer, und die Bosse dürfen nicht immer dieselben
+  sein, rotiere sie durch, und auch die Level-Reihenfolge darf nicht dieselbe
+  sein, mach ein paar neue Level und rotiere sie von Runde zu Runde, sonst
+  wird es langweilig"):** drei damit zusammenhängende, aber technisch
+  getrennte Änderungen:
+  - **Level 1-10 schwerer über Hindernisse + Dreh-Muster statt Äxte:**
+    `axeCountFor` bewusst UNANGETASTET (genau wie gewünscht). Stattdessen
+    `obstacleBaseFor` für Level 4-19 angehoben (4-6: 1→2, 7-10: 2→3, 11-19:
+    3→4, einheitlich mit der bisherigen 17-19-Stufe) und `spinPatternFor`
+    verschärft: `steady` verschwindet jetzt schon ab Level 5 komplett aus dem
+    Zyklus (vorher erst ab Level 20) – Level 5-19 laufen durchgehend mit
+    Pulsieren/Richtungswechsel statt gelegentlich ruhig. Level 1-3 bleiben
+    bewusst unangetastet (reine Grundmechanik-Einführung, 0 Hindernisse).
+  - **Boss-Rotation:** neues Speicherfeld `runSeed` (`SaveData.runSeed`,
+    `storage.ts`) verschiebt `bossFruitForLevel()`
+    (`BOSS_FRUITS[(bossNumber + runSeed) % BOSS_FRUITS.length]`, ebenso für
+    `HERO_BOSSES`) um `runSeed`-viele Stellen. Bei `runSeed=0` (Standard,
+    auch für alte Spielstände nach der Migration) verhält sich alles exakt
+    wie vorher – rückwärtskompatibel.
+  - **Level-Layout-Rotation statt komplett neuer Level:** eine wirklich neue
+    Level-Bibliothek hätte die sorgfältig austarierte Schwierigkeits-Kurve
+    (Axt-/Hindernis-Zahl, Tempo, Dreh-Muster – bleibt bewusst NUR von
+    `levelIndex` abhängig) verdoppeln müssen. Stattdessen verschiebt
+    `runSeed` in `generateLevel()` die Apfel-/Hindernis-Winkel-Seeds um
+    `runSeed * 53` bzw. `runSeed * 97` (eigene, wieder teilerfremde
+    Faktoren) – dieselbe Levelnummer bekommt in Runde 2 eine spürbar andere
+    Anordnung auf der Scheibe, bleibt aber INNERHALB einer Runde bei jedem
+    Versuch identisch (kein `Math.random()`, wie der Rest der
+    Level-Generierung). `LEVEL_COUNT` fest vorbereitete Level gibt es
+    unverändert weiterhin, das vorberechnete `LEVELS`-Array dafür ist aber
+    entfallen (siehe `levelConfigAt()`) – es hätte für jede Runde eine
+    eigene Cache-Invalidierung gebraucht, `generateLevel()` ist aber reine,
+    billige Arithmetik, direktes Neuberechnen bei jedem Aufruf ist einfacher
+    und ähnlich schnell.
+  - **`runSeed` steigt GENAU EINMAL pro neuer Runde**, nicht bei jedem
+    Levelwechsel: im Game-Over-Effekt (`useAxeGame.ts`, der Moment, in dem
+    ein Lauf endgültig vorbei ist – unabhängig davon, ob sofort neu
+    gestartet wird oder die App erst später wieder aufgemacht wird) und bei
+    "Von Level 1 starten" auf dem Startbildschirm (`goToLevel(0)`). EIN
+    Sprung zu einer schon freigeschalteten Welt über die Weltkarte zählt
+    NICHT als neue Runde (kein Neustart bei Level 1). `restartRun()` (Button
+    im Game-Over-Fenster) erhöht bewusst NICHT nochmal – der Game-Over-Effekt
+    ist zu dem Zeitpunkt schon gelaufen, ein zweiter Anhub dort hätte die
+    Rotation bei jedem Tod um 2 statt 1 springen lassen.
+  - **Bekannter Nebeneffekt, bewusst nicht behoben:** die Shop-Anzeige
+    "schaltet frei bei Level X" für Boss-Beute-Äxte (`Shop.tsx`) rechnet
+    weiterhin mit `runSeed=0` – nach mehreren Neustarts ist das nur noch
+    eine grobe Erst-Runde-Orientierung, keine exakte Garantie mehr, welche
+    Frucht bei welchem Level in der AKTUELLEN Runde auftaucht. Eine exakte
+    Anzeige hätte den Shop von der laufenden Runde abhängig gemacht, was den
+    Rahmen dieser Änderung gesprengt hätte – als offenes To-do vermerkt.
+  Verifiziert per echtem Spielstand (Save-Felder `currentLevel`/`runSeed`
+  direkt gesetzt): Level 7 (Index 6) hat jetzt 4 statt vorher 3 Hindernisse;
+  bei `runSeed` 0→1 bleibt die Hindernis-ZAHL bei Level 7 identisch (4), aber
+  alle vier Winkel verschieben sich einheitlich um +97° (227°/317°/47°/137°
+  → 324°/54°/144°/234°) – Zahl bleibt an `levelIndex` hängen, nur die
+  Anordnung rotiert; Level 5 (Boss) zeigt bei `runSeed=0` `board-melon.png`,
+  bei `runSeed=1` `board-orange.png`, Axt-/Hindernis-Zahl bleiben dabei
+  identisch (7/4). `tsc -b` sauber, keine Konsolenfehler. Das tatsächliche
+  Schwierigkeitsgefühl von Level 1-10 ließ sich wie immer nicht per
+  Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
+  echtes Spielen steht noch aus.
 - **Dreh-Muster** (`spinPattern`) sorgen für Abwechslung, ohne an den
   Grundwerten zu drehen: `steady` (gleichmäßig, nur bis Level 19), `pulse`
   (Tempo schwankt) und `reverse` (Scheibe dreht periodisch die Richtung um).
@@ -1590,6 +1694,33 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       levelbasiert wie vor der XP-Wirtschaft. `tsc -b` sauber, per echtem Tap
       auf der Weltkarte geprüft (Eis/Vulkan/Kosmos/Heldenstadt zeigen korrekt
       "Ab Level 41/61/81/101"), keine Konsolenfehler.
+- [x] **Sechste Runde: Äxte-Anzahl pro Level deutlich angehoben** (Details
+      siehe Level-System-Abschnitt oben, 2026-08-21): Klaus fand die Level
+      trotz aller bisherigen Härte-Durchgänge "viel zu einfach", diesmal
+      gezielt am Axt-Vorrat gedreht statt an Tempo/Hindernissen – Start 5→6,
+      Deckel 12→19, Schnitt über alle 100 Level ~8,7→~12,7 Äxte. Per echtem
+      Spielstand verifiziert (Level 51 = 15 Äxte statt vorher 10).
+- [x] **Siebte Runde: bewusste Schwierigkeits-WALL bei Level 20-25** (Details
+      siehe Level-System-Abschnitt oben, 2026-08-21): Klaus wollte es
+      "wirklich sehr schwer", speziell über Level 20-25 zu kommen – genau da
+      liegen bereits die Boss-Level 20 und 25. Statt weiter überall
+      gleichmäßig anzuheben, dort ein Nadelöhr eingebaut (Äxte 9-11→16,
+      Hindernis-Basis 4→8), danach kurze Erholung auf die alten Werte für
+      Level 26-30. Per echtem Spielstand verifiziert (Level 20 = 17 Äxte/10
+      Hindernisse, Level 21 = 16 Äxte/9 Hindernisse, exakt wie erwartet).
+- [x] **Achter Härte-Durchgang: Level 1-10 härter ohne mehr Äxte, plus
+      Boss-/Level-Rotation pro Runde** (Details siehe Level-System-Abschnitt
+      oben, 2026-08-21): `axeCountFor` unangetastet gelassen, stattdessen
+      Hindernis-Basis für Level 4-19 angehoben und `steady`-Dreh-Muster
+      verschwindet schon ab Level 5 statt erst ab 20. Neu: `SaveData.runSeed`
+      rotiert Boss-Frucht UND die Apfel-/Hindernis-Winkel-Anordnung von Runde
+      zu Runde (steigt bei Game Over bzw. "Von Level 1 starten"), damit ein
+      wiederholter Lauf nicht mehr exakt gleich aussieht – die eigentliche
+      Schwierigkeits-Kurve bleibt dabei unverändert nur von `levelIndex`
+      abhängig. Per echtem Spielstand verifiziert (Level 7: 4 statt 3
+      Hindernisse, Winkel rotieren um +97° zwischen zwei Runden; Level 5:
+      Boss-Frucht wechselt zwischen den Runden, Axt-/Hindernis-Zahl bleibt
+      gleich).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
@@ -1603,6 +1734,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 
 ## Offene To-dos
 
+- **Shop-Anzeige "schaltet frei bei Level X" für Boss-Beute-Äxte ist seit der
+  Boss-Rotation (Achter Härte-Durchgang, siehe Level-System-Abschnitt oben)
+  nur noch eine grobe Erst-Runde-Näherung**, keine exakte Garantie mehr –
+  rechnet bewusst weiterhin mit `runSeed=0`. Betrifft nur die Anzeige im
+  Shop (`Shop.tsx`, `bossLevel`-Berechnung), nicht die eigentliche
+  Spiellogik. Falls das als verwirrend zurückgemeldet wird: entweder auf
+  "Boss Nr. X" statt einer konkreten Levelnummer umstellen, oder den Shop
+  den `runSeed` des aktuellen Spielstands mitgeben lassen.
 - **Dritter Härte-Durchgang (2026-08-21) noch nicht durch echtes Spielen
   bestätigt.** Tempo-Anstieg, Axt-/Hindernis-Deckel, Boss-Bonus und Puls-/
   Richtungswechsel-Rhythmus wurden gleichzeitig hochgeschraubt (siehe

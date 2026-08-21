@@ -47,6 +47,14 @@ export interface SaveData {
   dailyStreak: number;
   /** Datum (YYYY-MM-DD, lokale Zeit) der letzten abgeholten täglichen Belohnung. Leer = nie. */
   lastDailyClaim: string;
+  /**
+   * Zählt, wie oft schon (neu) bei Level 1 gestartet wurde – rotiert damit Bosse und
+   * Level-Layouts von Runde zu Runde (siehe `bossFruitForLevel`/`generateLevel` in
+   * constants.ts), damit ein wiederholter Durchlauf nicht exakt gleich aussieht.
+   * Steigt NUR beim tatsächlichen Beginn eines neuen Laufs (Game Over oder "Von Level 1
+   * starten"), nicht bei jedem Levelwechsel – siehe useAxeGame.ts.
+   */
+  runSeed: number;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -65,6 +73,7 @@ const EMPTY_SAVE: SaveData = {
   figurines: 0,
   dailyStreak: 0,
   lastDailyClaim: '',
+  runSeed: 0,
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -101,6 +110,7 @@ export function loadSave(): SaveData {
         figurines: Math.max(0, Math.floor(toFiniteNumber(parsed.figurines, 0))),
         dailyStreak: Math.max(0, Math.floor(toFiniteNumber(parsed.dailyStreak, 0))),
         lastDailyClaim: typeof parsed.lastDailyClaim === 'string' && ISO_DATE_PATTERN.test(parsed.lastDailyClaim) ? parsed.lastDailyClaim : '',
+        runSeed: Math.max(0, Math.floor(toFiniteNumber(parsed.runSeed, 0))),
       };
     }
 

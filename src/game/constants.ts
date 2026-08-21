@@ -190,12 +190,23 @@ function spreadAngles(count: number, startDeg: number): number[] {
  * Brett mit COLLISION_ANGLE_TOLERANCE_DEG=10° pro Axt) wird eine Lücke irgendwann
  * rechnerisch unvermeidbar eng – genau das ist im Highscore-Prinzip (irgendwann
  * stirbt man garantiert) der gewünschte Effekt, kein Bug.
+ *
+ * Siebter Härte-Durchgang (Klaus: "es soll wirklich schwer sein, über Level 20-25 zu
+ * kommen, sehr schwer"): bewusste WALL genau in diesem Fenster statt nur weiterer
+ * gleichmäßiger Ramp – Level 20 UND Level 25 sind ohnehin schon Boss-Level
+ * (`isBoss()`, `BOSS_EVERY=5`), die Lücke dazwischen war aber bisher nur eine normale
+ * Zwischenstufe (9-11 Äxte). Jetzt springt der Wert dort auf 16 (sonst erst ab Level
+ * ~43 erreicht), direkt gefolgt von einer kurzen Erholung auf die alte Stufe (11) für
+ * Level 26-30, bevor die ursprüngliche Kurve unverändert weiterläuft – ein klar
+ * spürbares Nadelöhr statt einer weiteren unauffälligen Zahl in einer langen Rampe.
+ * Siehe `obstacleBaseFor` unten für dieselbe Behandlung der Hindernis-Kurve.
  */
 function axeCountFor(levelIndex: number): number {
   if (levelIndex < 5) return 6; // Level 1-5
   if (levelIndex < 12) return 7; // Level 6-12
-  if (levelIndex < 20) return 9; // Level 13-20
-  if (levelIndex < 30) return 11; // Level 21-30
+  if (levelIndex < 19) return 9; // Level 13-19
+  if (levelIndex < 25) return 16; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
+  if (levelIndex < 30) return 11; // Level 26-30 (kurze Erholung nach der Wall)
   if (levelIndex < 42) return 13; // Level 31-42
   if (levelIndex < 55) return 15; // Level 43-55
   if (levelIndex < 70) return 17; // Level 56-70
@@ -205,15 +216,22 @@ function axeCountFor(levelIndex: number): number {
 /**
  * Grobe Trend-Kurve für Hindernisse – Basis für die tatsächliche Schwankung weiter
  * unten (`obstacleCountFor`), nicht mehr direkt die Ausgabe. Werte unverändert
- * gegenüber dem zweiten Härte-Durchgang.
+ * gegenüber dem zweiten Härte-Durchgang, AUSSER dem Wall-Fenster Level 20-25 (siehe
+ * `axeCountFor` oben) und dem Fenster Level 4-19 (Achter Härte-Durchgang, Klaus:
+ * "die Anfangs-Level 1-10 noch ein Stück schwerer, aber nicht immer mehr Äxte,
+ * einfach nur schwerer"): `axeCountFor` bewusst UNANGETASTET gelassen, stattdessen
+ * hier die Hindernis-Basis für Level 4-19 angehoben (Level 4-6 1→2, Level 7-10 2→3,
+ * Level 11-19 3→4, einheitlich mit der bisherigen 17-19-Stufe statt eines eigenen
+ * Zwischenschritts). Level 1-3 bleiben bewusst UNANGETASTET (0 Hindernisse) – die
+ * ersten drei Level sind die reine Grundmechanik-Einführung, siehe Kommentar dort.
  */
 function obstacleBaseFor(levelIndex: number): number {
   if (levelIndex < 3) return 0; // Level 1-3: erst mal die Grundmechanik lernen
-  if (levelIndex < 6) return 1; // ab Level 4
-  if (levelIndex < 10) return 2; // ab Level 7
-  if (levelIndex < 16) return 3; // ab Level 11
-  if (levelIndex < 24) return 4; // ab Level 17
-  if (levelIndex < 34) return 5; // ab Level 25
+  if (levelIndex < 6) return 2; // Level 4-6
+  if (levelIndex < 10) return 3; // Level 7-10
+  if (levelIndex < 19) return 4; // Level 11-19
+  if (levelIndex < 25) return 8; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
+  if (levelIndex < 34) return 5; // Level 26-34 (kurze Erholung nach der Wall)
   if (levelIndex < 46) return 6; // ab Level 35
   if (levelIndex < 60) return 7; // ab Level 47
   return 8; // ab Level 61
@@ -295,18 +313,25 @@ export const GEMS_PER_FIGURINE = 2;
 
 /**
  * Dreh-Muster. Level 1-2 laufen gleichmäßig (Einstieg), ab Level 3 wechselt sich
- * Pulsieren ein, ab Level 8 kommt der Richtungswechsel dazu. Ab Level 20 gibt es
- * `steady` gar nicht mehr im Zyklus – ab dann ist IMMER etwas in Bewegung (Pulsieren
- * oder Richtungswechsel), nie mehr eine ruhige, gleichmäßige Drehung. Wie erratisch
- * sich Pulsieren/Richtungswechsel selbst anfühlen (Tempo der Schwankung/wie oft die
- * Richtung kippt), skaliert zusätzlich mit dem Board-Tempo – siehe currentSpeed() in
- * TargetBoard.tsx: eine schnellere Scheibe wechselt automatisch auch öfter.
+ * Pulsieren ein. Ab Level 20 gibt es `steady` gar nicht mehr im Zyklus – ab dann ist
+ * IMMER etwas in Bewegung (Pulsieren oder Richtungswechsel), nie mehr eine ruhige,
+ * gleichmäßige Drehung. Wie erratisch sich Pulsieren/Richtungswechsel selbst anfühlen
+ * (Tempo der Schwankung/wie oft die Richtung kippt), skaliert zusätzlich mit dem
+ * Board-Tempo – siehe currentSpeed() in TargetBoard.tsx: eine schnellere Scheibe
+ * wechselt automatisch auch öfter.
+ *
+ * Achter Härte-Durchgang (Klaus: "Level 1-10 noch ein Stück schwerer, aber nicht immer
+ * mehr Äxte, einfach nur schwerer"): der Richtungswechsel (`reverse`) kam bisher erst
+ * ab Level 8 vor UND `steady` blieb bis Level 19 im Zyklus vertreten. Jetzt verschwindet
+ * `steady` schon ab Level 5 komplett (nicht erst ab 20) – Level 5-19 laufen jetzt
+ * durchgehend mit Pulsieren/Richtungswechsel statt gelegentlich ruhig, ohne dass dafür
+ * Axt- oder Hindernis-Zahl angefasst wurde.
  */
 function spinPatternFor(levelIndex: number): SpinPattern {
   if (levelIndex < 2) return 'steady';
-  if (levelIndex < 7) return levelIndex % 2 === 0 ? 'steady' : 'pulse';
+  if (levelIndex < 5) return levelIndex % 2 === 0 ? 'steady' : 'pulse';
   if (levelIndex < 20) {
-    const cycle: SpinPattern[] = ['steady', 'pulse', 'reverse', 'pulse'];
+    const cycle: SpinPattern[] = ['pulse', 'reverse', 'pulse'];
     return cycle[levelIndex % cycle.length];
   }
   const hardCycle: SpinPattern[] = ['pulse', 'reverse'];
@@ -325,19 +350,39 @@ export function isBossLevel(levelIndex: number): boolean {
  * siehe worlds.ts) hat eine EIGENE Boss-Rotation (HERO_BOSSES) statt der
  * Boss-Früchte – beide Listen wiederholen sich, falls sie kürzer sind als die
  * Anzahl Boss-Level in ihrem jeweiligen Bereich.
+ *
+ * `runSeed` (siehe `SaveData.runSeed` in storage.ts) verschiebt die Rotation UM
+ * `runSeed`-viele Stellen (Achter Härte-Durchgang, Klaus: "die Bosse dürfen nicht
+ * immer dieselben sein, rotiere sie durch"): Boss-Level 4 (0-basiert, = Level 5) zeigt
+ * bei runSeed=0 z.B. `BOSS_FRUITS[0]`, bei runSeed=1 `BOSS_FRUITS[1]`, usw. – OHNE
+ * `runSeed` (Standard 0) verhält sich alles exakt wie vorher, bewusst rückwärtskompatibel.
+ * Die Shop-Anzeige ("schaltet frei bei Level X", siehe `Shop.tsx`) rechnet weiterhin mit
+ * runSeed=0 – das bleibt eine grobe Erst-Runde-Orientierung, keine exakte Garantie mehr,
+ * sobald ein Spielstand mehrfach neu gestartet hat.
  */
-export function bossFruitForLevel(levelIndex: number): BossFruit | null {
+export function bossFruitForLevel(levelIndex: number, runSeed = 0): BossFruit | null {
   if (!isBossLevel(levelIndex)) return null;
   if (levelIndex >= HERO_WORLD_START) {
     const heroBossNumber = Math.floor((levelIndex - HERO_WORLD_START) / BOSS_EVERY);
-    return HERO_BOSSES[heroBossNumber % HERO_BOSSES.length];
+    return HERO_BOSSES[(heroBossNumber + runSeed) % HERO_BOSSES.length];
   }
   const bossNumber = Math.floor(levelIndex / BOSS_EVERY); // 0-basiert
-  return BOSS_FRUITS[bossNumber % BOSS_FRUITS.length];
+  return BOSS_FRUITS[(bossNumber + runSeed) % BOSS_FRUITS.length];
 }
 
-function generateLevel(levelIndex: number): LevelConfig {
-  const boss = bossFruitForLevel(levelIndex);
+/**
+ * `runSeed` verschiebt zusätzlich die Apfel-/Hindernis-Winkel-Seeds (Achter
+ * Härte-Durchgang, Klaus: "die Level-Reihenfolge darf nicht dieselbe sein, mach ein
+ * paar neue Level und rotiere sie durch"): eine komplett neue Level-Bibliothek zu
+ * bauen hätte die ganze bisherige, sorgfältig austarierte Schwierigkeits-Kurve
+ * (Axt-/Hindernis-Zahl, Tempo, Dreh-Muster – alles weiterhin NUR von `levelIndex`
+ * abhängig) unnötig verdoppelt. Stattdessen bekommt jede Runde ihre eigene, aber
+ * genauso deterministische Anordnung der Äpfel/Hindernisse auf der Scheibe – Level 12
+ * sieht in Runde 3 anders aus als in Runde 1, bleibt aber INNERHALB einer Runde bei
+ * jedem Versuch identisch (kein `Math.random()`, wie der Rest der Level-Generierung).
+ */
+function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
+  const boss = bossFruitForLevel(levelIndex, runSeed);
 
   /*
    * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
@@ -356,9 +401,12 @@ function generateLevel(levelIndex: number): LevelConfig {
   );
 
   // Zwei teilerfremde Faktoren, damit sich Apfel- und Hindernis-Positionen über die
-  // Level nicht in kurzen Zyklen wiederholen.
-  const appleSeed = normalizeDeg(levelIndex * 47 + 31);
-  const obstacleSeed = normalizeDeg(levelIndex * 79 + 113);
+  // Level nicht in kurzen Zyklen wiederholen. `runSeed` mit EIGENEN, wieder teilerfremden
+  // Faktoren (53, 97) verschoben, damit eine neue Runde eine spürbar andere Anordnung
+  // bekommt statt nur alle Winkel um denselben Betrag zu drehen (das sähe bei gleicher
+  // Apfel-/Hindernis-ZAHL optisch identisch aus, nur "gedreht").
+  const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53);
+  const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97);
 
   const obstacleCount = obstacleCountFor(levelIndex) + (boss ? 2 : 0);
   const appleCount = appleCountFor(levelIndex);
@@ -377,19 +425,24 @@ function generateLevel(levelIndex: number): LevelConfig {
 
 export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;
 
-export const LEVELS: LevelConfig[] = Array.from({ length: LEVEL_COUNT }, (_, i) => generateLevel(i));
-
 /**
  * Level-Konfiguration für einen BELIEBIGEN Index – auch jenseits der 100 fest
  * vorbereiteten Level. Trägt den Endlos-Modus: `generateLevel()` ist eine reine
- * Funktion der Levelnummer ohne eingebaute Obergrenze (Tempo deckelt sich selbst bei
- * MAX_SPEED_DEG_PER_SEC, Axt-/Hindernis-/Apfelzahl bei den letzten `if`-Stufen, der
- * Boss-Zyklus und die goldene-Apfel-Formel laufen über Modulo) – jenseits von Level
- * 100 musste dafür nichts Neues gebaut werden. Die ersten 100 kommen aus dem
- * vorberechneten Array (billiger), alles danach wird bei Bedarf einmalig berechnet.
+ * Funktion von Levelnummer UND `runSeed` ohne eingebaute Obergrenze (Tempo deckelt
+ * sich selbst bei MAX_SPEED_DEG_PER_SEC, Axt-/Hindernis-/Apfelzahl bei den letzten
+ * `if`-Stufen, der Boss-Zyklus und die goldene-Apfel-Formel laufen über Modulo) –
+ * jenseits von Level 100 musste dafür nichts Neues gebaut werden.
+ *
+ * Früher gab es hier ein vorberechnetes Array für die ersten 100 Level (billiger als
+ * jedes Mal neu rechnen). Seit `runSeed` mit reinspielt (Achter Härte-Durchgang,
+ * Boss-/Level-Rotation) ist das Ergebnis nicht mehr nur von `levelIndex` allein
+ * abhängig – ein statisches Array pro `levelIndex` hätte für jede neue Runde eine
+ * eigene Cache-Invalidierung gebraucht. `generateLevel()` ist reine Arithmetik über
+ * wenige Zahlen (kein Array-Scan, keine Rekursion), das direkte Neuberechnen bei jedem
+ * Aufruf ist spürbar günstiger als die dafür nötige Cache-Verwaltung.
  */
-export function levelConfigAt(levelIndex: number): LevelConfig {
-  return levelIndex < LEVEL_COUNT ? LEVELS[levelIndex] : generateLevel(levelIndex);
+export function levelConfigAt(levelIndex: number, runSeed = 0): LevelConfig {
+  return generateLevel(levelIndex, runSeed);
 }
 
 /** Alter Speicherstand (nur eine Apfel-Zahl). Wird beim ersten Start in Münzen migriert. */

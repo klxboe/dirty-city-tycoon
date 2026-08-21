@@ -32,8 +32,8 @@ import { getSkin, isFreeSkin } from '../game/shop';
 import { setMuted } from '../game/sound';
 import type { Difficulty, GameState, LevelReward, StuckAxe } from '../game/types';
 
-function createLevelState(levelIndex: number): Omit<GameState, 'save' | 'streak'> {
-  const level = levelConfigAt(levelIndex);
+function createLevelState(levelIndex: number, runSeed: number): Omit<GameState, 'save' | 'streak'> {
+  const level = levelConfigAt(levelIndex, runSeed);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
     id: -1 - i,
@@ -66,7 +66,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const [state, setState] = useState<GameState>(() => {
     const save = loadSave();
     setMuted(!save.soundOn);
-    return { ...createLevelState(Math.max(0, save.currentLevel)), streak: save.streak, save };
+    return { ...createLevelState(Math.max(0, save.currentLevel), save.runSeed), streak: save.streak, save };
   });
 
   /**
@@ -116,7 +116,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     const timeout = setTimeout(() => {
       setState((prev) => {
         if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-        const level = levelConfigAt(prev.levelIndex);
+        const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
 
         // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
         // des Flugs weiter, genau darin liegt das Timing-Spiel.
@@ -226,35 +226,57 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   // hoher Highscore (= bestLevel) in einem einzigen Lauf statt Kampagnen-Fortschritt –
   // ein Fehler irgendwo wirft konsequent auf Los zurück, dafür bleiben Münzen/XP/Skins
   // aus bereits geschafften Leveln erhalten (siehe oben, nur `currentLevel` resettet).
+  //
+  // `runSeed` steigt hier um genau 1 (Achter Härte-Durchgang – Boss-/Level-Rotation,
+  // siehe `bossFruitForLevel`/`generateLevel` in constants.ts): DAS ist der Moment, in
+  // dem ein Lauf endgültig vorbei ist, egal ob direkt danach neu gestartet wird oder die
+  // App erst später wieder geöffnet wird. `restartRun()` (Button im Game-Over-Fenster)
+  // erhöht NICHT nochmal – der Effekt hier ist schon gelaufen, bevor das Fenster
+  // überhaupt angezeigt wird, ein zweiter Anhub dort wäre ein doppelter Sprung.
   useEffect(() => {
     if (state.phase !== 'gameOver') return;
     setState((prev) => {
       if (prev.phase !== 'gameOver') return prev;
-      const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: 0 };
+      const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: 0, runSeed: prev.save.runSeed + 1 };
       saveSave(nextSave);
       return { ...prev, save: nextSave, streak: 0 };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
+  /**
+   * Springt zu einem Level – über die Weltkarte (beliebiges Ziel) oder als "Von Level 1
+   * starten" auf dem Startbildschirm (Ziel 0). Nur der Fall "Ziel 0" zählt als Beginn
+   * einer neuen Runde und erhöht `runSeed` (Boss-/Level-Rotation, siehe
+   * `bossFruitForLevel`/`generateLevel` in constants.ts) – ein Sprung zu einer bereits
+   * freigeschalteten Welt mitten in einem laufenden Highscore-Versuch ist kein Neustart.
+   */
   const goToLevel = useCallback((levelIndex: number) => {
     pendingThrowRef.current = false;
     setState((prev) => {
       const target = Math.max(0, levelIndex);
-      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      const nextSave: SaveData = {
+        ...prev.save,
+        currentLevel: target,
+        runSeed: target === 0 ? prev.save.runSeed + 1 : prev.save.runSeed,
+      };
       saveSave(nextSave);
-      return { ...createLevelState(target), streak: prev.streak, save: nextSave };
+      return { ...createLevelState(target, nextSave.runSeed), streak: prev.streak, save: nextSave };
     });
   }, []);
 
-  /** Nach einem Game Over: Neustart immer bei Level 1. Münzen/XP/Skins bleiben. */
+  /**
+   * Nach einem Game Over: Neustart immer bei Level 1. Münzen/XP/Skins bleiben.
+   * `runSeed` ist an dieser Stelle schon erhöht (siehe Game-Over-Effekt oben) – hier
+   * NICHT nochmal anfassen, sonst springt die Rotation bei jedem Tod um 2 statt 1.
+   */
   const restartRun = useCallback(() => {
     setState((prev) => {
       const target = 0;
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);
-      return { ...createLevelState(target), streak: 0, save: nextSave };
+      return { ...createLevelState(target, nextSave.runSeed), streak: 0, save: nextSave };
     });
   }, []);
 
@@ -269,7 +291,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
-      return { ...createLevelState(target), streak: prev.streak, save: nextSave };
+      return { ...createLevelState(target, nextSave.runSeed), streak: prev.streak, save: nextSave };
     });
   }, []);
 
@@ -413,17 +435,17 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const fresh = loadSaveFresh();
       saveSave(fresh);
       setMuted(!fresh.soundOn);
-      return { ...createLevelState(0), streak: 0, save: fresh };
+      return { ...createLevelState(0, fresh.runSeed), streak: 0, save: fresh };
     });
   }, []);
 
-  const level = levelConfigAt(state.levelIndex);
+  const level = levelConfigAt(state.levelIndex, state.save.runSeed);
   // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
   // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
   // keins, danach läuft es als Endlos-Modus weiter (siehe nextLevel oben). Der
   // Ergebnis-Screen nutzt dieses Flag nur für die einmalige Glückwunsch-Anzeige.
   const isCampaignComplete = state.phase === 'levelComplete' && state.levelIndex === LEVEL_COUNT - 1;
-  const bossFruit = bossFruitForLevel(state.levelIndex);
+  const bossFruit = bossFruitForLevel(state.levelIndex, state.save.runSeed);
 
   return {
     ...state,
@@ -479,6 +501,7 @@ function loadSaveFresh(): SaveData {
     figurines: 0,
     dailyStreak: 0,
     lastDailyClaim: '',
+    runSeed: 0,
   };
 }
 
@@ -500,8 +523,8 @@ function computeReward(
   streak: number,
   save: SaveData,
 ): LevelReward {
-  const level = levelConfigAt(levelIndex);
-  const boss = bossFruitForLevel(levelIndex);
+  const level = levelConfigAt(levelIndex, save.runSeed);
+  const boss = bossFruitForLevel(levelIndex, save.runSeed);
 
   const apples = (applesCollected - gemsCollected - figurinesCollected) * COINS_PER_APPLE;
   const gems = gemsCollected * GEMS_PER_GOLDEN_APPLE;
