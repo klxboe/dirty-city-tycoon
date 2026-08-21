@@ -115,7 +115,8 @@ export function blockStartIndex(levelIndex: number): number {
  * pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist das Zeitfenster, in
  * dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das macht das gezielte
  * Apfel-Sammeln nach oben hin schwerer.
- * Level 1 = 55°/Sek., Level 100 = ~199°/Sek., Deckel erst bei Level ~183 (320°/Sek.).
+ * Level 1 = 55°/Sek., Level 100 = ~245°/Sek. (zweiter Härte-Durchgang, siehe unten),
+ * Deckel erst bei Level ~182 (400°/Sek.).
  *
  * Der Deckel lag früher bei 200°/Sek. (erreicht um Level 100) – seit dem Umstieg aufs
  * Highscore-Prinzip (Klaus' Wunsch: "je höher, desto schwerer", ein Lauf geht potenziell
@@ -125,8 +126,18 @@ export function blockStartIndex(levelIndex: number): number {
  * hinten, damit die Schwierigkeit auch in einem sehr guten Lauf noch spürbar weiterwächst.
  */
 export const BASE_SPEED_DEG_PER_SEC = 55;
-const SPEED_STEP_PER_LEVEL = 1.45;
-export const MAX_SPEED_DEG_PER_SEC = 320;
+/**
+ * Angehoben von 1.45 auf 1.9 (Klaus' Feedback: "immer noch zu einfach, deutlich
+ * schwerer machen"). Level 50 lag vorher bei ~126°/Sek., jetzt bei ~150°/Sek.;
+ * Level 100 vorher ~199°/Sek., jetzt ~245°/Sek. – spürbar schneller schon in der
+ * Mitte eines Laufs, nicht erst ganz am Ende.
+ */
+const SPEED_STEP_PER_LEVEL = 1.9;
+/** Von 320 auf 400 angehoben, damit der höhere Anstieg pro Level (siehe oben) den
+ *  Deckel nicht spürbar früher erreicht als vorher (~Level 183) – bei 1.9°/Level
+ *  liegt er jetzt bei Level ~182, also praktisch an derselben Stelle, nur auf
+ *  höherem Niveau. */
+export const MAX_SPEED_DEG_PER_SEC = 400;
 
 function normalizeDeg(deg: number): number {
   const m = deg % 360;
@@ -150,35 +161,40 @@ function spreadAngles(count: number, startDeg: number): number[] {
 /**
  * Wie viele Äxte pro Level (mehr Äxte = voller wird das Brett = enger die Lücken).
  *
- * Deckel früher bei 8 (ab Level 31) – im Highscore-Prinzip (siehe MAX_SPEED_DEG_PER_SEC
- * oben) deutlich weiter nach hinten geschoben und höher angesetzt, damit ein langer Lauf
- * auch jenseits der ersten Welten spürbar voller/enger wird statt zu plateauen.
+ * Zweiter Härte-Durchgang (Klaus: "immer noch zu einfach, deutlich schwerer"):
+ * Deckel von 10 auf 12 angehoben UND alle Stufen früher erreicht (vorher 71, jetzt
+ * bereits ab 81 – aber die Zwischenstufen kommen jetzt alle 8-15 Level statt 10-25).
  */
 function axeCountFor(levelIndex: number): number {
-  if (levelIndex < 10) return 5; // Level 1-10
-  if (levelIndex < 20) return 6; // Level 11-20
-  if (levelIndex < 30) return 7; // Level 21-30
-  if (levelIndex < 45) return 8; // Level 31-45
-  if (levelIndex < 70) return 9; // Level 46-70
-  return 10; // ab Level 71
+  if (levelIndex < 6) return 5; // Level 1-6
+  if (levelIndex < 14) return 6; // Level 7-14
+  if (levelIndex < 22) return 7; // Level 15-22
+  if (levelIndex < 32) return 8; // Level 23-32
+  if (levelIndex < 45) return 9; // Level 33-45
+  if (levelIndex < 60) return 10; // Level 46-60
+  if (levelIndex < 80) return 11; // Level 61-80
+  return 12; // ab Level 81
 }
 
 /**
  * Von Anfang an steckende Äxte als Hindernisse ("viele Messer drin").
  *
- * Deckel früher bei 3 (ab Level 26) – jetzt weiter nach hinten geschoben und auf 6
- * angehoben. Bei max. Axtzahl (10) + max. Hindernissen (6) sind am Levelende 16 von
- * theoretisch 36 möglichen Plätzen belegt (360° / 10°-Kollisionstoleranz) – eng, aber
- * mit Absicht nie unlösbar voll.
+ * Zweiter Härte-Durchgang: Deckel von 6 auf 8 angehoben, Stufen früher erreicht.
+ * Bei max. Axtzahl (12, siehe oben) + max. Hindernissen (8) sind am Levelende
+ * 19 von theoretisch 36 möglichen Plätzen belegt (360° / 10°-Kollisionstoleranz,
+ * 8 Hindernisse + 11 schon geworfene Äxte vor dem letzten Wurf) – deutlich enger
+ * als vorher (16 von 36), aber mit Absicht immer noch lösbar.
  */
 function obstacleCountFor(levelIndex: number): number {
   if (levelIndex < 3) return 0; // Level 1-3: erst mal die Grundmechanik lernen
-  if (levelIndex < 8) return 1; // ab Level 4
-  if (levelIndex < 16) return 2; // ab Level 9
-  if (levelIndex < 26) return 3; // ab Level 17
-  if (levelIndex < 40) return 4; // ab Level 27
-  if (levelIndex < 60) return 5; // ab Level 41
-  return 6; // ab Level 61
+  if (levelIndex < 6) return 1; // ab Level 4
+  if (levelIndex < 10) return 2; // ab Level 7
+  if (levelIndex < 16) return 3; // ab Level 11
+  if (levelIndex < 24) return 4; // ab Level 17
+  if (levelIndex < 34) return 5; // ab Level 25
+  if (levelIndex < 46) return 6; // ab Level 35
+  if (levelIndex < 60) return 7; // ab Level 47
+  return 8; // ab Level 61
 }
 
 function appleCountFor(levelIndex: number): number {
@@ -273,17 +289,16 @@ function generateLevel(levelIndex: number): LevelConfig {
 
   /*
    * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
-   * Level mit anderer Farbe – das war ein offener Verdacht im TODO, nie wirklich
-   * gegengeprüft. Drei Stellschrauben statt nur einer:
-   *  - Tempo-Bonus von 12 auf 20°/Sek. angehoben (spürbar mehr als die übliche
-   *    Steigerung von ~1,4°/Level, statt nur wenigen Leveln vorauszueilen).
-   *  - Ein zusätzliches Hindernis obendrauf – volleres Brett, engere Lücken.
+   * Level mit anderer Farbe. Drei Stellschrauben statt nur einer:
+   *  - Tempo-Bonus, zweiter Härte-Durchgang von 20 auf 28°/Sek. angehoben.
+   *  - ZWEI zusätzliche Hindernisse statt einem obendrauf – volleres Brett, engere
+   *    Lücken (vorher +1, zweiter Härte-Durchgang: +2).
    *  - Erzwungenes `pulse`-Muster: `spinPatternFor()` allein hätte z.B. das erste
    *    Boss-Level (Index 4) auf `steady` gesetzt – ausgerechnet der erste Boss
    *    hätte sich dann NICHT schwerer angefühlt als das Level davor.
    */
   const axeCount = axeCountFor(levelIndex) + (boss ? 1 : 0);
-  const speedBonus = boss ? 20 : 0;
+  const speedBonus = boss ? 28 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
@@ -293,7 +308,7 @@ function generateLevel(levelIndex: number): LevelConfig {
   const appleSeed = normalizeDeg(levelIndex * 47 + 31);
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113);
 
-  const obstacleCount = obstacleCountFor(levelIndex) + (boss ? 1 : 0);
+  const obstacleCount = obstacleCountFor(levelIndex) + (boss ? 2 : 0);
   const appleCount = appleCountFor(levelIndex);
 
   return {

@@ -81,10 +81,17 @@ interface FallingApple {
  * die Grundgeschwindigkeit stieg – die Muster selbst fühlten sich dadurch bei Level 100
  * genauso "gemächlich" an wie bei Level 10, nur eben schneller abgespult.
  */
-const PULSE_PERIOD_SEC = 2.6;
-const PULSE_PERIOD_AT_MAX_SEC = 1.0;
-const REVERSE_PERIOD_SEC = 3.4;
-const REVERSE_PERIOD_AT_MAX_SEC = 1.3;
+/**
+ * Zweiter Härte-Durchgang (Klaus: "immer noch zu einfach, deutlich schwerer"): alle
+ * vier Perioden verkürzt, damit Pulsieren/Richtungswechsel öfter zuschlagen – sowohl
+ * gleich zu Level-1-Tempo als auch am Tempo-Deckel. Die Fairness-Untergrenze
+ * (Puls-Faktor nie unter 0.55, siehe currentSpeed()) bleibt davon unberührt – nur WIE
+ * OFT gewechselt wird, nicht WIE TIEF.
+ */
+const PULSE_PERIOD_SEC = 2.2;
+const PULSE_PERIOD_AT_MAX_SEC = 0.75;
+const REVERSE_PERIOD_SEC = 2.9;
+const REVERSE_PERIOD_AT_MAX_SEC = 1.0;
 
 /** Linear zwischen dem Level-1-Wert und dem `..._AT_MAX`-Wert interpoliert, je nach
  *  aktuellem Grundtempo relativ zur Spanne aus BASE_SPEED_DEG_PER_SEC..MAX_SPEED_DEG_PER_SEC. */

@@ -80,6 +80,55 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   hinten (siehe Tabelle oben), Tempo-Deckel von 200 auf 320°/Sek. angehoben
   (erreicht jetzt bei Level ~183, tief im Endlos-Modus), und ab Level 20 gibt
   es gar kein `steady`-Muster mehr – nur noch Pulsieren/Richtungswechsel.
+  **Dritte Runde (Klaus, 2026-08-21: "immer noch zu einfach, deutlich
+  schwerer"):** diesmal an fünf Stellschrauben gleichzeitig gedreht statt nur
+  an einer, jeweils in `constants.ts`/`TargetBoard.tsx` mit Begründung im
+  Code kommentiert:
+  - **Tempo-Anstieg pro Level** (`SPEED_STEP_PER_LEVEL`) von 1,45 auf
+    1,9°/Sek. – Level 50 jetzt ~150°/Sek. (vorher ~126), Level 100 jetzt
+    ~245°/Sek. (vorher ~199). Der Tempo-DECKEL (`MAX_SPEED_DEG_PER_SEC`)
+    musste dafür von 320 auf 400°/Sek. mitwandern, sonst hätte der steilere
+    Anstieg den Deckel spürbar früher erreicht als vorher – bei 400 liegt er
+    jetzt bei Level ~182, also praktisch an derselben Stelle wie zuvor
+    (~183), nur auf höherem Niveau.
+  - **Axt-/Hindernis-Kurve steiler und mit höherem Deckel:** Axt-Deckel von
+    10 auf 12 (`axeCountFor`), Hindernis-Deckel von 6 auf 8
+    (`obstacleCountFor`), UND alle Zwischenstufen kommen jetzt 30-40% früher
+    (z.B. Deckel-Erreichen bei Axt vorher Level 71, jetzt Level 81, aber bei
+    HÖHEREM Wert und mit dichteren Zwischenschritten davor – die Kurve ist
+    insgesamt steiler, nicht nur nach hinten verschoben). Am Levelende sind
+    dadurch 19 von theoretisch 36 möglichen Steckplätzen belegt (vorher 16).
+  - **Boss-Level härter:** Tempo-Bonus von 20 auf 28°/Sek., zusätzliche
+    Hindernisse von +1 auf +2 – ein Boss soll sich wie eine echte Spitze
+    anfühlen, nicht wie ein normales Level mit Frucht-Textur.
+  - **Puls-/Richtungswechsel-Rhythmus verkürzt** (`PULSE_PERIOD_SEC` 2,6→2,2,
+    `PULSE_PERIOD_AT_MAX_SEC` 1,0→0,75, `REVERSE_PERIOD_SEC` 3,4→2,9,
+    `REVERSE_PERIOD_AT_MAX_SEC` 1,3→1,0, alle in `TargetBoard.tsx`) – die
+    Scheibe pulsiert/wechselt jetzt sowohl bei Level-1-Tempo als auch am
+    Tempo-Deckel spürbar öfter. Die Fairness-Untergrenze (Puls-Faktor nie
+    unter 0.55, Richtungswechsel springt hart statt weich durch null) blieb
+    dabei bewusst UNANGETASTET – die steht extra im Code-Kommentar als
+    Grenze, die nicht fallen darf (siehe Dreh-Muster-Abschnitt oben), sonst
+    wird die Scheibe irgendwann unfair (fast Stillstand -> zwei Äxte landen
+    an derselben Stelle -> Instant-Tod ohne eigenes Zutun).
+  Bewusst NICHT angefasst: `COLLISION_ANGLE_TOLERANCE_DEG` (10°) – der Wert
+  ist eng an `FLIGHT_DURATION_MS` gekoppelt (190ms Flugzeit bei 55°/Sek.
+  Level-1-Tempo ergeben ~10,5° Drehung, also knapp ÜBER der Toleranz, siehe
+  Kommentar in `constants.ts`), ihn isoliert zu erhöhen hätte diese fein
+  austarierte Kalibrierung verschoben, ohne dass das der eigentliche Hebel
+  für "die Level fühlen sich zu leicht an" ist. Ebenfalls unangetastet:
+  `APPLE_HIT_TOLERANCE_DEG` – das reguliert das Apfel-Sammeln (Belohnung),
+  nicht das Überleben.
+  Verifiziert: `tsc -b` läuft sauber durch, die Seite lädt ohne
+  Konsolenfehler (Level 51 aus einem vorhandenen Spielstand direkt
+  geladen, 7 Hindernis-Äxte korrekt vorplatziert – passt zur neuen
+  `obstacleCountFor(50) === 7`-Stufe). Das TATSÄCHLICHE Spielgefühl (wie viel
+  schneller/enger sich ein Lauf jetzt anfühlt) ließ sich NICHT per
+  Browser-Automatisierung nachspielen – derselbe dokumentierte
+  rAF-Freeze wie bei allen bisherigen Balancing-Änderungen (die
+  Browser-Pane komponiert hier keine Frames, `requestAnimationFrame`
+  bleibt aus, die Scheibe dreht sich in dieser Umgebung schlicht nicht).
+  Bestätigung durch echtes Spielen auf dem Gerät steht noch aus.
 - **Dreh-Muster** (`spinPattern`) sorgen für Abwechslung, ohne an den
   Grundwerten zu drehen: `steady` (gleichmäßig, nur bis Level 19), `pulse`
   (Tempo schwankt) und `reverse` (Scheibe dreht periodisch die Richtung um).
@@ -1397,6 +1446,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Muster mehr. Puls-/Richtungswechsel-Häufigkeit skaliert zusätzlich mit
       dem Board-Tempo (öfter, nicht nur schneller), die Fairness-Untergrenze
       (Scheibe darf nie fast stillstehen) bleibt dabei unverändert.
+- [x] **Dritter Härte-Durchgang** (Details siehe Level-System-Abschnitt oben,
+      2026-08-21): Tempo-Anstieg pro Level, Axt-/Hindernis-Deckel und
+      -Kurvensteilheit, Boss-Level-Bonus sowie Puls-/Richtungswechsel-Rhythmus
+      gleichzeitig verschärft, statt nur einen Wert zu drehen. Fairness-
+      Untergrenze (Puls-Faktor nie unter 0.55) und die Flugzeit/Kollisions-
+      Kalibrierung (`COLLISION_ANGLE_TOLERANCE_DEG`) bewusst unangetastet
+      gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
+      Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
+      automatisierten Umgebung, siehe eigener Abschnitt).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
@@ -1410,6 +1468,16 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 
 ## Offene To-dos
 
+- **Dritter Härte-Durchgang (2026-08-21) noch nicht durch echtes Spielen
+  bestätigt.** Tempo-Anstieg, Axt-/Hindernis-Deckel, Boss-Bonus und Puls-/
+  Richtungswechsel-Rhythmus wurden gleichzeitig hochgeschraubt (siehe
+  Level-System-Abschnitt oben) – rein rechnerisch/per Code-Review begründet,
+  die automatisierte Umgebung kann die Scheibendrehung wegen des
+  rAF-Freeze-Problems nicht selbst nachspielen. Falls "immer noch zu leicht"
+  oder "jetzt zu hart" als Feedback kommt: `SPEED_STEP_PER_LEVEL`,
+  `axeCountFor`/`obstacleCountFor` in `constants.ts` bzw. die
+  `PULSE_PERIOD_*`/`REVERSE_PERIOD_*`-Werte in `TargetBoard.tsx` sind die
+  Stellschrauben.
 - Selbst durchspielen und Feedback zum Balancing geben – die Werte sind
   Schätzungen. Konkret unklar:
   - **Münz-Tempo.** ~15-25 Münzen pro Level plus Boni. Der erste kaufbare Skin
