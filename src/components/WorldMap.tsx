@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Axe } from './Axe';
 import { LEVEL_COUNT, XP_PER_LEVEL } from '../game/constants';
-import { WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
+import { WORLD_BOSSES, WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
 import './WorldMap.css';
 
 /** XP-Schwelle einer Welt, aus ihrem Level-Bereich abgeleitet – kein eigenes Datenfeld
@@ -99,6 +99,9 @@ interface MapNode {
   unlocked: boolean;
   isCurrent: boolean;
   progress: number;
+  /** Name des Weltbosses am Eingang dieser Welt, `null` bei Wald (Tutorial-Einstieg
+   *  ohne Weltboss, siehe isWorldBossLevel() in worlds.ts). */
+  bossName: string | null;
 }
 
 interface WorldMapProps {
@@ -233,6 +236,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
       progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL))),
+      bossName: WORLD_BOSSES[world.id] ?? null,
     };
   });
 
@@ -248,6 +252,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: true,
       isCurrent: currentLevelIndex >= LEVEL_COUNT,
       progress: 1,
+      bossName: null,
     });
   }
 
@@ -438,7 +443,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                 <div
                   className={`world-node ${node.unlocked ? '' : 'world-node--locked'} ${
                     node.isCurrent ? 'world-node--current' : ''
-                  }`}
+                  } ${node.bossName ? 'world-node--boss' : ''}`}
                   style={{ ['--node-accent' as string]: node.accent }}
                 >
                   {node.isCurrent && !travel && <span className="world-node__pin">Du bist hier</span>}
@@ -447,7 +452,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                     className="world-node__badge"
                     disabled={!node.unlocked || !!travel}
                     onClick={() => startTravel(i)}
-                    aria-label={`${node.name}, ${node.sublabel}`}
+                    aria-label={`${node.name}, ${node.sublabel}${node.bossName ? `, Weltboss ${node.bossName}` : ''}`}
                   >
                     <svg className="world-node__ring" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="46" className="world-node__ring-track" />
@@ -461,6 +466,10 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                       />
                     </svg>
                     <span className="world-node__icon">{node.unlocked ? <WorldIcon kind={node.icon} /> : <LockIcon />}</span>
+                    {/* Weltboss-Warnung: jede Welt außer Wald hat ein Tor, siehe worlds.ts.
+                        Zeigt sich auch gesperrt schon (Vorschau "was dich erwartet"), nur
+                        beim Endlos-Knoten (kein bossName) nie. */}
+                    {node.bossName && <span className="world-node__boss-badge">⚔</span>}
                   </button>
 
                   <div className={`world-node__label world-node__label--${labelSide}`}>
@@ -468,6 +477,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                     <span className="world-node__sub">
                       {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex + 1} (durch XP)`}
                     </span>
+                    {node.bossName && <span className="world-node__boss-name">⚔ {node.bossName}</span>}
                   </div>
                 </div>
               </div>

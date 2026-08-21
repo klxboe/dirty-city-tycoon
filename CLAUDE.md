@@ -1811,6 +1811,29 @@ Verifiziert per echtem Kauf + Ausrüsten (Frostscheibe für 800 Münzen gekauft,
 Shop-Reiter zeigen alle 20 neuen Karten mit Name/Beschreibung/Preis, `tsc -b`
 sauber, keine Konsolenfehler.
 
+### Weltkarte: Weltboss-Warnung sichtbar gemacht, gesperrte Welten kontrastreicher
+
+Vierter Teil-Batch. Klaus wollte die Weltkarte "hochwertiger", mit
+besonders auffälligen Boss-Welten und klar erkennbaren gesperrten Bereichen.
+Bewusst KEIN kompletter Neubau (die Karte hat schon einen aufwendigen
+Insel-/Reise-Look aus mehreren früheren Durchgängen, siehe Abschnitte weiter
+oben) – zwei gezielte Ergänzungen statt alles neu zu erfinden:
+
+- **Weltboss-Abzeichen** (`world-node__boss-badge`, `WorldMap.tsx`/`.css`):
+  ein kleines rot-lila Schwert-Icon oben rechts an JEDEM Welt-Knoten außer
+  Wald (nutzt `WORLD_BOSSES` aus `worlds.ts`, siehe Weltboss-Abschnitt weiter
+  oben), plus der Bossname direkt im Label unter dem Level-Bereich ("⚔
+  Sandkolossos" usw.) – schon sichtbar, auch während die Welt noch gesperrt
+  ist ("das erwartet dich, sobald du so weit bist").
+- **Gesperrte Welten kontrastreicher**: `filter: saturate(0.35)
+  brightness(0.65)` auf dem Knoten-Badge statt nur eines leichten
+  Grau-Untertons – deutlicherer Unterschied zwischen "gesperrt" und
+  "freigeschaltet" auf den ersten Blick.
+
+Verifiziert: alle 5 Bosse (Sandkolossos/Frostwardin/Aschenschlund/
+Leerenwächter/Turmbrecher) erscheinen korrekt auf ihren Welt-Knoten, Wald
+bleibt bewusst ohne Abzeichen, `tsc -b` sauber, keine Konsolenfehler.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)

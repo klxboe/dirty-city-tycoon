@@ -281,9 +281,45 @@
 
 .world-node--locked .world-node__badge {
   background: radial-gradient(circle at 35% 30%, #4a4f58, #2a2d33 60%, #1a1c20 100%);
+  /* Deutlich kräftiger abgedunkelt als vorher (Klaus: "gesperrte Bereiche sollen
+     erkennbar sein") – Sättigung UND Helligkeit runter, nicht nur ein Grauschleier. */
+  filter: saturate(0.35) brightness(0.65);
   box-shadow:
-    0 6px 14px rgba(0, 0, 0, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.6),
     0 0 0 4px rgba(13, 58, 99, 0.9);
+}
+
+/* Weltboss-Warnung: kleines Schwert-Abzeichen oben rechts am Knoten-Badge, auffällig
+   in Rot/Lila statt der jeweiligen Welt-Akzentfarbe – Boss-Welten sollen sich klar von
+   normalen Welten abheben, auch auf den ersten Blick über die Karte gescannt. */
+.world-node__boss-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: radial-gradient(circle at 35% 30%, #d05fff, #6b1f9c 70%, #2e0a4a 100%);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(13, 58, 99, 0.9),
+    0 0 10px 1px rgba(180, 90, 255, 0.6);
+}
+
+.world-node--locked .world-node__boss-badge {
+  filter: saturate(0.4) brightness(0.7);
+}
+
+.world-node__boss-name {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #d59bff;
 }
 
 .world-node--current .world-node__badge {
