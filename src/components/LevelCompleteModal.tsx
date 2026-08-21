@@ -21,6 +21,7 @@ interface LevelCompleteModalProps {
   reward: LevelReward;
   totalCoins: number;
   totalGems: number;
+  totalXp: number;
   streak: number;
   /** Wahr genau einmal: wenn gerade Level 100 (der letzte feste Kampagnen-Level) geschafft wurde. */
   isCampaignComplete: boolean;
@@ -35,6 +36,7 @@ export function LevelCompleteModal({
   reward,
   totalCoins,
   totalGems,
+  totalXp,
   streak,
   isCampaignComplete,
   onNext,
@@ -132,6 +134,12 @@ export function LevelCompleteModal({
               Serie ×{streak} <strong>×{reward.streakMultiplier.toFixed(2)}</strong>
             </span>
           )}
+          {/* XP läuft bewusst NICHT durch den Münz-Serien-Multiplikator (siehe
+              Kommentar in useAxeGame.ts) – deshalb eigene Zeile statt Teil der
+              Münz-Aufschlüsselung oben. */}
+          <span className="reward-breakdown__row reward-breakdown__row--gems">
+            XP <strong>+{reward.xp}</strong>
+          </span>
           {reward.gems > 0 && (
             <span className="reward-breakdown__row reward-breakdown__row--gems">
               Goldener Apfel <strong>+{reward.gems} Diamanten</strong>
@@ -152,6 +160,9 @@ export function LevelCompleteModal({
             <Gem size={13} /> Diamanten insgesamt: <strong>{totalGems}</strong>
           </div>
         )}
+        <div className="modal-card__sub">
+          XP insgesamt: <strong>{totalXp}</strong>
+        </div>
 
         {/* Einmalige Glückwunsch-Zeile bei Level 100 – danach geht's im Endlos-Modus
             einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}

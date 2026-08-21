@@ -61,14 +61,14 @@ export function SettingsModal({
         </div>
 
         <div className="settings-row settings-row--static">
-          <span className="settings-row__label">Bestmarke</span>
+          <span className="settings-row__label">Highscore</span>
           <span className="settings-row__value">Level {bestLevel}</span>
         </div>
 
         {confirmReset ? (
           <div className="settings-confirm">
             <p className="settings-confirm__text">
-              Wirklich alles löschen? Münzen, Äxte, Scheiben und die Bestmarke sind dann weg.
+              Wirklich alles löschen? Münzen, XP, Äxte, Scheiben und der Highscore sind dann weg.
             </p>
             <button
               className="modal-card__button modal-card__button--danger"

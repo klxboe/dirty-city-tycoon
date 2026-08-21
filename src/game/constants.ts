@@ -302,6 +302,15 @@ export const SAVE_KEY = 'axe-throw-save-v2';
  * wertvoll und ist der Grund, überhaupt zu zielen statt zu spammen.
  */
 export const COINS_PER_APPLE = 5;
+/**
+ * XP für ein geschafftes Level – fest, unabhängig von Levelnummer/Serie/Perfekt-Bonus
+ * (bewusst simpel gehalten, im Gegensatz zu den Münzen). XP ist eine EIGENE, DAUERHAFTE
+ * Ressource (übersteht ein Game Over, anders als der Lauf-Fortschritt selbst) und
+ * schaltet Welten frei – siehe `worldForLevel`/`WORLDS` in `worlds.ts` für die
+ * Level-Bereiche, aus denen sich die Schwellenwerte ableiten (`startLevelIndex *
+ * XP_PER_LEVEL`), und `WorldMap.tsx` für die Freischalt-Prüfung selbst.
+ */
+export const XP_PER_LEVEL = 10;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 

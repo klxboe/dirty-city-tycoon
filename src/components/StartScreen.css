@@ -208,7 +208,8 @@
 
 .start__coins,
 .start__gems,
-.start__figurines {
+.start__figurines,
+.start__xp {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -230,6 +231,13 @@
 
 .start__figurines {
   color: #ff6b76;
+}
+
+.start__xp {
+  color: #2ec4b6;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 /* Kurzer Hinweis nach dem Oster-Ei – verschwindet von selbst, kein Dialog nötig. */

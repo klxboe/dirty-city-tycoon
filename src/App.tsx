@@ -312,6 +312,7 @@ function App() {
         <StartScreen
           continueLevel={game.levelIndex + 1}
           bestLevel={game.save.bestLevel}
+          xp={game.save.xp}
           coins={game.save.coins}
           gems={game.save.gems}
           figurines={game.save.figurines}
@@ -345,6 +346,7 @@ function App() {
         {worldMapOpen && (
           <WorldMap
             bestLevel={game.save.bestLevel}
+            xp={game.save.xp}
             currentLevelIndex={game.levelIndex}
             onSelectLevel={(levelIndex) => {
               game.goToLevel(levelIndex);
@@ -559,6 +561,7 @@ function App() {
           reward={game.reward}
           totalCoins={game.save.coins}
           totalGems={game.save.gems}
+          totalXp={game.save.xp}
           streak={game.streak}
           isCampaignComplete={game.isCampaignComplete}
           onNext={() => {
@@ -572,7 +575,7 @@ function App() {
       {!overlayOpen && modalVisible && game.phase === 'gameOver' && (
         <GameOverModal
           level={game.levelIndex + 1}
-          restartLevel={game.blockStart + 1}
+          restartLevel={1}
           bestLevel={game.save.bestLevel}
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}

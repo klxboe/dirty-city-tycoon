@@ -480,12 +480,52 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
 
 ### Münzen, Läufe und die Werkstatt (Shop)
 
-- **Die 100 Level sind in 10er-Blöcke gruppiert** (`LEVELS_PER_BLOCK`,
-  `blockStartIndex()` in `constants.ts`). Ein Game Over wirft nicht bis Level 1
-  zurück, sondern nur an den Anfang des aktuellen Blocks – Level 1, 11, 21, …
-  So bleibt der Einsatz spürbar, ohne dass ein später Fehler den ganzen
-  Fortschritt kostet. Das höchste je erreichte Level bleibt als "Bestmarke"
-  gespeichert. Die Punktreihe im HUD zeigt die Position im aktuellen Block.
+- **Highscore-Prinzip: ein Game Over wirft IMMER auf Level 1 zurück, egal wie
+  weit man war.** Frühere Fassung warf nur an den Anfang des aktuellen
+  10er-Blocks zurück (Level 1, 11, 21, …) – auf Wunsch geändert: das Ziel ist
+  jetzt ein möglichst hoher Highscore in einem einzigen ununterbrochenen Lauf
+  statt Kampagnen-Fortschritt mit Teil-Rückwurf. Ein Fehler ist wieder ein
+  echter Fehler. `restartRun()` und der Game-Over-Effekt in `useAxeGame.ts`
+  setzen `currentLevel` deshalb fest auf `0`, nicht mehr auf
+  `blockStartIndex(levelIndex)`. Münzen, Diamanten, XP und Skins aus bereits
+  abgeschlossenen Leveln bleiben dabei erhalten (die werden ja sofort beim
+  Levelabschluss gutgeschrieben, nicht erst am Lauf-Ende) – nur der laufende
+  Versuch verfällt. Das höchste je erreichte Level bleibt als **Highscore**
+  gespeichert (`bestLevel`, umbenannt von "Bestmarke" in der gesamten UI). Die
+  Punktreihe im HUD nutzt weiterhin `LEVELS_PER_BLOCK`/`blockStartIndex()` für
+  die Positionsanzeige (rein kosmetisch, "wo stehe ich in diesem 10er-
+  Abschnitt") und der 10er-Block-Münzbonus (`blockCompletionBonus`) läuft
+  unverändert weiter – beide sind jetzt komplett unabhängig vom Neustart-Punkt.
+- **XP: neue, dauerhafte Ressource, schaltet Welten frei – unabhängig vom
+  Highscore.** Jedes geschaffte Level bringt `XP_PER_LEVEL` (10, bewusst FEST
+  ohne Serie/Perfekt-Bonus/Schwierigkeit – anders als die Münzen soll XP nicht
+  taktisch optimierbar sein, nur ein verlässlicher Fortschrittsbalken). XP
+  übersteht ein Game Over (wie Münzen), auch wenn `currentLevel` dabei auf 0
+  zurückspringt – das ist der ganze Witz daran: man kann nie weiter als bis
+  zum eigenen Highscore in EINEM Lauf kommen, aber Welten schaltet man über
+  viele Läufe hinweg frei, ohne sie in einem einzigen perfekten Durchlauf
+  erreichen zu müssen. Die Schwelle pro Welt ist bewusst kein eigenes
+  Datenfeld in `worlds.ts` (das kennt XP nicht, um einen Zirkelimport mit
+  `constants.ts` zu vermeiden), sondern wird in `WorldMap.tsx` direkt aus dem
+  bestehenden `startLevelIndex` abgeleitet (`startLevelIndex * XP_PER_LEVEL`
+  – Wald 0, Wüste 200, Eis 400, Vulkan 600, Kosmos 800, Heldenstadt 1000).
+  Damit bleibt das Freischalt-TEMPO ungefähr wie vorher (vorher: Level
+  erreicht schaltet sofort frei; jetzt: gleich viele geschaffte Level
+  irgendwann über beliebig viele Läufe schalten frei), nur dass man dafür
+  nicht mehr in einem Rutsch bis dahin durchspielen muss. Der Endlos-Modus-
+  Knoten auf der Weltkarte bleibt bewusst an `bestLevel` (Highscore) hängen,
+  nicht an XP – der zeigt ja gerade "wie weit warst du in deinem besten
+  Lauf", nicht "wie viel hast du insgesamt gefarmt".
+  Verifiziert per direktem Setzen von `xp`/`currentLevel` im Spielstand: Welt
+  exakt an der Schwelle (199 XP gesperrt, 200 XP frei), Game Over in Level 15
+  (zweiter 10er-Block) wirft korrekt auf Level 1 zurück statt auf Level 11
+  wie es die alte Logik getan hätte. Die tatsächliche XP-Gutschrift beim
+  Abschluss eines Levels ließ sich nicht per echtem Durchspielen verifizieren
+  (derselbe rAF-Freeze wie beim Endlos-Modus, siehe eigener Abschnitt weiter
+  unten – die Scheibe dreht sich in der automatisierten Browser-Umgebung
+  nicht, jeder zweite Wurf kollidiert deshalb zwangsläufig mit dem ersten),
+  der Code folgt aber exakt demselben, bereits bewährten Muster wie die
+  Diamanten-/Sammelfiguren-Gutschrift direkt daneben.
 - **Münzen** sind die einzige Währung (früher waren es Äpfel; alte Spielstände
   werden beim ersten Start umgerechnet, siehe `loadSave()` in `storage.ts`).
   Es gibt sie NUR beim Abschluss eines Levels – ein Game Over schreibt nichts
@@ -1313,6 +1353,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       langer Stiel aus) gefunden und zurückgenommen. Bewegungsschweif hinter
       der Axt entfernt, Abschuss-Sound ergänzt (gab vorher nur Einschlag-
       Sounds).
+- [x] **Highscore-Prinzip + XP-Wirtschaft** (Details siehe Münzen/Läufe-
+      Abschnitt oben): Game Over wirft jetzt immer auf Level 1 zurück statt
+      nur an den 10er-Block-Anfang – Ziel ist ein möglichst hoher Highscore
+      in einem Lauf, nicht Kampagnen-Fortschritt. "Bestmarke" in der gesamten
+      UI zu "Highscore" umbenannt. Neue, dauerhafte XP-Ressource (übersteht
+      ein Game Over) schaltet Welten frei, unabhängig davon, wie weit man im
+      aktuellen Lauf kommt – Schwellenwerte aus den bestehenden
+      Welt-Level-Bereichen abgeleitet, kein neues Datenfeld nötig.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

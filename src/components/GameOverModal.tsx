@@ -5,9 +5,10 @@ import './GameOverModal.css';
 
 interface GameOverModalProps {
   level: number;
-  /** Level, bei dem der neue Versuch startet: der Anfang des aktuellen 10er-Blocks. */
+  /** Level, bei dem der neue Versuch startet – immer 1: das Ziel ist ein möglichst
+   *  hoher Highscore in einem Lauf, kein Kampagnen-Fortschritt mit Teil-Rückwurf. */
   restartLevel: number;
-  /** Höchstes je erreichtes Level – bleibt als Bestmarke stehen. */
+  /** Höchstes je erreichtes Level – bleibt als Highscore stehen. */
   bestLevel: number;
   /** Münzen, die dieser Lauf gekostet hat (gesammelte Äpfel des laufenden Levels). */
   coinsLost: number;
@@ -24,8 +25,9 @@ const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
 
 /**
  * Erscheint, wenn eine Axt eine bereits steckende Axt trifft. Das beendet den Lauf –
- * weiter geht es am Anfang des aktuellen 10er-Blocks. Die Münzen aus früher
- * abgeschlossenen Leveln bleiben erhalten, nur das angefangene Level bringt nichts ein.
+ * weiter geht es immer bei Level 1 (Highscore-Prinzip: ein Fehler irgendwo wirft
+ * konsequent auf Los zurück). Münzen, XP und Skins aus früher abgeschlossenen Leveln
+ * bleiben erhalten, nur das angefangene Level bringt nichts ein.
  *
  * Bekommt bewusst eine EIGENE Inszenierung als das Erfolgs-Fenster (`LevelCompleteModal`)
  * – vorher teilten sich beide dieselbe sanfte Pop-in-Animation, nur in Rot statt Orange,
@@ -84,7 +86,7 @@ export function GameOverModal({
         </div>
 
         <div className="modal-card__record">
-          Bestmarke: <strong>Level {bestLevel}</strong>
+          Highscore: <strong>Level {bestLevel}</strong>
         </div>
 
         {coinsLost > 0 && (

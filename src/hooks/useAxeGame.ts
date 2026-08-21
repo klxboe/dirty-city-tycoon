@@ -24,6 +24,7 @@ import {
   levelCompletionBonus,
   PERFECT_APPLE_BONUS,
   streakMultiplier,
+  XP_PER_LEVEL,
 } from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { pendingDailyReward, todayDateString } from '../game/daily';
@@ -203,6 +204,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...prev.save,
         coins: prev.save.coins + prev.reward.total,
         gems: prev.save.gems + prev.reward.gems,
+        xp: prev.save.xp + prev.reward.xp,
         figurines: prev.save.figurines + prev.reward.figurines,
         bestLevel: Math.max(prev.save.bestLevel, prev.levelIndex + 2),
         streak,
@@ -218,13 +220,17 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 
-  // Bei Game Over die Serie reißen lassen und den Lauf-Stand auf den Blockanfang setzen,
-  // damit auch ein Schließen der App genau dort wieder aufsetzt.
+  // Bei Game Over die Serie reißen lassen und den Lauf-Stand auf Level 1 zurücksetzen,
+  // damit auch ein Schließen der App genau dort wieder aufsetzt. Bewusst IMMER Level 1
+  // (nicht mehr der Anfang des aktuellen 10er-Blocks): das Ziel ist jetzt ein möglichst
+  // hoher Highscore (= bestLevel) in einem einzigen Lauf statt Kampagnen-Fortschritt –
+  // ein Fehler irgendwo wirft konsequent auf Los zurück, dafür bleiben Münzen/XP/Skins
+  // aus bereits geschafften Leveln erhalten (siehe oben, nur `currentLevel` resettet).
   useEffect(() => {
     if (state.phase !== 'gameOver') return;
     setState((prev) => {
       if (prev.phase !== 'gameOver') return prev;
-      const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: blockStartIndex(prev.levelIndex) };
+      const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: 0 };
       saveSave(nextSave);
       return { ...prev, save: nextSave, streak: 0 };
     });
@@ -241,10 +247,10 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  /** Nach einem Game Over: Neustart am Anfang des aktuellen 10er-Blocks. Münzen bleiben. */
+  /** Nach einem Game Over: Neustart immer bei Level 1. Münzen/XP/Skins bleiben. */
   const restartRun = useCallback(() => {
     setState((prev) => {
-      const target = blockStartIndex(prev.levelIndex);
+      const target = 0;
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);
@@ -460,6 +466,7 @@ function loadSaveFresh(): SaveData {
   return {
     coins: 0,
     gems: 0,
+    xp: 0,
     ownedSkins: [],
     equippedAxeSkin: 'axe-standard',
     equippedBoardSkin: 'board-oak',
@@ -533,6 +540,10 @@ function computeReward(
     gems,
     // Sammelfiguren ebenso: 1:1 ohne Multiplikator, reines Fund-Glück wie die Diamanten.
     figurines: figurinesCollected,
+    // XP ist bewusst FEST pro Level, ohne Serie/Perfekt-Bonus/Schwierigkeit – anders als
+    // die Münzen soll sie nicht taktisch optimierbar sein, nur ein einfacher, verlässlicher
+    // Fortschrittsbalken Richtung nächste Welt.
+    xp: XP_PER_LEVEL,
     bossFruitId: boss?.id,
     unlockedAxeSkinId,
   };

@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Axe } from './Axe';
-import { LEVEL_COUNT } from '../game/constants';
+import { LEVEL_COUNT, XP_PER_LEVEL } from '../game/constants';
 import { WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
 import './WorldMap.css';
+
+/** XP-Schwelle einer Welt, aus ihrem Level-Bereich abgeleitet – kein eigenes Datenfeld
+ *  in `worlds.ts` nötig (das kennt XP_PER_LEVEL bewusst nicht, um einen Zirkelimport
+ *  mit constants.ts zu vermeiden). Wald (startLevelIndex 0) ist damit immer frei. */
+function xpThresholdFor(startLevelIndex: number): number {
+  return startLevelIndex * XP_PER_LEVEL;
+}
 
 /** Kleines Schloss-Symbol für noch nicht erreichte Welten. */
 function LockIcon() {
@@ -92,11 +99,16 @@ interface MapNode {
   unlocked: boolean;
   isCurrent: boolean;
   progress: number;
+  /** Wie viel XP nötig ist, um diese Welt freizuschalten (0 = von Anfang an frei). */
+  xpThreshold: number;
 }
 
 interface WorldMapProps {
-  /** Höchstes je erreichtes Kampagnen-Level (1-basiert), für den Freischalt-Fortschritt. */
+  /** Höchstes je erreichtes Level (1-basiert) – nur noch für den Endlos-Modus-Knoten
+   *  und dessen Highscore-Anzeige gebraucht, Welten schaltet jetzt XP frei. */
   bestLevel: number;
+  /** Dauerhafte XP – bestimmt, welche Welten schon frei sind (siehe xpThresholdFor oben). */
+  xp: number;
   currentLevelIndex: number;
   onSelectLevel: (levelIndex: number) => void;
   onClose: () => void;
@@ -209,25 +221,29 @@ const DECOR_OFFSETS: [number, number][] = [
   [-0.5, 0.15],
 ];
 
-export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose }: WorldMapProps) {
-  const nodes: MapNode[] = WORLDS.map((world) => ({
-    key: world.id,
-    name: world.name,
-    sublabel: `Level ${world.startLevelIndex + 1}–${world.startLevelIndex + WORLDS_LEVEL_COUNT}`,
-    accent: world.colors.accent,
-    bgTop: world.colors.bgTop,
-    icon: world.decor,
-    startLevelIndex: world.startLevelIndex,
-    unlocked: bestLevel > world.startLevelIndex,
-    isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
-    progress: Math.max(0, Math.min(1, (bestLevel - world.startLevelIndex) / WORLDS_LEVEL_COUNT)),
-  }));
+export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onClose }: WorldMapProps) {
+  const nodes: MapNode[] = WORLDS.map((world) => {
+    const threshold = xpThresholdFor(world.startLevelIndex);
+    return {
+      key: world.id,
+      name: world.name,
+      sublabel: `Level ${world.startLevelIndex + 1}–${world.startLevelIndex + WORLDS_LEVEL_COUNT}`,
+      accent: world.colors.accent,
+      bgTop: world.colors.bgTop,
+      icon: world.decor,
+      startLevelIndex: world.startLevelIndex,
+      unlocked: xp >= threshold,
+      isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
+      progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL))),
+      xpThreshold: threshold,
+    };
+  });
 
   if (bestLevel > LEVEL_COUNT) {
     nodes.push({
       key: 'endless',
       name: 'Endlos-Modus',
-      sublabel: `Bestmarke Level ${bestLevel}`,
+      sublabel: `Highscore Level ${bestLevel}`,
       accent: '#2ec4b6',
       bgTop: '#0d1a1c',
       icon: 'endless',
@@ -235,6 +251,7 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
       unlocked: true,
       isCurrent: currentLevelIndex >= LEVEL_COUNT,
       progress: 1,
+      xpThreshold: 0,
     });
   }
 
@@ -453,7 +470,7 @@ export function WorldMap({ bestLevel, currentLevelIndex, onSelectLevel, onClose 
                   <div className={`world-node__label world-node__label--${labelSide}`}>
                     <span className="world-node__name">{node.name}</span>
                     <span className="world-node__sub">
-                      {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex}`}
+                      {node.unlocked ? node.sublabel : `Ab ${node.xpThreshold} XP`}
                     </span>
                   </div>
                 </div>

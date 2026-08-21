@@ -101,6 +101,8 @@ export interface LevelReward {
   gems: number;
   /** Sammelfiguren aus Heldenstadt – landen im Inventar, keine Münzen. */
   figurines: number;
+  /** XP – dauerhafte Ressource, schaltet Welten frei (siehe XP_PER_LEVEL in constants.ts). */
+  xp: number;
   /** Bei Boss-Leveln: welche Frucht besiegt wurde. */
   bossFruitId?: string;
   /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */

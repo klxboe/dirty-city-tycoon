@@ -11,6 +11,7 @@ interface StartScreenProps {
   /** Level, bei dem es weitergeht (1-basiert). */
   continueLevel: number;
   bestLevel: number;
+  xp: number;
   coins: number;
   gems: number;
   /** Sammelfiguren aus Heldenstadt – nur gezeigt, wenn schon welche im Inventar sind. */
@@ -35,6 +36,7 @@ const SECRET_TAP_WINDOW_MS = 2200;
 export function StartScreen({
   continueLevel,
   bestLevel,
+  xp,
   coins,
   gems,
   figurines,
@@ -98,11 +100,12 @@ export function StartScreen({
 
         <div className="start__stats">
           <span>
-            Bestmarke: <strong>Level {bestLevel}</strong>
+            Highscore: <strong>Level {bestLevel}</strong>
           </span>
           <span className="start__coins">
             <Coin size={16} /> {coins}
           </span>
+          <span className="start__xp">{xp} XP</span>
           {gems > 0 && (
             <span className="start__gems">
               <Gem size={14} /> {gems}

@@ -15,6 +15,12 @@ export interface SaveData {
   coins: number;
   /** Zweite, seltenere Währung aus goldenen Äpfeln – kauft "Legendäre" Skins im Shop. */
   gems: number;
+  /**
+   * Dauerhafte Fortschritts-Ressource, unabhängig vom aktuellen Lauf – übersteht ein
+   * Game Over (anders als `currentLevel`, das dann auf 0 zurückspringt). Schaltet
+   * Welten auf der Weltkarte frei (siehe XP_PER_LEVEL in constants.ts).
+   */
+  xp: number;
   /** IDs gekaufter bzw. erspielter Skins. Gratis-Shop-Skins stehen hier nicht drin. */
   ownedSkins: string[];
   equippedAxeSkin: string;
@@ -46,6 +52,7 @@ export interface SaveData {
 const EMPTY_SAVE: SaveData = {
   coins: 0,
   gems: 0,
+  xp: 0,
   ownedSkins: [],
   equippedAxeSkin: DEFAULT_AXE_SKIN,
   equippedBoardSkin: DEFAULT_BOARD_SKIN,
@@ -81,6 +88,7 @@ export function loadSave(): SaveData {
       return {
         coins: Math.max(0, Math.floor(toFiniteNumber(parsed.coins, 0))),
         gems: Math.max(0, Math.floor(toFiniteNumber(parsed.gems, 0))),
+        xp: Math.max(0, Math.floor(toFiniteNumber(parsed.xp, 0))),
         ownedSkins: Array.isArray(parsed.ownedSkins) ? parsed.ownedSkins.filter((id) => typeof id === 'string') : [],
         equippedAxeSkin: typeof parsed.equippedAxeSkin === 'string' ? parsed.equippedAxeSkin : DEFAULT_AXE_SKIN,
         equippedBoardSkin: typeof parsed.equippedBoardSkin === 'string' ? parsed.equippedBoardSkin : DEFAULT_BOARD_SKIN,
