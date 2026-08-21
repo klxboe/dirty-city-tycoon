@@ -1771,6 +1771,46 @@ Echtzeit nachspielen (rAF-Freeze) – bitte am Gerät bestätigen, ob die drei
 Phasen als "lernen -> Druck -> Grenze" ankommen oder nachjustiert werden
 müssen (Stellschraube: die Zahlen in `worldBossPhaseSpeedMultiplier()`).
 
+### 20 neue Shop-Items in das bestehende System eingehängt
+
+Dritter Teil-Batch. Klaus wollte einen "richtigen Shop mit ID/Name/Kategorie/
+Preis/Bild/gekauft/ausgerüstet" – bei der Analyse zeigte sich: **das gibt es
+in `game/shop.ts` bereits vollständig** (`SkinDef` trägt schon `id`, `kind`
+als Kategorie, `name`, `price`; `ownedSkins`/`equippedAxeSkin`/
+`equippedBoardSkin` im Spielstand decken gekauft/ausgerüstet ab; `getAxeImage()`/
+`getBoardImage()` das Bild, mit automatischem Farb-Fallback ohne Bild). Statt
+ein zweites, paralleles Item-System zu bauen, einfach 10 neue Äxte + 10 neue
+Zielscheiben nach genau den von Klaus vorgegebenen Kategorien in die
+bestehenden `AXE_SKINS`/`BOARD_SKINS`-Arrays gehängt (`shop.ts`):
+
+- **Äxte:** Kiefernhieb, Schwarzstahl, Goldbeil, Feuerbeil, Frostbeil,
+  Kristallbeil, Wikingerbeil, Dämonenbeil, Blitzbeil, Neonbeil (900-6700
+  Münzen, eingereiht zwischen die bestehenden Preis-Stufen).
+- **Zielscheiben:** Kiefernscheibe, Dunkelscheibe, Frostscheibe, Quarzscheibe,
+  Magische Scheibe, Aschescheibe, Verfluchte Scheibe, Goldscheibe,
+  Technikscheibe, Fantasy-Scheibe (350-3500 Münzen).
+- Wo Klaus' Kategorie-Namen mit bereits existierenden Skins kollidiert hätten
+  (z.B. "Eis-Scheibe" ↔ bestehende "Gletscher", "Vulkan-Scheibe" ↔
+  bestehender "Vulkan", "Kristall-Scheibe" ↔ bestehende Legendär-Scheibe
+  "Kristallkern"), bewusst leicht abgewandelte Namen/IDs gewählt
+  (Frostscheibe/Aschescheibe/Quarzscheibe), damit es zwei sinnvoll
+  unterscheidbare Varianten gibt statt eines Duplikats.
+- **Jedes neue Item hat schon jetzt einen vollständigen Farb-Skin**
+  (`AXE_STYLES`/`BOARD_STYLES`) – rendert also SOFORT sichtbar unterscheidbar
+  über die bestehende Vektor-Silhouette, genau wie das erste Zwölfer-Set vor
+  seinen eigenen Gemini-Bildern. Sobald echte Bilder da sind, reicht ein
+  Eintrag in `AXE_IMAGES`/`BOARD_IMAGES` (`axeShapes.ts`/`boardImages.ts`) –
+  `getAxeImage()`/`getBoardImage()` haben automatisch Vorrang vor der
+  Farb-Silhouette, wie bei allen bisherigen Skins auch.
+- Preise mit der bestehenden Ökonomie kompatibel gehalten (dieselbe
+  Größenordnung wie das erste Zwölfer-Set/die sechs Kauf-Scheiben, keine neue
+  Währung, kein neues Preis-System).
+
+Verifiziert per echtem Kauf + Ausrüsten (Frostscheibe für 800 Münzen gekauft,
+`ownedSkins`/`equippedBoardSkin` im Spielstand korrekt aktualisiert), beide
+Shop-Reiter zeigen alle 20 neuen Karten mit Name/Beschreibung/Preis, `tsc -b`
+sauber, keine Konsolenfehler.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
