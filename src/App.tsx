@@ -496,6 +496,20 @@ function App() {
               ['--flight-x' as string]: `${flightX}px`,
               ['--flight-travel-px' as string]: `${flightTravelPx}px`,
             }}
+            /*
+             * Löst den Einschlag aus, statt dass useAxeGame das über einen eigenen
+             * setTimeout(FLIGHT_DURATION_MS) tut (siehe ausführliche Herleitung bei
+             * resolveThrow() in useAxeGame.ts – GENAU der Grund für den gemeldeten
+             * Mikro-Stopp: ein JS-Timer neben der CSS-Animation kann nachhinken, die Axt
+             * stand dann fertig am Ziel und wartete auf einen zweiten, unabhängigen
+             * Zeitgeber). `.axe-flying` trägt ZWEI gleichzeitige Animationen (Position +
+             * Transform, siehe App.css), `animationend` feuert deshalb zweimal – hier auf
+             * genau EINEN der beiden Namen gefiltert, damit `resolveThrow` nicht doppelt
+             * läuft (wäre wegen des reinen Updaters zwar harmlos, aber unnötig).
+             */
+            onAnimationEnd={(e) => {
+              if (e.animationName === 'axe-fly-position') game.resolveThrow();
+            }}
           >
             <Axe size={42} skin={game.save.equippedAxeSkin} />
           </div>

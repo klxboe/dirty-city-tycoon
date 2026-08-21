@@ -15,7 +15,6 @@ import {
   COINS_PER_APPLE,
   DIFFICULTY_REWARD_MULTIPLIER,
   DIFFICULTY_SPEED_MULTIPLIER,
-  FLIGHT_DURATION_MS,
   GEMS_PER_FIGURINE,
   GEMS_PER_GOLDEN_APPLE,
   LEVEL_COUNT,
@@ -106,83 +105,99 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  // Löst den Wurf nach der Flugzeit auf: Treffer (Axt steckt) oder Kollision (= Game Over).
-  // Die Updater-Funktion ist bewusst REIN (keine Ref-Mutationen, keine performance.now()-Aufrufe),
-  // damit sie den StrictMode-Doppelaufruf unbeschadet übersteht. Das Nachziehen eines gepufferten
-  // Taps passiert deshalb im separaten Effekt darunter, nicht hier.
-  useEffect(() => {
-    if (state.phase !== 'flying') return;
+  /**
+   * Löst den Wurf auf: Treffer (Axt steckt) oder Kollision (= Game Over).
+   *
+   * GEFUNDENER BUG (Klaus: "Axt stoppt kurz vor der Zielscheibe, bevor der Einschlag
+   * passiert"): das lief hier früher über einen EIGENEN `setTimeout(..., FLIGHT_DURATION_MS)`
+   * in einem `useEffect` – eine komplett UNABHÄNGIGE Uhr neben der CSS-Flug-Animation
+   * (`.axe-flying` in App.tsx, dieselbe `FLIGHT_DURATION_MS`, aber als `animation-duration`).
+   * Zwei Uhren für dieselbe Dauer sind KEINE Garantie für denselben Zeitpunkt: die CSS-
+   * Animation läuft compositor-getrieben (bleibt exakt im Takt, auch wenn der Haupt-Thread
+   * kurz beschäftigt ist), ein `setTimeout` läuft dagegen auf dem Haupt-Thread und kann
+   * dort nachhinken (Timer-Drift, React-Re-Renders, Effekte). Ergebnis: die Axt "kam" (die
+   * CSS-Animation war fertig und stand per `animation-fill-mode: forwards` exakt am Ziel),
+   * aber der JS-Timer war noch nicht gefeuert – Einschlag-Effekte, Board-Zucken und die
+   * "steckende" Axt blieben für ein paar Millisekunden aus. GENAU der gemeldete
+   * "Mikro-Stopp kurz vor dem Einschlag", nur dass die Axt tatsächlich schon angekommen
+   * war und auf das Spiel gewartet hat, nicht umgekehrt.
+   *
+   * FIX: keine zweite Uhr mehr. `App.tsx` ruft diese Funktion jetzt direkt aus dem
+   * `onAnimationEnd`-Event der `.axe-flying`-Animation auf – demselben Ereignis, das der
+   * Browser GENAU in dem Moment feuert, in dem die Animation tatsächlich fertig ist. Damit
+   * gibt es nur noch EIN System, das über den Zeitpunkt des Einschlags entscheidet.
+   *
+   * Die Updater-Funktion bleibt bewusst REIN (keine Ref-Mutationen, keine
+   * `performance.now()`-Aufrufe), damit sie den StrictMode-Doppelaufruf unbeschadet
+   * übersteht – das war schon vorher so und ändert sich durch den neuen Aufrufer nicht.
+   */
+  const resolveThrow = useCallback(() => {
+    setState((prev) => {
+      if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
 
-    const timeout = setTimeout(() => {
-      setState((prev) => {
-        if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-        const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
+      // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
+      // des Flugs weiter, genau darin liegt das Timing-Spiel.
+      const localAngle = computeBoardLocalAngle(getBoardAngleDeg());
 
-        // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
-        // des Flugs weiter, genau darin liegt das Timing-Spiel.
-        const localAngle = computeBoardLocalAngle(getBoardAngleDeg());
-
-        // Eigene Axt getroffen -> Lauf vorbei. Die Münzen dieses Levels sind futsch.
-        if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
-          return {
-            ...prev,
-            phase: 'gameOver',
-            flyingAxe: null,
-            lastOutcome: 'collided',
-            axesThrown: prev.axesThrown + 1,
-          };
-        }
-
-        // id = laufende Wurfnummer: pro Wurf entsteht genau eine Axt, also innerhalb eines
-        // Levels eindeutig – und rein berechnet statt aus einem hochgezählten Ref.
-        const stuckAxes = [...prev.stuckAxes, { id: prev.axesThrown, boardLocalAngleDeg: localAngle }];
-        const hits = prev.hits + 1;
-
-        let apples = prev.apples;
-        let applesCollectedThisRun = prev.applesCollectedThisRun;
-        let gemsCollectedThisRun = prev.gemsCollectedThisRun;
-        let figurinesCollectedThisRun = prev.figurinesCollectedThisRun;
-        const hitApple = findHitApple(localAngle, prev.apples);
-        if (hitApple) {
-          apples = prev.apples.map((apple) => (apple.id === hitApple.id ? { ...apple, collected: true } : apple));
-          applesCollectedThisRun = prev.applesCollectedThisRun + 1;
-          // Golden statt normal -> Diamanten statt Münzen, siehe computeReward unten.
-          if (hitApple.golden) gemsCollectedThisRun = prev.gemsCollectedThisRun + 1;
-          // Sammelfigur (nur Heldenstadt) -> landet im Figuren-Inventar statt in Münzen.
-          if (hitApple.figurine) figurinesCollectedThisRun = prev.figurinesCollectedThisRun + 1;
-        }
-
-        const axesThrown = prev.axesThrown + 1;
-        const levelDone = axesThrown >= level.axeCount;
-
+      // Eigene Axt getroffen -> Lauf vorbei. Die Münzen dieses Levels sind futsch.
+      if (collidesWithStuckAxe(localAngle, prev.stuckAxes)) {
         return {
           ...prev,
-          phase: levelDone ? 'levelComplete' : 'ready',
+          phase: 'gameOver',
           flyingAxe: null,
-          lastOutcome: 'stuck',
-          axesThrown,
-          hits,
-          stuckAxes,
-          apples,
-          applesCollectedThisRun,
-          gemsCollectedThisRun,
-          figurinesCollectedThisRun,
-          reward: levelDone
-            ? computeReward(
-                prev.levelIndex,
-                applesCollectedThisRun,
-                gemsCollectedThisRun,
-                figurinesCollectedThisRun,
-                prev.streak,
-                prev.save,
-              )
-            : null,
+          lastOutcome: 'collided',
+          axesThrown: prev.axesThrown + 1,
         };
-      });
-    }, FLIGHT_DURATION_MS);
+      }
 
-    return () => clearTimeout(timeout);
-  }, [state.phase, state.flyingAxe, getBoardAngleDeg]);
+      // id = laufende Wurfnummer: pro Wurf entsteht genau eine Axt, also innerhalb eines
+      // Levels eindeutig – und rein berechnet statt aus einem hochgezählten Ref.
+      const stuckAxes = [...prev.stuckAxes, { id: prev.axesThrown, boardLocalAngleDeg: localAngle }];
+      const hits = prev.hits + 1;
+
+      let apples = prev.apples;
+      let applesCollectedThisRun = prev.applesCollectedThisRun;
+      let gemsCollectedThisRun = prev.gemsCollectedThisRun;
+      let figurinesCollectedThisRun = prev.figurinesCollectedThisRun;
+      const hitApple = findHitApple(localAngle, prev.apples);
+      if (hitApple) {
+        apples = prev.apples.map((apple) => (apple.id === hitApple.id ? { ...apple, collected: true } : apple));
+        applesCollectedThisRun = prev.applesCollectedThisRun + 1;
+        // Golden statt normal -> Diamanten statt Münzen, siehe computeReward unten.
+        if (hitApple.golden) gemsCollectedThisRun = prev.gemsCollectedThisRun + 1;
+        // Sammelfigur (nur Heldenstadt) -> landet im Figuren-Inventar statt in Münzen.
+        if (hitApple.figurine) figurinesCollectedThisRun = prev.figurinesCollectedThisRun + 1;
+      }
+
+      const axesThrown = prev.axesThrown + 1;
+      const levelDone = axesThrown >= level.axeCount;
+
+      return {
+        ...prev,
+        phase: levelDone ? 'levelComplete' : 'ready',
+        flyingAxe: null,
+        lastOutcome: 'stuck',
+        axesThrown,
+        hits,
+        stuckAxes,
+        apples,
+        applesCollectedThisRun,
+        gemsCollectedThisRun,
+        figurinesCollectedThisRun,
+        reward: levelDone
+          ? computeReward(
+              prev.levelIndex,
+              applesCollectedThisRun,
+              gemsCollectedThisRun,
+              figurinesCollectedThisRun,
+              prev.streak,
+              prev.save,
+            )
+          : null,
+      };
+    });
+  }, [getBoardAngleDeg]);
 
   // Zieht einen während des Fluges gepufferten Tap nach, sobald wieder geworfen werden darf.
   // Läuft zuverlässig erneut, weil die Phase dabei immer 'flying' -> 'ready' -> 'flying' wechselt.
@@ -468,6 +483,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
      *  sichtbar wird. */
     dailyReward: pendingDailyReward(state.save.lastDailyClaim, state.save.dailyStreak),
     throwAxe,
+    resolveThrow,
     restartRun,
     nextLevel,
     goToLevel,

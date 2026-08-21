@@ -1443,6 +1443,75 @@ sichtbar ist: das ist die nächste Stelle zum Ansetzen
 (`axe-fly-transform`-Endwert in `App.css` bzw. der `axe-land-wiggle`-Start-
 wert in `TargetBoard.css`).
 
+### Der ECHTE Mikro-Stopp kurz vor dem Einschlag: zwei unabhängige Uhren
+
+Klaus, direkt im Anschluss an den Radius-Fix oben ("Axt schwebt vor der
+Scheibe"): der eigentliche, wichtigere Ruckler war noch da – die Axt wirkt
+kurz VOR dem Einschlag, als bliebe sie kurz stehen, danach erst kommt der
+Treffer. Explizite Ansage: kein Workaround, keine zusätzliche Animation,
+Ursache finden statt kaschieren.
+
+**Analyse des kompletten Lebenszyklus eines Wurfs** (Input → Spawn → Flug →
+Kollisionsprüfung → Impact → Stuck) ergab: es gab tatsächlich ZWEI komplett
+unabhängige "Uhren", die beide dieselbe Dauer (`FLIGHT_DURATION_MS`, 190ms)
+repräsentieren sollten, aber NICHT garantiert im selben Moment ablaufen:
+
+1. Die CSS-Flug-Animation (`.axe-flying`, `axe-fly-position` +
+   `axe-fly-transform` in App.css) – läuft compositor-getrieben, bleibt exakt
+   im Takt, unabhängig davon, was der Haupt-Thread gerade tut.
+2. Ein `setTimeout(..., FLIGHT_DURATION_MS)` in `useAxeGame.ts`, der NACH
+   Ablauf den eigentlichen Treffer auswertet (Kollision prüfen, Axt als
+   steckend eintragen, Level-Fortschritt).
+
+Ein JS-`setTimeout` läuft auf dem Haupt-Thread und KANN gegenüber einer
+Compositor-Animation nachhinken (React-Re-Renders, andere Effekte, normale
+Timer-Ungenauigkeit – Browser garantieren nur "nicht früher", nie "exakt
+pünktlich"). Genau das war der Bug: die CSS-Animation war fertig und stand
+(dank `animation-fill-mode: forwards`) exakt am Ziel – aber das Spiel
+wartete noch auf den zweiten, unabhängigen Timer, bevor der Einschlag
+(Kollisionsprüfung, Späne-Burst, Board-Zucken, steckende Axt) überhaupt
+ausgelöst wurde. Die Axt war also in Wahrheit längst angekommen und stand
+nur scheinbar "kurz davor" – tatsächlich wartete das SPIEL auf sich selbst.
+Exakt die Fallart, vor der Klaus gewarnt hatte ("zwei Systeme kontrollieren
+gleichzeitig denselben Ablauf").
+
+**Fix – eine Uhr weniger, nicht eine weitere Animation:** `useAxeGame.ts`
+exportiert jetzt `resolveThrow()` (dieselbe reine Treffer-Auswertung wie
+vorher, nur nicht mehr in einen `setTimeout` verpackt). `App.tsx` ruft diese
+Funktion direkt aus dem `onAnimationEnd`-Event der `.axe-flying`-Animation
+auf – demselben Ereignis, das der Browser GENAU in dem Moment feuert, in dem
+die Animation tatsächlich (compositor-seitig) fertig ist. Keine zweite,
+unabhängig tickende Uhr mehr; nur noch EIN Ereignis entscheidet, wann der
+Einschlag passiert – und das ist dasselbe Ereignis, das auch visuell das
+Ende des Flugs markiert. `.axe-flying` trägt zwei gleichzeitige Animationen
+(Position + Transform), `animationend` feuert deshalb zweimal – im Handler
+auf `event.animationName === 'axe-fly-position'` gefiltert, damit
+`resolveThrow` nicht doppelt läuft (wäre wegen des reinen Updaters ohnehin
+harmlos, aber unnötig).
+Nebeneffekt, der die Fairness sogar verbessert: der Trefferwinkel
+(`computeBoardLocalAngle(getBoardAngleDeg())`) wird jetzt exakt im Moment
+des sichtbaren Einschlags gelesen statt irgendwann später, wenn der
+JS-Timer zufällig durchkam – die Scheibe könnte sich in der Zwischenzeit
+ja weitergedreht haben.
+
+**Verifiziert, mit einer offenen Einschränkung:** `tsc -b` sauber. Die
+automatisierte Browser-Umgebung komponiert hier keine Frames (dokumentiertes
+rAF-Freeze-Problem, siehe eigener Abschnitt weiter unten) – dadurch läuft in
+dieser Umgebung auch KEINE echte CSS-Animation zu Ende, `animationend`
+feuert hier nie von selbst (mit der alten `setTimeout`-Fassung hätte das
+Spiel trotzdem "funktioniert", weil ein JS-Timer nicht auf Compositing
+angewiesen ist – genau DAS war ja das Problem). Zur Verifizierung deshalb
+das native `animationend`-Ereignis manuell simuliert
+(`element.dispatchEvent(new AnimationEvent('animationend', {animationName:
+'axe-fly-position'}))`): löst zuverlässig `resolveThrow` aus (Treffer → neue
+steckende Axt, Kollision → Game-Over-Fenster), das FALSCHE Animation-Name
+(`axe-fly-transform`) wird korrekt ignoriert (kein doppeltes Auslösen), keine
+Konsolenfehler. Die eigentliche Kernfrage – "verschwindet der optische
+Mikro-Stopp auf einem echten Gerät" – lässt sich damit nur indirekt
+(Architektur-Ebene) bestätigen, nicht durch echtes Zeitlupen-Ansehen. Bitte
+am echten Handy gegenprüfen: mehrere normale Würfe, schnelle Scheiben-
+Drehung, verschiedene Trefferwinkel, schnelle Serienwürfe.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
@@ -1808,6 +1877,19 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Echter Mikro-Stopp vor dem Einschlag behoben: zwei unabhängige Uhren
+      zu einer gemacht** (Details siehe eigener Abschnitt oben, 2026-08-21):
+      die Treffer-Auswertung lief über einen eigenen `setTimeout`, parallel
+      zur CSS-Flug-Animation – ein JS-Timer kann gegenüber einer Compositor-
+      Animation nachhinken, die Axt stand dann fertig am Ziel und wartete auf
+      das Spiel, nicht umgekehrt. Jetzt löst `App.tsx` die Treffer-Auswertung
+      (`useAxeGame.ts`, neu `resolveThrow()`) direkt aus dem
+      `onAnimationEnd`-Event der Flug-Animation aus – nur noch EIN Ereignis
+      entscheidet über den Einschlags-Zeitpunkt. Per manuell simuliertem
+      `animationend`-Event verifiziert (Treffer UND Kollision lösen korrekt
+      aus, falsche Animation wird korrekt ignoriert); echte Zeitlupen-
+      Bestätigung am Gerät steht noch aus (Browser-Pane komponiert hier keine
+      echten Animationen, siehe rAF-Freeze-Abschnitt).
 - [x] **Axt-Treffer: 6px-Positionssprung beim Übergang Flug→Steckend behoben**
       (Details siehe eigener Abschnitt oben, 2026-08-21): die fliegende Axt
       zielte schon länger auf Radius 114 (Steck-Radius minus Einstechtiefe),
