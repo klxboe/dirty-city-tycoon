@@ -2393,6 +2393,393 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
 - Idee für später: Level-Auswahl statt nur "weiter" – die Bestmarke ist da, ein
   Sprung in einen früheren Block wäre wenig Aufwand.
 
+## Gemini-Prompts für Weltbosse & Shop-Items (Ausbaustufe 2026-08-21)
+
+Fertige, direkt kopierbare Prompts für die mit Gemini zu erzeugenden Bilder.
+Alle nach demselben Artstyle wie die bestehenden Assets ausgerichtet (per
+Bild-Inspektion bestätigt: `axe-cosmic.png`, `board-volcano.png`) – flaches
+Cartoon-/Vektor-Cel-Shading, kräftige durchgehende dunkle Konturlinien,
+2-3-stufige Flächen-Schattierung statt fotorealistischer Verläufe, ein
+schmales helle Glanzlicht als Akzent, sehr gesättigte Farben, Mobile-Game-
+Ästhetik. **Technische Vorgaben für JEDES Bild:** komplett transparenter
+Hintergrund (PNG mit Alpha-Kanal), keine Schrift/Zahlen/Logos/UI-Elemente,
+kein Schlagschatten auf einer Fläche, kein Wasserzeichen.
+
+### Asset-Spezifikation (vorab, siehe Punkt 11 der Anfrage)
+
+- **Äxte**: Hochformat, Seitenverhältnis 2:3 (z.B. 900×1350px), Axt senkrecht
+  im Bild, Kopf nach oben, zentriert. Passt zur bestehenden Bounding-Box in
+  `Axe.tsx` (`size × size*1.5`) – WICHTIG: nichts darf am Rand abgeschnitten
+  werden, ausreichend Rand um die Silhouette lassen.
+- **Zielscheiben**: Quadratisch, 1:1 (z.B. 1024×1024px), Scheibe exakt
+  kreisrund und zentriert, direkt von vorne (keine Perspektive/kein Kippen –
+  die Scheibe dreht sich im Spiel um die Bildmitte, ein gekipptes Bild würde
+  sichtbar eiern).
+- **Weltbosse**: ebenfalls quadratisch 1:1, da sie als Zielscheiben-Textur
+  während des Kampfes verwendet werden (genau wie die Boss-Früchte/Helden-
+  Bosse das schon tun) – die Kreatur/das Gesicht füllt die komplett runde
+  Fläche aus, siehe Prompts unten.
+
+### Weltbosse
+
+**Weltboss 1 – Sandkolossos (Wüste, Level 21)**
+```
+Flaches Cartoon-Vektor-Artwork für ein mobiles Arcade-Handyspiel: das Gesicht
+eines uralten Wüsten-Golems, komplett aus rissigem, sandfarbenem Sandstein
+gemeißelt, füllt eine perfekt kreisrunde Fläche aus (wie eine Zielscheibe von
+vorne fotografiert, keine Perspektive, kein Kippen). Breite, grob gehauene
+Gesichtszüge mit zwei tief liegenden, glühend orangefarbenen Rissen als
+Augen, die wie Lava-Adern das gesamte Gesicht durchziehen und sich zur Mitte
+hin zu einem hellen, pulsierenden Kern bündeln. Oberfläche aus grob
+strukturiertem Sandstein mit dunklen Rissen (wie getrocknete Wüstenerde),
+kleine goldene Ornament-Verzierungen (Hieroglyphen-artige Muster, aber ohne
+lesbare Schrift) am äußeren Rand. Beleuchtung: warmes, hartes Wüstenlicht von
+oben, kräftige Schlagschatten in den Rissen, sonst flaches Cel-Shading in
+2-3 Sandton-Stufen (helles Beige, mittleres Ocker, dunkles Braun) plus
+Orange-Glut in den Rissen. Kräftige durchgehende dunkle Konturlinie um die
+gesamte Silhouette. Wirkt bedrohlich und uralt, wie ein Wächter, der seit
+Jahrtausenden wartet. Komplett transparenter Hintergrund, keine Schrift,
+keine Zahlen, kein Logo, kein Wasserzeichen, kein Schlagschatten außerhalb
+der Kreisform. Format: perfektes Quadrat, Kreis exakt zentriert und
+randfüllend.
+```
+
+**Weltboss 2 – Frostwardin (Eis, Level 41)**
+```
+Flaches Cartoon-Vektor-Artwork für ein mobiles Arcade-Handyspiel: das
+Gesicht eines eisigen Wächter-Geistes aus reinem, blau schimmerndem
+Gletschereis, füllt eine perfekt kreisrunde Fläche aus (wie eine Zielscheibe
+von vorne fotografiert, keine Perspektive, kein Kippen). Scharfe, kristalline
+Gesichtszüge wie aus Eisplatten zusammengesetzt, zwei leuchtend weiß-blaue
+Augen ohne Pupillen, feine Frost-Risse ziehen sich vom Zentrum sternförmig
+nach außen. Oberfläche aus glattem, halbtransparentem Eis mit eingefrorenen
+kleinen Luftblasen, am äußeren Rand wachsen kurze, spitze Eiszapfen nach
+innen. Beleuchtung: kaltes, klares Licht von oben, starke helle Reflexe auf
+den Eisflächen, Cel-Shading in 2-3 Blauton-Stufen (fast weiß, helles
+Eisblau, tiefes Blaugrau) mit hellblauem Glühen im Zentrum. Kräftige
+durchgehende dunkle Konturlinie um die gesamte Silhouette. Wirkt kalt,
+unnahbar und mächtig. Komplett transparenter Hintergrund, keine Schrift,
+keine Zahlen, kein Logo, kein Wasserzeichen, kein Schlagschatten außerhalb
+der Kreisform. Format: perfektes Quadrat, Kreis exakt zentriert und
+randfüllend.
+```
+
+**Weltboss 3 – Aschenschlund (Vulkan, Level 61)**
+```
+Flaches Cartoon-Vektor-Artwork für ein mobiles Arcade-Handyspiel: der
+klaffende, kreisrunde Krater-Schlund eines zornigen Vulkan-Dämons, direkt
+von oben/vorne betrachtet, füllt die komplett runde Bildfläche aus (wie eine
+Zielscheibe von vorne fotografiert, keine Perspektive, kein Kippen).
+Konzentrische Ringe aus verkrusteter schwarzer Lavagestein-Haut um einen
+gleißend hellorangen, glühenden Kern in der Mitte, feine Risse im
+Krustengestein, aus denen an mehreren Stellen dünne Lava-Adern nach außen
+laufen. Vereinzelt kleine, grimmig blickende Dämonen-Augenpaare (glühend
+gelb-orange) zwischen den Rissen am äußeren Rand angedeutet. Beleuchtung:
+starkes inneres Glühen als Hauptlichtquelle, dunkle, fast schwarze
+Außenbereiche, Cel-Shading in 2-3 Stufen (tiefschwarz, dunkelgrau-braun,
+glühendes Orange-Gelb im Zentrum). Kräftige durchgehende dunkle
+Konturlinie um die gesamte Silhouette. Wirkt gefährlich, kurz vor dem
+Ausbruch. Komplett transparenter Hintergrund, keine Schrift, keine Zahlen,
+kein Logo, kein Wasserzeichen, kein Schlagschatten außerhalb der Kreisform.
+Format: perfektes Quadrat, Kreis exakt zentriert und randfüllend.
+```
+
+**Weltboss 4 – Leerenwächter (Kosmos, Level 81)**
+```
+Flaches Cartoon-Vektor-Artwork für ein mobiles Arcade-Handyspiel: das
+maskenhafte Gesicht eines kosmischen Wächter-Wesens aus dunkler
+Nebel-Materie und Sternenlicht, füllt eine perfekt kreisrunde Fläche aus
+(wie eine Zielscheibe von vorne fotografiert, keine Perspektive, kein
+Kippen). Tiefviolett-schwarze Gesichtsfläche wie ein Ausschnitt Nachthimmel,
+durchzogen von feinen, hell leuchtenden Sternpunkten, zwei große, leere,
+hell strahlende Augen ohne Pupillen als Zentrum, um die herum sich Ringe aus
+funkelndem Sternenstaub ziehen (wie Saturnringe, aber als flache Ornamente).
+Oberfläche wirkt wie samtige Nebel-Materie, keine harten Kanten. Beleuchtung:
+das Gesicht selbst leuchtet von innen (Augen und Sternpunkte als
+Lichtquellen), Cel-Shading in 2-3 Violett-/Blauton-Stufen (tiefes
+Schwarzviolett, mittleres Lila, helles Sternweiß) mit hellen Glanzpunkten.
+Kräftige durchgehende dunkle Konturlinie um die gesamte Silhouette. Wirkt
+geheimnisvoll, uralt, außerirdisch ruhig statt aggressiv. Komplett
+transparenter Hintergrund, keine Schrift, keine Zahlen, kein Logo, kein
+Wasserzeichen, kein Schlagschatten außerhalb der Kreisform. Format:
+perfektes Quadrat, Kreis exakt zentriert und randfüllend.
+```
+
+**Weltboss 5 – Turmbrecher (Heldenstadt, Level 101)**
+```
+Flaches Cartoon-Vektor-Artwork für ein mobiles Arcade-Handyspiel: die
+kreisrunde Frontplatte eines riesigen, feindseligen Häuserkampf-Roboters
+(eigenständiges, unbenanntes Großstadt-Gegner-Design, KEINE bestehende
+Comic-/Film-Figur), füllt die komplett runde Bildfläche aus (wie eine
+Zielscheibe von vorne fotografiert, keine Perspektive, kein Kippen).
+Massive graue Panzerplatten in konzentrischen Ringsegmenten angeordnet, im
+Zentrum ein einzelnes großes, kalt leuchtend rotes Scanner-Auge/Visier,
+feine rote Energie-Linien laufen vom Zentrum radial zwischen den
+Panzerplatten nach außen (wie Schaltkreise). Sichtbare Nietenreihen und
+Abnutzungsspuren (Kratzer, kleine Rostflecken) auf dem Metall. Beleuchtung:
+kaltes, hartes Kunstlicht von oben, das rote Zentrum als einzige warme
+Lichtquelle, Cel-Shading in 2-3 Grauton-Stufen (helles Stahlgrau, mittleres
+Blaugrau, dunkles Anthrazit) plus kräftigem Rot im Zentrum. Kräftige
+durchgehende dunkle Konturlinie um die gesamte Silhouette. Wirkt
+industriell, kalt, unaufhaltsam. Komplett transparenter Hintergrund, keine
+Schrift, keine Zahlen, kein Logo, kein Wasserzeichen, kein Schlagschatten
+außerhalb der Kreisform. Format: perfektes Quadrat, Kreis exakt zentriert
+und randfüllend.
+```
+
+### Shop-Äxte (10 neue, siehe `AXE_SKINS`/`AXE_STYLES` in `shop.ts`)
+
+Gemeinsame Basis für alle zehn (jeweils nur Material/Farbe/Deko variiert):
+symmetrische Tomahawk-Axt-Silhouette (breiter Klingenkopf mit kleinem
+Hammer-/Dornsporn auf der Rückseite, schlanker Griff mit sichtbarer
+Wicklung nahe dem unteren Ende, kleiner runder Knauf/Edelstein ganz unten),
+senkrecht im Bild, Klinge zeigt nach oben, zentriert, reiner Objekt-Shot
+ohne Hand/Umgebung.
+
+**1. Kiefernhieb** (`axe-oldwood`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette (Klingenkopf mit kleinem Hammersporn auf der
+Rückseite, umwickelter Griff, kleiner Holzknauf unten), senkrecht mit
+Klinge nach oben. Schlichte, helle Klinge aus poliertem Silberstahl, Griff
+aus hellem, frisch gehobeltem Kiefernholz mit sichtbarer Maserung, dunkle
+Lederwicklung. Cel-Shading, kräftige dunkle Konturlinie, helles
+Glanzlicht entlang der Schneide. Komplett transparenter Hintergrund, keine
+Schrift, kein Logo. Hochformat 2:3.
+```
+
+**2. Schwarzstahl** (`axe-black`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Mattschwarz brünierte
+Stahlklinge (verschluckt Licht, nur ein schmaler heller Kantenglanz),
+Griff aus dunkel gebeiztem Holz, schwarze Lederwicklung, winziger
+dunkelgrauer Knauf. Cel-Shading, kräftige dunkle Konturlinie, dezentes
+kaltes Glanzlicht entlang der Schneide. Komplett transparenter
+Hintergrund, keine Schrift, kein Logo. Hochformat 2:3.
+```
+
+**3. Goldbeil** (`axe-gold`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus poliertem
+Gold mit geprägten Ornament-Linien (keine lesbare Schrift), Griff mit
+goldener Zierwicklung auf dunklem Holz, kleiner gelber Edelstein als
+Knauf. Cel-Shading, kräftige dunkle Konturlinie, starkes warmes
+Glanzlicht entlang der Schneide, wirkt kostbar und schwer. Komplett
+transparenter Hintergrund, keine Schrift, kein Logo. Hochformat 2:3.
+```
+
+**4. Feuerbeil** (`axe-fire`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus dunkel
+verbranntem Metall mit glühend orangeroten Rissen entlang der Schneide,
+als würde die Glut nie ganz erlöschen, Griff aus rußgeschwärztem Holz mit
+dunkelroter Wicklung. Cel-Shading in Schwarz/Dunkelrot/glühendem Orange,
+kräftige dunkle Konturlinie, die Glut selbst als Lichtquelle. Komplett
+transparenter Hintergrund, keine Schrift, kein Logo. Hochformat 2:3.
+```
+
+**5. Frostbeil** (`axe-frostaxe`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus klarem,
+bläulichem Eis mit feinen weißen Frostmustern an der Oberfläche, Griff aus
+raureif-bedecktem dunklem Holz mit hellblauer Wicklung. Cel-Shading in
+Weiß/Hellblau/Tiefblau, kräftige dunkle Konturlinie, kalter heller
+Glanzstreifen entlang der Schneide. Komplett transparenter Hintergrund,
+keine Schrift, kein Logo. Hochformat 2:3.
+```
+
+**6. Kristallbeil** (`axe-crystalaxe`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus
+gewachsenem violettem Kristall mit facettierten, leicht durchscheinenden
+Flächen statt einer glatten Metalloberfläche, Griff aus hellem Holz mit
+lila-weißer Wicklung, kleiner Amethyst als Knauf. Cel-Shading in
+Weiß/Helllila/Tiefviolett, kräftige dunkle Konturlinie, das Licht bricht
+sich sichtbar in den Facetten. Komplett transparenter Hintergrund, keine
+Schrift, kein Logo. Hochformat 2:3.
+```
+
+**7. Wikingerbeil** (`axe-viking`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus schlicht
+geschmiedetem grauem Eisen mit sichtbaren Hammerschlag-Spuren, in die
+Klinge geätzte einfache geometrische Knotenmuster (keine lesbare Schrift/
+Runen als Text), Griff aus dunklem Holz mit brauner Lederwicklung. Cel-
+Shading in Grau/Braun, kräftige dunkle Konturlinie, gedämpfter metallischer
+Glanz statt poliertem Hochglanz – wirkt uralt und robust statt neu.
+Komplett transparenter Hintergrund, keine Schrift, kein Logo. Hochformat
+2:3.
+```
+
+**8. Dämonenbeil** (`axe-demon`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus tiefschwarzem
+Obsidian-artigem Material mit pulsierenden blutroten Adern, die sich wie
+Risse durch die Fläche ziehen, Griff aus fast schwarzem Horn/Knochen-Material
+mit dunkelroter Wicklung. Cel-Shading in Schwarz/Blutrot, kräftige dunkle
+Konturlinie, unheimlicher roter Glanz statt eines normalen Glanzlichts.
+Komplett transparenter Hintergrund, keine Schrift, kein Logo. Hochformat
+2:3.
+```
+
+**9. Blitzbeil** (`axe-lightning`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus hellem,
+fast weißem Metall mit sichtbaren kleinen Blitz-Verästelungen (dünne helle
+Risslinien) über die Fläche, die wie eingefrorene Elektrizität wirken,
+Griff aus dunkelblauem Metall/Holz-Mix mit gelber Wicklung. Cel-Shading in
+Weiß/Gelb/Elektroblau, kräftige dunkle Konturlinie, greller weiß-gelber
+Glanzpunkt an der Schneidenspitze. Komplett transparenter Hintergrund,
+keine Schrift, kein Logo. Hochformat 2:3.
+```
+
+**10. Neonbeil** (`axe-neonaxe`)
+```
+Flaches Cartoon-Vektor-Artwork einer Wurf-Axt für ein mobiles Handyspiel,
+Tomahawk-Silhouette, senkrecht mit Klinge nach oben. Klinge aus glänzend
+weißem Material mit auffälligen Neon-Pink- und Cyan-Farbverläufen entlang
+der Kanten (wie beleuchtete Neonröhren-Umrisse), Griff dunkel mit
+neonpinker Wicklung. Cel-Shading, sehr kräftige gesättigte Neonfarben statt
+gedeckter Töne, kräftige dunkle Konturlinie, die Neon-Kanten wirken
+selbstleuchtend. Komplett transparenter Hintergrund, keine Schrift, kein
+Logo. Hochformat 2:3.
+```
+
+### Shop-Zielscheiben (10 neue, siehe `BOARD_SKINS`/`BOARD_STYLES` in `shop.ts`)
+
+Gemeinsame Basis für alle zehn: runde Zielscheibe direkt von vorne
+(keine Perspektive), radiale Speichen-Linien, mehrere konzentrische Ringe
+um einen leuchtenden Kern in der Mitte, dicker Außenrand, quadratisches
+Bild mit der Scheibe zentriert und randfüllend.
+
+**11. Kiefernscheibe** (`board-oldwood`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Holzscheibe für ein
+mobiles Handyspiel, direkt von vorne, radiale Speichen-Linien und
+konzentrische Ringe, leuchtender heller Kern. Helles, frisches
+Kiefernholz mit sichtbarer heller Maserung, dünner hellbrauner Rand. Cel-
+Shading in Beige/Hellbraun, kräftige dunkle Konturlinie, dezentes warmes
+Glanzlicht oben links. Komplett transparenter Hintergrund, keine Schrift,
+keine Zahlen, kein Logo. Quadratisch, Scheibe zentriert und randfüllend.
+```
+
+**12. Dunkelscheibe** (`board-dark`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Holzscheibe für ein
+mobiles Handyspiel, direkt von vorne, radiale Speichen-Linien und
+konzentrische Ringe, leuchtender Kern. Fast schwarzes, rußgeschwärztes
+Holz, nur der Kern glimmt schwach gräulich-blau. Cel-Shading in
+Anthrazit/Schwarz, kräftige dunkle Konturlinie, minimaler kalter
+Glanzpunkt. Komplett transparenter Hintergrund, keine Schrift, keine
+Zahlen, kein Logo. Quadratisch, Scheibe zentriert und randfüllend.
+```
+
+**13. Frostscheibe** (`board-frost`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: dicke Raureif-Schicht über
+bläulichem Eis, feine Frostkristalle am Rand, die nach innen wachsen.
+Cel-Shading in Weiß/Hellblau/Tiefblau, kräftige dunkle Konturlinie,
+kalter heller Glanz im Zentrum. Komplett transparenter Hintergrund, keine
+Schrift, keine Zahlen, kein Logo. Quadratisch, Scheibe zentriert und
+randfüllend.
+```
+
+**14. Quarzscheibe** (`board-crystalboard`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: gewachsener heller violetter Quarz
+mit facettierten, leicht durchscheinenden Segmenten zwischen den
+Speichen. Cel-Shading in Weiß/Helllila/Tiefviolett, kräftige dunkle
+Konturlinie, Licht bricht sich sichtbar in den Facetten. Komplett
+transparenter Hintergrund, keine Schrift, keine Zahlen, kein Logo.
+Quadratisch, Scheibe zentriert und randfüllend.
+```
+
+**15. Magische Scheibe** (`board-magic`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: eine changierende magenta-violette
+Fläche mit sanft geschwungenen, leicht leuchtenden Ornament-Linien
+zwischen den Speichen (keine lesbare Schrift), als würde sich die
+Maserung ständig verändern. Cel-Shading in Pink/Violett, kräftige dunkle
+Konturlinie, magisches helles Glühen im Zentrum. Komplett transparenter
+Hintergrund, keine Schrift, keine Zahlen, kein Logo. Quadratisch, Scheibe
+zentriert und randfüllend.
+```
+
+**16. Aschescheibe** (`board-ash`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: erkaltete graue Vulkanasche mit
+feinen dunklen Rissen, aus denen ein schwacher oranger Schimmer dringt
+(innen noch warm). Cel-Shading in Grau/Dunkelbraun mit orangem Glühen,
+kräftige dunkle Konturlinie. Komplett transparenter Hintergrund, keine
+Schrift, keine Zahlen, kein Logo. Quadratisch, Scheibe zentriert und
+randfüllend.
+```
+
+**17. Verfluchte Scheibe** (`board-cursed`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: sumpfig-grünes, leicht schleimig
+wirkendes Material mit unregelmäßigen dunklen Flecken, ein unheimliches
+giftgrünes Glühen im Zentrum. Cel-Shading in Grün/Dunkelgrün/Schwarz,
+kräftige dunkle Konturlinie, wirkt lebendig statt tot. Komplett
+transparenter Hintergrund, keine Schrift, keine Zahlen, kein Logo.
+Quadratisch, Scheibe zentriert und randfüllend.
+```
+
+**18. Goldscheibe** (`board-golden`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: poliertes Gold mit geprägten
+Ornament-Mustern zwischen den Speichen (keine lesbare Schrift). Cel-
+Shading in Gold/Hellgelb/Bernstein, kräftige dunkle Konturlinie, starker
+warmer Glanz, wirkt kostbar und schwer. Komplett transparenter
+Hintergrund, keine Schrift, keine Zahlen, kein Logo. Quadratisch, Scheibe
+zentriert und randfüllend.
+```
+
+**19. Technikscheibe** (`board-tech`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: bläulich-graue Metallplatten mit
+feinen hellblau leuchtenden Schaltkreis-Linien zwischen den Speichen
+(keine lesbare Schrift), Kern wie ein aktiver Prozessor-Kern. Cel-Shading
+in Blaugrau/Hellblau, kräftige dunkle Konturlinie, technisches kaltes
+Glühen im Zentrum. Komplett transparenter Hintergrund, keine Schrift,
+keine Zahlen, kein Logo. Quadratisch, Scheibe zentriert und randfüllend.
+```
+
+**20. Fantasy-Scheibe** (`board-fantasyboss`)
+```
+Flaches Cartoon-Vektor-Artwork einer runden Ziel-Scheibe für ein mobiles
+Handyspiel, direkt von vorne, radiale Speichen-Linien und konzentrische
+Ringe, leuchtender Kern. Statt Holz: dramatische Mischung aus warmem
+Orange und tiefem Violett zwischen den Speichen, wie ein Ausschnitt aus
+einer Fantasy-Bosskampf-Arena (Lava trifft Magie), kleine Ornament-Details
+am Rand. Cel-Shading in Orange/Violett, kräftige dunkle Konturlinie,
+starkes dramatisches Glühen im Zentrum. Komplett transparenter
+Hintergrund, keine Schrift, keine Zahlen, kein Logo. Quadratisch, Scheibe
+zentriert und randfüllend.
+```
+
 ## Zusammenarbeits-Regeln (siehe auch Anleitung im Chat)
 
 - Immer zuerst `git pull`, bevor man anfängt zu arbeiten.
