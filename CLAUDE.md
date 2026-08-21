@@ -1598,6 +1598,37 @@ Compositing) – bitte am Gerät bestätigen, ob 140ms "schnell, direkt, extrem
 smooth" trifft oder ob nachjustiert werden muss (einzige Stellschraube:
 `FLIGHT_DURATION_MS` in `constants.ts`).
 
+### Axt kurz "falsch herum" ganz am Anfang des Wurfs
+
+Klaus, mit expliziter Ansage "nur die Anfangsrotation korrigieren, NICHTS an
+Fluggeschwindigkeit/-bahn/Kollision/Impact ändern – das Timing ist jetzt gut."
+
+**Analyse:** `axe-fly-transform` (App.css) hatte einen Zwischenwert bei 12%:
+`0% rotate(0deg) → 12% rotate(70deg) → 100% rotate(190deg)`. Bei den
+aktuellen 140ms Flugzeit liegen die ersten 12% bei nur noch ~17ms – die Axt
+sprang in dieser winzigen Zeitspanne von 0° auf 70°, mehr als 4× so schnell
+wie die restliche Drehung bis 190° über die verbleibenden 88% der Flugzeit.
+Das las sich wie ein kurzer, falscher Ausschlag direkt beim Abschuss, bevor
+die eigentliche, gleichmäßigere Drehung übernahm – keine zwei konkurrierenden
+Rotations-Systeme (es gibt nur diese eine Keyframe-Animation für die
+Flug-Rotation), sondern ein rein gestalterischer Zwischenwert, der bei der
+jetzt kürzeren Flugzeit unproportional schnell wirkte.
+**Fix:** NUR der 12%-Rotationswert von 70° auf 25° gesenkt (nah an einer
+linear durchgezogenen Kurve – 12% von 190° wären rechnerisch ~23°). `scale()`
+an allen drei Stopps, der 0%- und 100%-Wert sowie alle Timings/Prozente
+bleiben exakt unverändert. Betrifft ausschließlich `axe-fly-transform`
+(Rotation/Squash) – `axe-fly-position` (Flugbahn/-geschwindigkeit),
+`resolveThrow()` (Kollision/Impact) und `AXE_EMBED_DEPTH_PX` (Einstecktiefe)
+komplett unangetastet.
+Verifiziert: `tsc -b` sauber, `git diff --stat` zeigt nur `App.css`
+geändert, die geladene `axe-fly-transform`-Regel im Browser bestätigt exakt
+`0%→rotate(0deg)`, `12%→rotate(25deg)`, `100%→rotate(190deg)`. Ein
+kompletter Wurf (Flug → simuliertes `animationend` → Auflösung) läuft
+weiterhin fehlerfrei durch. Das eigentliche visuelle Ergebnis (wirkt der
+Start jetzt sauber statt "kurz verdreht") lässt sich wie immer nicht in der
+automatisierten Umgebung beobachten (kein echtes Compositing) – bitte am
+Gerät gegenprüfen.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
@@ -1963,6 +1994,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Axt kurz "falsch herum" am Wurf-Start behoben** (Details siehe
+      eigener Abschnitt oben, 2026-08-21): `axe-fly-transform`-Zwischenwert
+      bei 12% von 70° auf 25° gesenkt (nah an linearer Kurve) – bei den
+      jetzt kürzeren 140ms Flugzeit sprang die Axt in den ersten ~17ms
+      unproportional schnell auf 70°. NUR dieser eine Rotationswert
+      geändert, Flugbahn/-geschwindigkeit/Kollision/Impact/Einstecktiefe
+      komplett unangetastet (per `git diff --stat` bestätigt: nur App.css).
 - [x] **Schwierigkeitsgrad-Auswahl komplett entfernt, immer "Schwer"**
       (Details siehe Startbildschirm-Abschnitt oben, 2026-08-21): Klaus wollte
       keine Wahl mehr in den Einstellungen – automatisch immer die härteste
