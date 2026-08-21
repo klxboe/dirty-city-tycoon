@@ -643,7 +643,7 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           rescueAvailable={!game.rescueUsedThisRun}
           onWatchVideo={() => setVideoRescueOpen(true)}
-          onBackToMenu={() => setScreen('start')}
+          onPlayAgain={game.restartRun}
         />
       )}
 

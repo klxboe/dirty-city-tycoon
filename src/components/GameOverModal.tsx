@@ -16,8 +16,16 @@ interface GameOverModalProps {
   rescueAvailable: boolean;
   /** Öffnet den (simulierten) Rettungs-Video-Flow, siehe VideoRescueModal.tsx. */
   onWatchVideo: () => void;
-  /** Zurück zum Startbildschirm, ohne einen neuen Versuch zu starten. */
-  onBackToMenu: () => void;
+  /**
+   * Startet direkt einen neuen Lauf bei Level 1 – OHNE Umweg über den
+   * Startbildschirm (Klaus: "riesen Fehler, wenn man kein Video anschaut, startet
+   * man wieder bei Level 1, mach einfach so 'Spielen' oder sowas" – gemeint war
+   * nicht ein Bug, sondern dass der bisherige Button "Zurück zum Menü" einen
+   * unnötigen Extra-Tap über den Startbildschirm verlangte, bevor man wirklich
+   * wieder spielen konnte). Ruft schlicht `restartRun()` auf, während der
+   * Bildschirm bereits auf "game" steht – kein Screen-Wechsel nötig.
+   */
+  onPlayAgain: () => void;
 }
 
 const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
@@ -29,8 +37,9 @@ const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
  *
  * Bewusst auf GENAU zwei mögliche Buttons reduziert (Klaus: "extrem klare UI, keine
  * dritten Buttons") – vorher gab es zusätzlich "Neuer Versuch" und "Werkstatt öffnen".
- * Ein Neustart läuft jetzt ausschließlich über "Zurück zum Menü" -> Weltkarte/Start,
- * die Werkstatt ist über den Münzstand im HUD ohnehin einen Tap entfernt.
+ * "Nochmal spielen" startet DIREKT einen neuen Lauf bei Level 1 (kein Umweg über den
+ * Startbildschirm mehr – siehe `onPlayAgain`), die Werkstatt ist über den Münzstand im
+ * HUD ohnehin einen Tap entfernt.
  */
 export function GameOverModal({
   level,
@@ -40,7 +49,7 @@ export function GameOverModal({
   axeSkin,
   rescueAvailable,
   onWatchVideo,
-  onBackToMenu,
+  onPlayAgain,
 }: GameOverModalProps) {
   return (
     <div className="modal-backdrop modal-backdrop--danger">
@@ -92,8 +101,8 @@ export function GameOverModal({
             📺 Fortschritt mit Video
           </button>
         )}
-        <button className="modal-card__button modal-card__button--secondary" onClick={onBackToMenu}>
-          Zurück zum Menü
+        <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>
+          Nochmal spielen
         </button>
       </div>
     </div>

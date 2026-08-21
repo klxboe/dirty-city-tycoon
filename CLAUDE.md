@@ -1858,6 +1858,25 @@ Scheibe zeigt jetzt korrekt die eigene Sandkolossos-Farbgebung
 (`--board-rim` etc. im Inline-Style nachgeprüft) statt des ausgerüsteten
 Designs.
 
+### Game Over ohne Rettung: direkt "Nochmal spielen" statt Umweg über den Startbildschirm
+
+Klaus, direkt nach dem vorigen Batch: "riesen Fehler, wenn man verliert und
+kein Video anschaut, startet man wieder bei Level 1, mach einfach so
+'SPIELEN' oder sowas." Kein echter Bug – das Highscore-Prinzip (Game Over
+ohne Rettung wirft auf Level 1 zurück) ist seit Langem Absicht. Gemeint war:
+der bisherige Button "Zurück zum Menü" brauchte einen unnötigen Extra-Tap
+über den Startbildschirm, bevor man wirklich wieder spielen konnte.
+
+**Fix:** `GameOverModal.tsx`s zweiter Button heißt jetzt "Nochmal spielen"
+und ruft direkt `game.restartRun()` auf (`onPlayAgain`-Prop, umbenannt von
+`onBackToMenu`) – KEIN `setScreen('start')` mehr nötig, weil der Bildschirm
+beim Game Over ohnehin schon auf `'game'` steht. Ein Tap, sofort zurück im
+Spiel bei Level 1.
+
+Verifiziert per echtem Kollisions-Test: nach "Nochmal spielen" zeigt die
+Bühne sofort "Level 1" mit frischer Scheibe, kein Zwischenstopp am
+Startbildschirm, keine Konsolenfehler.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
