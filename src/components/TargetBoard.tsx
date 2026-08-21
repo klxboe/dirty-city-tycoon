@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
-import { HIT_STOP_MS } from '../game/constants';
+import { BASE_SPEED_DEG_PER_SEC, HIT_STOP_MS, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
 import { boardStyleVars } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
@@ -71,9 +71,30 @@ interface FallingApple {
   figurine: boolean;
 }
 
-/** Wie lange ein voller Puls-Zyklus dauert (Sek.) bzw. wie lange bis zum Richtungswechsel. */
+/**
+ * Wie lange ein voller Puls-Zyklus dauert (Sek.) bzw. wie lange bis zum Richtungswechsel –
+ * bei Level 1-Tempo (`BASE_SPEED_DEG_PER_SEC`). Bei höherem Tempo wird daraus linear
+ * interpoliert bis zu den `..._AT_MAX`-Werten bei `MAX_SPEED_DEG_PER_SEC` – eine schnell
+ * drehende Scheibe pulsiert/wechselt also automatisch auch öfter, nicht nur schneller.
+ * Genau das war Klaus' Wunsch nach mehr Härte in höheren Leveln ("Richtungswechsel,
+ * schneller langsamer"): bisher blieben BEIDE Perioden über alle Level hinweg fest, nur
+ * die Grundgeschwindigkeit stieg – die Muster selbst fühlten sich dadurch bei Level 100
+ * genauso "gemächlich" an wie bei Level 10, nur eben schneller abgespult.
+ */
 const PULSE_PERIOD_SEC = 2.6;
+const PULSE_PERIOD_AT_MAX_SEC = 1.0;
 const REVERSE_PERIOD_SEC = 3.4;
+const REVERSE_PERIOD_AT_MAX_SEC = 1.3;
+
+/** Linear zwischen dem Level-1-Wert und dem `..._AT_MAX`-Wert interpoliert, je nach
+ *  aktuellem Grundtempo relativ zur Spanne aus BASE_SPEED_DEG_PER_SEC..MAX_SPEED_DEG_PER_SEC. */
+function periodFor(baseSpeed: number, atRef: number, atMax: number): number {
+  const t = Math.min(
+    1,
+    Math.max(0, (Math.abs(baseSpeed) - BASE_SPEED_DEG_PER_SEC) / (MAX_SPEED_DEG_PER_SEC - BASE_SPEED_DEG_PER_SEC)),
+  );
+  return atRef + (atMax - atRef) * t;
+}
 
 /**
  * Momentane Winkelgeschwindigkeit je nach Dreh-Muster.
@@ -83,15 +104,19 @@ const REVERSE_PERIOD_SEC = 3.4;
  * Scheibe kurz still, landen zwei schnell hintereinander geworfene Äxte an derselben
  * Stelle – mit der Game-Over-Regel wäre das ein unfairer Instant-Tod. Deshalb liegt der
  * Puls-Faktor nie unter 0.55 und der Richtungswechsel springt hart statt weich durch null.
+ * Das gilt unverändert auch mit den kürzeren Perioden oben – nur WIE OFT gewechselt wird
+ * steigt mit dem Level, nie WIE TIEF der Puls-Faktor fällt.
  */
 function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number): number {
   switch (pattern) {
     case 'pulse': {
-      const phase = (elapsed / PULSE_PERIOD_SEC) * Math.PI * 2;
+      const period = periodFor(baseSpeed, PULSE_PERIOD_SEC, PULSE_PERIOD_AT_MAX_SEC);
+      const phase = (elapsed / period) * Math.PI * 2;
       return baseSpeed * (1.05 + 0.5 * Math.sin(phase));
     }
     case 'reverse': {
-      const halfCycles = Math.floor(elapsed / REVERSE_PERIOD_SEC);
+      const period = periodFor(baseSpeed, REVERSE_PERIOD_SEC, REVERSE_PERIOD_AT_MAX_SEC);
+      const halfCycles = Math.floor(elapsed / period);
       return halfCycles % 2 === 0 ? baseSpeed : -baseSpeed;
     }
     default:

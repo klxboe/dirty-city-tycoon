@@ -49,34 +49,61 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
 - **Die Schwierigkeits-Kurve hängt an der LEVELNUMMER, nicht an "Stufen zu je 5".**
   Das war eine bewusste Korrektur: die erste Fassung änderte in den ersten 16
   Leveln praktisch nichts (immer 5 Äxte, 2 Äpfel, keine Hindernisse, gleichmäßige
-  Drehung, +1,4°/Sek. pro Level – das merkt niemand). Das erste Hindernis kam in
-  Level 31, der erste Richtungswechsel in Level 38. Wer nach fünf Minuten
-  aufhörte, hatte vom Spiel nichts gesehen. Jetzt kommt jede Zutat in den ersten
-  ~15 Leveln mindestens einmal vor, danach wird nur noch nachgeschärft:
+  Drehung, +1,4°/Sek. pro Level – das merkt niemand). Jetzt kommt jede Zutat in
+  den ersten ~15 Leveln mindestens einmal vor, danach wird nachgeschärft:
   | ab Level | Änderung |
   |---|---|
   | 3 | Pulsieren kommt dazu, erstes Hindernis (`obstacleCountFor`) |
   | 8 | Richtungswechsel kommt dazu |
+  | 9 | 2 Hindernisse |
   | 11 | 6 Äxte |
-  | 14 | 2 Hindernisse |
+  | 17 | 3 Hindernisse |
+  | 20 | `steady` verschwindet komplett aus dem Muster-Zyklus – ab hier ist IMMER etwas in Bewegung |
   | 21 | 7 Äxte |
-  | 26 | 3 Hindernisse, 3 Äpfel |
+  | 27 | 4 Hindernisse |
+  | 26 | 3 Äpfel |
   | 31 | 8 Äxte |
+  | 41 | 5 Hindernisse |
+  | 46 | 9 Äxte |
   | 51 | 4 Äpfel |
+  | 61 | 6 Hindernisse (Deckel) |
+  | 71 | 10 Äxte (Deckel) |
+
+  **Zweite, deutlich härtere Runde (Klaus' Wunsch: "die Level sind viel zu
+  einfach, je höher desto schwerer"):** die alten Deckel (8 Äxte ab Level 31,
+  3 Hindernisse ab Level 26, 200°/Sek. ab ca. Level 100) waren fürs alte
+  120-Level-Kampagnen-Ziel gedacht. Seit dem Umstieg aufs Highscore-Prinzip
+  (siehe Münzen/Läufe-Abschnitt weiter unten – ein Lauf geht potenziell lange
+  über Level 120 in den Endlos-Modus hinein) war das falsch: ein guter
+  Spieler hätte den harten Teil der Kurve schnell hinter sich und der Rest
+  des Laufs würde sich nicht mehr steigern. Deckel deshalb höher und weiter
+  hinten (siehe Tabelle oben), Tempo-Deckel von 200 auf 320°/Sek. angehoben
+  (erreicht jetzt bei Level ~183, tief im Endlos-Modus), und ab Level 20 gibt
+  es gar kein `steady`-Muster mehr – nur noch Pulsieren/Richtungswechsel.
 - **Dreh-Muster** (`spinPattern`) sorgen für Abwechslung, ohne an den
-  Grundwerten zu drehen: `steady` (gleichmäßig), `pulse` (Tempo schwankt weich)
-  und `reverse` (Scheibe dreht periodisch die Richtung um).
+  Grundwerten zu drehen: `steady` (gleichmäßig, nur bis Level 19), `pulse`
+  (Tempo schwankt) und `reverse` (Scheibe dreht periodisch die Richtung um).
   WICHTIG: Kein Muster darf die Geschwindigkeit auf ~0 bringen. Steht die
   Scheibe kurz still, landen zwei schnell geworfene Äxte an derselben Stelle –
   mit der Game-Over-Regel wäre das ein unfairer Instant-Tod. Deshalb sinkt der
   Puls-Faktor nie unter 0.55 und der Richtungswechsel springt hart, statt weich
-  durch null zu gehen.
-- **Die Drehgeschwindigkeit steigt mit JEDEM Level** (streng steigend über alle
-  100 Level, nicht mehr pro Stufe schwankend): Level 1 = 55°/Sek., Level 50 =
-  126°/Sek., Level 100 = 199°/Sek. Je schneller die Scheibe, desto kürzer das
-  Zeitfenster, in dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt –
-  genau das macht das gezielte Apfel-Sammeln nach hinten raus schwerer.
-- Jedes Level hat eine feste Axt-Anzahl (5-8, siehe Tabelle oben), am linken
+  durch null zu gehen. Gilt unverändert auch für die härtere Fassung unten.
+  **Wie OFT pulsiert/gewechselt wird, skaliert jetzt zusätzlich mit dem
+  Board-Tempo** (`periodFor()` in `TargetBoard.tsx`): bei Level-1-Tempo dauert
+  ein Puls-Zyklus 2,6 Sek. und ein Richtungswechsel-Zyklus 3,4 Sek., linear
+  interpoliert bis runter auf 1,0 bzw. 1,3 Sek. bei Höchsttempo
+  (`MAX_SPEED_DEG_PER_SEC`). Vorher blieben beide Perioden über alle Level
+  fest, nur die Grundgeschwindigkeit stieg – ein Level-100-Puls fühlte sich
+  dadurch genauso "gemächlich" an wie einer bei Level 10, nur schneller
+  abgespult. Die TIEFE des Pulses/die Härte des Wechsels bleibt dabei exakt
+  gleich (siehe Fairness-Regel oben) – nur die Häufigkeit steigt.
+- **Die Drehgeschwindigkeit steigt mit JEDEM Level** (streng steigend, nicht
+  mehr pro Stufe schwankend): Level 1 = 55°/Sek., Level 50 = 126°/Sek., Level
+  100 = 199°/Sek., Deckel erst bei Level ~183 (320°/Sek., siehe oben). Je
+  schneller die Scheibe, desto kürzer das Zeitfenster, in dem ein bestimmter
+  Apfel am Einschlagpunkt vorbeikommt – genau das macht das gezielte
+  Apfel-Sammeln nach hinten raus schwerer.
+- Jedes Level hat eine feste Axt-Anzahl (5-10, siehe Tabelle oben), am linken
   Bühnenrand als senkrechte Reihe sichtbar – geworfene Äxte werden dort grau.
 - Am Brett hängen Äpfel (feste Positionen pro Level, AUSSERHALB des Randes an
   einem kleinen Stiel, nicht auf dem Holz). Trifft eine erfolgreich steckende
@@ -85,7 +112,7 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   (`.target-mount__falling`) – im rotierenden Brett würde er beim Fallen
   mitkreiseln statt nach unten zu fallen.
 - Level starten je nach Nummer mit bereits im Brett steckenden Äxten
-  (`preplacedAxeAngles`) als Hindernisse (max. 3).
+  (`preplacedAxeAngles`) als Hindernisse (max. 6, siehe Tabelle oben).
 - Ein Level endet auf zwei Arten: alle Äxte sauber verworfen → geschafft, ODER
   eine Axt trifft eine steckende Axt → Game Over (`GameOverModal.tsx`).
 - Ergebnis-Screen nach geschafftem Level zeigt eingesammelte Äpfel und die
@@ -1361,6 +1388,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       ein Game Over) schaltet Welten frei, unabhängig davon, wie weit man im
       aktuellen Lauf kommt – Schwellenwerte aus den bestehenden
       Welt-Level-Bereichen abgeleitet, kein neues Datenfeld nötig.
+- [x] **Schwierigkeits-Deckel deutlich angehoben** (Details siehe
+      Level-System-Abschnitt oben): passend zum Highscore-Prinzip – die alten
+      Deckel (8 Äxte/3 Hindernisse/200°Sek.) waren fürs 120-Level-Kampagnen-
+      Ziel gedacht und hätten einen langen Highscore-Lauf nicht mehr
+      gefordert. Jetzt bis zu 10 Äxte/6 Hindernisse, Tempo-Deckel bei
+      320°/Sek. (statt 200), und ab Level 20 gibt es kein ruhiges `steady`-
+      Muster mehr. Puls-/Richtungswechsel-Häufigkeit skaliert zusätzlich mit
+      dem Board-Tempo (öfter, nicht nur schneller), die Fairness-Untergrenze
+      (Scheibe darf nie fast stillstehen) bleibt dabei unverändert.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

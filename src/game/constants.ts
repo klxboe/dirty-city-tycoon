@@ -111,15 +111,22 @@ export function blockStartIndex(levelIndex: number): number {
 }
 
 /**
- * Die Scheibe dreht sich mit JEDEM Level ein Stück schneller (streng steigend über alle
- * 100 Level, nicht nur pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist
- * das Zeitfenster, in dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das
- * macht das gezielte Apfel-Sammeln nach oben hin schwerer.
- * Level 1 = 55°/Sek., Level 100 = ~199°/Sek.
+ * Die Scheibe dreht sich mit JEDEM Level ein Stück schneller (streng steigend, nicht nur
+ * pro Schwierigkeitsstufe). Je schneller sie dreht, desto kürzer ist das Zeitfenster, in
+ * dem ein bestimmter Apfel am Einschlagpunkt vorbeikommt – genau das macht das gezielte
+ * Apfel-Sammeln nach oben hin schwerer.
+ * Level 1 = 55°/Sek., Level 100 = ~199°/Sek., Deckel erst bei Level ~183 (320°/Sek.).
+ *
+ * Der Deckel lag früher bei 200°/Sek. (erreicht um Level 100) – seit dem Umstieg aufs
+ * Highscore-Prinzip (Klaus' Wunsch: "je höher, desto schwerer", ein Lauf geht potenziell
+ * lange über Level 120 in den Endlos-Modus hinein) wäre ein früher Deckel genau falsch:
+ * ein guter Spieler hätte den harten Teil der Kurve schon lange hinter sich und der Rest
+ * des Laufs würde sich nicht mehr steigern. Deckel deshalb deutlich höher UND weiter
+ * hinten, damit die Schwierigkeit auch in einem sehr guten Lauf noch spürbar weiterwächst.
  */
-const BASE_SPEED_DEG_PER_SEC = 55;
+export const BASE_SPEED_DEG_PER_SEC = 55;
 const SPEED_STEP_PER_LEVEL = 1.45;
-const MAX_SPEED_DEG_PER_SEC = 200;
+export const MAX_SPEED_DEG_PER_SEC = 320;
 
 function normalizeDeg(deg: number): number {
   const m = deg % 360;
@@ -140,20 +147,38 @@ function spreadAngles(count: number, startDeg: number): number[] {
  * mindestens einmal vor, danach wird nur noch nachgeschärft.
  */
 
-/** Wie viele Äxte pro Level (mehr Äxte = voller wird das Brett = enger die Lücken). */
+/**
+ * Wie viele Äxte pro Level (mehr Äxte = voller wird das Brett = enger die Lücken).
+ *
+ * Deckel früher bei 8 (ab Level 31) – im Highscore-Prinzip (siehe MAX_SPEED_DEG_PER_SEC
+ * oben) deutlich weiter nach hinten geschoben und höher angesetzt, damit ein langer Lauf
+ * auch jenseits der ersten Welten spürbar voller/enger wird statt zu plateauen.
+ */
 function axeCountFor(levelIndex: number): number {
   if (levelIndex < 10) return 5; // Level 1-10
   if (levelIndex < 20) return 6; // Level 11-20
   if (levelIndex < 30) return 7; // Level 21-30
-  return 8; // ab Level 31
+  if (levelIndex < 45) return 8; // Level 31-45
+  if (levelIndex < 70) return 9; // Level 46-70
+  return 10; // ab Level 71
 }
 
-/** Von Anfang an steckende Äxte als Hindernisse. */
+/**
+ * Von Anfang an steckende Äxte als Hindernisse ("viele Messer drin").
+ *
+ * Deckel früher bei 3 (ab Level 26) – jetzt weiter nach hinten geschoben und auf 6
+ * angehoben. Bei max. Axtzahl (10) + max. Hindernissen (6) sind am Levelende 16 von
+ * theoretisch 36 möglichen Plätzen belegt (360° / 10°-Kollisionstoleranz) – eng, aber
+ * mit Absicht nie unlösbar voll.
+ */
 function obstacleCountFor(levelIndex: number): number {
   if (levelIndex < 3) return 0; // Level 1-3: erst mal die Grundmechanik lernen
-  if (levelIndex < 13) return 1; // ab Level 4
-  if (levelIndex < 25) return 2; // ab Level 14
-  return 3; // ab Level 26
+  if (levelIndex < 8) return 1; // ab Level 4
+  if (levelIndex < 16) return 2; // ab Level 9
+  if (levelIndex < 26) return 3; // ab Level 17
+  if (levelIndex < 40) return 4; // ab Level 27
+  if (levelIndex < 60) return 5; // ab Level 41
+  return 6; // ab Level 61
 }
 
 function appleCountFor(levelIndex: number): number {
@@ -202,13 +227,22 @@ export const GEMS_PER_FIGURINE = 2;
 
 /**
  * Dreh-Muster. Level 1-2 laufen gleichmäßig (Einstieg), ab Level 3 wechselt sich
- * Pulsieren ein, ab Level 8 kommt der Richtungswechsel dazu.
+ * Pulsieren ein, ab Level 8 kommt der Richtungswechsel dazu. Ab Level 20 gibt es
+ * `steady` gar nicht mehr im Zyklus – ab dann ist IMMER etwas in Bewegung (Pulsieren
+ * oder Richtungswechsel), nie mehr eine ruhige, gleichmäßige Drehung. Wie erratisch
+ * sich Pulsieren/Richtungswechsel selbst anfühlen (Tempo der Schwankung/wie oft die
+ * Richtung kippt), skaliert zusätzlich mit dem Board-Tempo – siehe currentSpeed() in
+ * TargetBoard.tsx: eine schnellere Scheibe wechselt automatisch auch öfter.
  */
 function spinPatternFor(levelIndex: number): SpinPattern {
   if (levelIndex < 2) return 'steady';
   if (levelIndex < 7) return levelIndex % 2 === 0 ? 'steady' : 'pulse';
-  const cycle: SpinPattern[] = ['steady', 'pulse', 'reverse', 'pulse'];
-  return cycle[levelIndex % cycle.length];
+  if (levelIndex < 20) {
+    const cycle: SpinPattern[] = ['steady', 'pulse', 'reverse', 'pulse'];
+    return cycle[levelIndex % cycle.length];
+  }
+  const hardCycle: SpinPattern[] = ['pulse', 'reverse'];
+  return hardCycle[levelIndex % hardCycle.length];
 }
 
 /** Jedes BOSS_EVERY-te Level ist ein Boss-Level mit Frucht-Zielscheibe. */
