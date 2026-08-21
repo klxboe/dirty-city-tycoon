@@ -7,36 +7,45 @@ import type { Difficulty, LevelConfig, SpinPattern } from './types';
  * Wie lange die Fluganimation der Axt dauert (ms). Das ist zugleich die kürzestmögliche
  * Zeit zwischen zwei Einschlägen.
  *
- * Stand früher auf 140ms, mit der Absicht: bei ~70°/Sek. dreht sich die Scheibe in
- * dieser Zeit nur ~9.8°, also WENIGER als die Kollisions-Toleranz (10°) – Dauertippen
- * traf damit garantiert die eigene vorherige Axt. Beim ersten echten Spielen auf dem
- * Handy war das aber unbrauchbar: die Axt legt die ganze Bildschirmhöhe in einer
- * Siebtelsekunde zurück, man sieht schlicht nicht, was passiert ("viel zu schnell,
- * fliegt einfach drüber").
+ * Stand früher schon einmal auf 140ms, mit der Absicht: bei ~70°/Sek. dreht sich die
+ * Scheibe in dieser Zeit nur ~9.8°, also WENIGER als die Kollisions-Toleranz (10°) –
+ * Dauertippen traf damit garantiert die eigene vorherige Axt. Beim ersten echten Spielen
+ * auf dem Handy war das aber unbrauchbar: die Axt legte die ganze Bildschirmhöhe in einer
+ * Siebtelsekunde zurück, man sah schlicht nicht, was passiert ("viel zu schnell, fliegt
+ * einfach drüber"). Über 300ms und 220ms ("zäh"/"langweilig und zu langsam") landete der
+ * Wert danach lange bei 190ms – DIESER Sprung war NICHT die Dauer allein, sondern vor
+ * allem mehr Energie in der Animation selbst (Squash-and-Stretch, schärferes Easing,
+ * kräftigerer Trail, siehe `axe-fly`-Keyframes in App.css).
  *
- * Lesbarkeit schlägt hier den Trick. 300ms waren gut zu verfolgen, fühlten sich beim
- * Spielen aber zäh an, 220ms danach immer noch "langweilig und zu langsam". Der nächste
- * Schritt war deshalb NICHT nur die Zahl weiter zu senken (die Dauer war nie das
- * Hauptproblem), sondern vor allem die Animation selbst mit mehr Energie zu versehen
- * (Squash-and-Stretch beim Abschuss, schärferes Easing, kräftigerer Trail – siehe
- * `axe-fly`-Keyframes in App.css). 190ms sind trotzdem spürbar knackiger als 220ms.
- * Bei `BASE_SPEED_DEG_PER_SEC` (70°/Sek., siehe dort) dreht sich die Scheibe in dieser
- * Zeit um ~13,3° – über der 10°-Kollisions-Toleranz, Dauertippen kollidiert also in
- * Level 1-5 NICHT mehr zuverlässig mit der eigenen letzten Axt (bewusst so seit Klaus'
- * Feedback "Level 1-5 nervig, Brett dreht zu langsam, kann nicht schnell werfen" – dort
- * gibt es ohnehin kaum Hindernisse, siehe `obstacleBaseFor`, also darf Dauertippen dort
- * auch mal einfach funktionieren). Ab dem Level, wo `boardSpeedDegPerSec` wieder unter
- * ~53°/Sek. läge, wäre das umgekehrt der Fall – kommt in der aktuellen Kurve aber nicht
- * vor, `BASE_SPEED_DEG_PER_SEC` ist der niedrigste Wert im ganzen Spiel. Weiter oben im
- * Spiel bleibt Dauertippen riskant, weil das Brett voller wird (mehr Hindernisse/Äxte,
- * siehe `obstacleBaseFor`/`axeCountFor`) – wer stumpf spammt, läuft dort trotzdem in
- * eine steckende Axt. Sollte es zu leicht werden, sind die Stellschrauben
- * COLLISION_ANGLE_TOLERANCE_DEG (größer = strenger) oder ein langsamerer Levelstart.
+ * **Jetzt zurück auf 140ms (Klaus, nach dem Mikro-Stopp-Fix: "Axt jetzt flüssig, aber
+ * Wurfzeit zu lang, bitte NUR die Geschwindigkeit erhöhen, Bewegungslogik unangetastet
+ * lassen"):** diesmal OHNE die alten Lesbarkeits-Probleme, weil inzwischen drei Dinge
+ * dazugekommen sind, die es damals noch nicht gab – die Positions-Animation läuft
+ * über `translate` statt `bottom` (kein Reflow, butterweich statt ruckelig, siehe
+ * `axe-fly-position` in App.css), UND die Treffer-Auswertung hängt jetzt am
+ * `animationend`-Ereignis der Animation selbst statt an einem separaten `setTimeout`
+ * (siehe `resolveThrow()` in useAxeGame.ts) – die kürzere Dauer betrifft dadurch BEIDE
+ * Systeme automatisch synchron, kein neuer Mikro-Stopp möglich. Die Rotation/Squash-
+ * Keyframes (`axe-fly-transform`) sind in PROZENT der Animationsdauer definiert (0%/12%/
+ * 100%), laufen also automatisch proportional schneller mit – keine separate Anpassung
+ * nötig, das Verhältnis Fluggeschwindigkeit↔Rotation bleibt unverändert dasselbe.
+ * Kollisions-ERKENNUNG ist von der Dauer ohnehin komplett unabhängig (ein einziger,
+ * diskreter Winkel-Vergleich bei Animationsende, kein Zeitschritt-basiertes Physik-
+ * Tunneling möglich) – nichts an `collidesWithStuckAxe`/`COLLISION_ANGLE_TOLERANCE_DEG`
+ * musste deshalb angefasst werden.
+ *
+ * Einzige bewusst NICHT kompensierte Nebenwirkung: bei `BASE_SPEED_DEG_PER_SEC` (70°/Sek.)
+ * dreht sich die Scheibe in 140ms nur noch um ~9.8° – wieder UNTER der 10°-Toleranz, d.h.
+ * Dauertippen in Level 1-5 wird dadurch wieder etwas riskanter als direkt nach dem
+ * Tempo-Anhub (siehe eigener Abschnitt weiter oben). Bewusst nicht mit-gefixt, weil diese
+ * Anfrage explizit NUR die Flugzeit betraf ("nicht wahllos mehrere Systeme gleichzeitig
+ * verändern") – falls das als eigenes Feedback zurückkommt, ist `COLLISION_ANGLE_TOLERANCE_DEG`
+ * oder erneut `FLIGHT_DURATION_MS` selbst die Stellschraube.
  *
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
  */
-export const FLIGHT_DURATION_MS = 190;
+export const FLIGHT_DURATION_MS = 140;
 
 /**
  * Wie lange die Scheibe beim Treffer stehen bleibt (ms). Ein sehr kurzer Stopp im

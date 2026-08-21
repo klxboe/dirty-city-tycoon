@@ -1512,6 +1512,54 @@ Mikro-Stopp auf einem echten Gerät" – lässt sich damit nur indirekt
 am echten Handy gegenprüfen: mehrere normale Würfe, schnelle Scheiben-
 Drehung, verschiedene Trefferwinkel, schnelle Serienwürfe.
 
+### Flugzeit verkürzt, OHNE die gerade gewonnene Flüssigkeit zu opfern
+
+Direkt im Anschluss an den Mikro-Stopp-Fix: "Axt jetzt flüssig, aber der Wurf
+dauert zu lange, bitte NUR die Geschwindigkeit erhöhen, an der Bewegungslogik
+nichts mehr ändern." `FLIGHT_DURATION_MS` von 190 auf 140ms gesenkt (~26%
+kürzer, im gewünschten 20-30%-Rahmen) – sonst **nichts** angefasst:
+
+- Kein neues Easing/Lerp: die Positions-Animation (`axe-fly-position`) ist
+  weiterhin strikt linear, läuft nur insgesamt kürzer ab.
+- Keine Kollisions-Änderung nötig: `resolveThrow()` prüft die Kollision als
+  EINEN diskreten Winkel-Vergleich bei Animationsende, kein Zeitschritt-
+  Physik-Tunneling möglich – von der Flugdauer komplett unabhängig.
+- Rotation bleibt automatisch im richtigen Verhältnis zur Geschwindigkeit:
+  die `axe-fly-transform`-Keyframes (0%/12%/100%) sind PROZENTE der
+  Animationsdauer, laufen bei kürzerer Dauer automatisch proportional
+  schneller mit – keine separate Anpassung nötig.
+- Kein neuer Mikro-Stopp möglich: seit dem vorherigen Fix hängt
+  `resolveThrow()` direkt am `animationend`-Ereignis derselben Animation,
+  deren Dauer sich hier ändert – beide Systeme bleiben also automatisch
+  synchron, es gibt keine zweite Uhr mehr, die auseinanderlaufen könnte.
+
+**140ms wurde früher schon einmal probiert und wegen Lesbarkeit verworfen**
+("Axt fliegt einfach drüber", siehe Kommentar bei `FLIGHT_DURATION_MS`) –
+diesmal aber in einem komplett anderen Kontext: die Positions-Animation lief
+damals noch über `bottom` (Reflow, ruckelig) statt `translate`, UND die
+Treffer-Auswertung hing an einem separaten `setTimeout` statt am
+`animationend`-Ereignis selbst. Beide seitdem behobenen Probleme waren
+vermutlich der eigentliche Grund für den damaligen "zu schnell, sieht man
+nicht"-Eindruck, nicht die reine Zahl 140.
+
+**Bewusst NICHT kompensiert:** bei `BASE_SPEED_DEG_PER_SEC` (70°/Sek.) dreht
+sich die Scheibe in 140ms nur noch ~9,8° – wieder unter der 10°-Kollisions-
+Toleranz, Dauertippen in Level 1-5 wird dadurch wieder etwas riskanter als
+direkt nach dem Tempo-Anhub. Bewusst nicht mit-repariert, weil diese Anfrage
+explizit nur die Flugzeit betraf ("nicht mehrere Systeme gleichzeitig
+ändern") – falls das separat als Feedback zurückkommt, sind
+`COLLISION_ANGLE_TOLERANCE_DEG` oder erneut `FLIGHT_DURATION_MS` die
+Stellschrauben.
+
+Verifiziert: `tsc -b` sauber, `.axe-flying` trägt korrekt `animationDuration:
+140ms`, manuell simuliertes `animationend` löst `resolveThrow()` weiterhin
+zuverlässig aus (Hint-Text kehrt zurück, Axt verschwindet aus dem Flug),
+keine Konsolenfehler. Das eigentliche Geschwindigkeitsgefühl lässt sich wie
+immer nicht in der automatisierten Umgebung nachspielen (kein echtes
+Compositing) – bitte am Gerät bestätigen, ob 140ms "schnell, direkt, extrem
+smooth" trifft oder ob nachjustiert werden muss (einzige Stellschraube:
+`FLIGHT_DURATION_MS` in `constants.ts`).
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
@@ -1877,6 +1925,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Flugzeit auf 140ms verkürzt, ohne die Flüssigkeit zu verlieren**
+      (Details siehe eigener Abschnitt oben, 2026-08-21): `FLIGHT_DURATION_MS`
+      190→140ms (~26%), sonst NICHTS an Easing/Kollision/Rotation-Kopplung
+      angefasst – seit den beiden Fixes direkt davor (translate-basierte
+      Bewegung, `animationend`-getriebene Auflösung) bleibt das automatisch
+      synchron. Bewusst nicht kompensiert: Dauertippen in Level 1-5 wird
+      dadurch wieder etwas riskanter (Nebenwirkung, kein Bug).
 - [x] **Echter Mikro-Stopp vor dem Einschlag behoben: zwei unabhängige Uhren
       zu einer gemacht** (Details siehe eigener Abschnitt oben, 2026-08-21):
       die Treffer-Auswertung lief über einen eigenen `setTimeout`, parallel
