@@ -127,20 +127,29 @@ export const WORLDS: World[] = [
   },
 ];
 
+export interface WorldBoss {
+  name: string;
+  /** Eigenes Scheiben-Design für den Kampf – überschreibt für dieses eine Level das
+   *  ausgerüstete Design, genau wie `bossFruit.boardSkinId` es für die normalen
+   *  5-Level-Bosse schon tut (siehe `activeBoardSkin` in useAxeGame.ts). Bild folgt
+   *  separat per Gemini (siehe Prompt-Sammlung am Ende dieser Datei/CLAUDE.md), bis
+   *  dahin rendert es über den Farb-Fallback in `BOARD_STYLES` (shop.ts).
+   */
+  boardSkinId: string;
+}
+
 /**
  * Weltboss je Welt – erscheint GENAU am ersten Level der jeweiligen Welt (siehe
  * `isWorldBossLevel()` unten), als große, deutlich härtere Prüfung "vor dem Tor" zur
  * restlichen Welt. Wald (Level 1) bekommt bewusst KEINEN Weltboss – das ist der
  * Tutorial-Einstieg für neue Spieler, siehe eigener Kommentar bei `isWorldBossLevel()`.
- * Rein kosmetischer Name/Bezeichner, kein eigenes Design-System nötig – die Härte
- * selbst kommt aus generateLevel() (constants.ts), nicht aus dieser Liste.
  */
-export const WORLD_BOSSES: Record<string, string> = {
-  desert: 'Sandkolossos',
-  ice: 'Frostwardin',
-  volcano: 'Aschenschlund',
-  cosmos: 'Leerenwächter',
-  metro: 'Turmbrecher',
+export const WORLD_BOSSES: Record<string, WorldBoss> = {
+  desert: { name: 'Sandkolossos', boardSkinId: 'board-boss-desert' },
+  ice: { name: 'Frostwardin', boardSkinId: 'board-boss-ice' },
+  volcano: { name: 'Aschenschlund', boardSkinId: 'board-boss-volcano' },
+  cosmos: { name: 'Leerenwächter', boardSkinId: 'board-boss-cosmos' },
+  metro: { name: 'Turmbrecher', boardSkinId: 'board-boss-metro' },
 };
 
 /**

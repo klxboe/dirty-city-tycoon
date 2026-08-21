@@ -236,7 +236,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
       progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL))),
-      bossName: WORLD_BOSSES[world.id] ?? null,
+      bossName: WORLD_BOSSES[world.id]?.name ?? null,
     };
   });
 

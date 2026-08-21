@@ -29,6 +29,7 @@ import {
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
+import { WORLD_BOSSES } from '../game/worlds';
 import { setMuted } from '../game/sound';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
@@ -492,9 +493,8 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   // Weltboss-Phasen-Eskalation: das Tempo zieht WÄHREND des Kampfes an, je mehr Äxte
   // schon geworfen sind (siehe worldBossPhaseSpeedMultiplier() in constants.ts). Bei
   // normalen Leveln ist der Multiplikator schlicht 1 (kein Effekt).
-  const worldBossPhaseMultiplier = level.worldBossId
-    ? worldBossPhaseSpeedMultiplier(state.axesThrown / level.axeCount)
-    : 1;
+  const worldBoss = level.worldBossId ? WORLD_BOSSES[level.worldBossId] : undefined;
+  const worldBossPhaseMultiplier = worldBoss ? worldBossPhaseSpeedMultiplier(state.axesThrown / level.axeCount) : 1;
 
   return {
     ...state,
@@ -511,9 +511,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     bossFruit,
     /** Name des Weltbosses, falls dieses Level das "Tor" vor einer Welt ist (siehe
      *  isWorldBossLevel()/WORLD_BOSSES in worlds.ts), sonst `null`. */
-    worldBossName: level.worldBossId ?? null,
-    /** Im Boss-Level zeigt die Scheibe die Frucht statt des ausgerüsteten Designs. */
-    activeBoardSkin: bossFruit ? bossFruit.boardSkinId : state.save.equippedBoardSkin,
+    worldBossName: worldBoss?.name ?? null,
+    /** Boss-Level (beide Arten) zeigen die Scheibe des Bosses statt des ausgerüsteten
+     *  Designs – Weltboss hat dabei Vorrang, falls beide sich je theoretisch
+     *  überschneiden sollten (kommt aktuell nicht vor, jeder Level-Index ist höchstens
+     *  eine Boss-Art). */
+    activeBoardSkin: worldBoss ? worldBoss.boardSkinId : bossFruit ? bossFruit.boardSkinId : state.save.equippedBoardSkin,
     /** Wartende tägliche Belohnung, `null` wenn heute schon abgeholt. Reine Ableitung
      *  aus dem Spielstand, kein eigener State – berechnet sich bei jedem Render neu
      *  aus der aktuellen Uhrzeit, damit ein Tageswechsel mitten in der Session sofort

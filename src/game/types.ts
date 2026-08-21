@@ -47,10 +47,11 @@ export interface LevelConfig {
   /** Gesetzt bei Boss-Leveln: welche Frucht die Zielscheibe ist (siehe shop.ts). */
   bossFruitId?: string;
   /**
-   * Gesetzt GENAU am ersten Level einer Welt (außer Wald/Level 1, dem Tutorial-Einstieg
-   * für neue Spieler) – der "Weltboss", eine deutlich härtere Prüfung als die normale
-   * Kurve an dieser Stelle vorsähe. Siehe `isWorldBossLevel()`/`WORLD_BOSS_PHASE_SPEED_MULTIPLIER`
-   * in constants.ts für die Umsetzung, `worlds.ts` für die betroffenen Level-Indizes.
+   * Die WELT-ID (z.B. 'desert'), falls dieses Level das Weltboss-"Tor" dieser Welt ist
+   * (gesetzt an jedem Welt-Start außer Wald/Level 1, dem Tutorial-Einstieg für neue
+   * Spieler) – Nachschlagen von Name/Scheiben-Design über `WORLD_BOSSES[worldBossId]`
+   * in `worlds.ts`. Siehe `isWorldBossLevel()`/`worldBossPhaseSpeedMultiplier()` in
+   * constants.ts für die Schwierigkeits-Umsetzung.
    */
   worldBossId?: string;
   /** Index in appleAngles, falls dieses Level einen goldenen Apfel hat (selten). */

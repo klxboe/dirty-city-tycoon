@@ -516,6 +516,71 @@ export const BOARD_STYLES: Record<string, BoardStyle> = {
     coreGlow: 'rgba(255, 154, 46, 0.8)',
   },
 
+  // --- Weltbosse (siehe WORLD_BOSSES in worlds.ts) – eigenes Scheiben-Design pro
+  // Weltboss-Kampf, analog zu den Boss-Früchten oben. Kein eigener Shop-Eintrag (wie
+  // die Boss-Beute-Scheiben), wird nur automatisch während des jeweiligen Weltboss-
+  // Levels angezeigt. ---
+  'board-boss-desert': {
+    rim: 'linear-gradient(150deg, #e0b25a, #a5701e 55%, #5c3a0a)',
+    faceInner: '#ffe0a0',
+    faceOuter: '#d4913a',
+    wedge: 'rgba(255, 240, 200, 0.5)',
+    glow: 'rgba(212, 145, 58, 0.5)',
+    ringLight: 'rgba(255, 240, 200, 0.5)',
+    ringAccent: 'rgba(140, 85, 20, 0.55)',
+    core: 'radial-gradient(circle at 38% 32%, #fff4d8, #e8a84a 65%, #a5701e 100%)',
+    coreEdge: 'rgba(80, 48, 10, 0.65)',
+    coreGlow: 'rgba(232, 168, 74, 0.75)',
+  },
+  'board-boss-ice': {
+    rim: 'linear-gradient(150deg, #cdeaff, #4a7fa0 55%, #1c3a4a)',
+    faceInner: '#eafbff',
+    faceOuter: '#7ec4e0',
+    wedge: 'rgba(255, 255, 255, 0.85)',
+    glow: 'rgba(120, 200, 240, 0.55)',
+    ringLight: 'rgba(255, 255, 255, 0.7)',
+    ringAccent: 'rgba(30, 90, 120, 0.55)',
+    core: 'radial-gradient(circle at 38% 32%, #ffffff, #7fd0ee 65%, #1c5a78 100%)',
+    coreEdge: 'rgba(10, 40, 55, 0.7)',
+    coreGlow: 'rgba(130, 215, 245, 0.8)',
+  },
+  'board-boss-volcano': {
+    rim: 'linear-gradient(150deg, #4a3028, #2a1810 55%, #120906)',
+    faceInner: '#5c2818',
+    faceOuter: '#240e08',
+    wedge: 'rgba(255, 90, 30, 0.6)',
+    glow: 'rgba(255, 90, 30, 0.55)',
+    ringLight: 'rgba(255, 140, 70, 0.4)',
+    ringAccent: 'rgba(255, 90, 30, 0.55)',
+    core: 'radial-gradient(circle at 38% 32%, #ffcf7a, #ff5a1e 55%, #6b0f00 100%)',
+    coreEdge: 'rgba(60, 10, 0, 0.75)',
+    coreGlow: 'rgba(255, 90, 30, 0.9)',
+  },
+  'board-boss-cosmos': {
+    rim: 'linear-gradient(150deg, #5c3fb0, #2a1860 55%, #0e0730)',
+    faceInner: '#c8b0ff',
+    faceOuter: '#5c3ec4',
+    wedge: 'rgba(230, 215, 255, 0.5)',
+    glow: 'rgba(140, 100, 230, 0.55)',
+    ringLight: 'rgba(225, 210, 255, 0.5)',
+    ringAccent: 'rgba(255, 210, 255, 0.4)',
+    core: 'radial-gradient(circle at 38% 32%, #ffffff, #a878ff 60%, #3a1c8a 100%)',
+    coreEdge: 'rgba(20, 10, 50, 0.75)',
+    coreGlow: 'rgba(170, 130, 255, 0.85)',
+  },
+  'board-boss-metro': {
+    rim: 'linear-gradient(150deg, #5a6270, #2c313a 55%, #101216)',
+    faceInner: '#8a92a0',
+    faceOuter: '#33383f',
+    wedge: 'rgba(224, 36, 47, 0.55)',
+    glow: 'rgba(224, 36, 47, 0.45)',
+    ringLight: 'rgba(200, 210, 225, 0.45)',
+    ringAccent: 'rgba(224, 36, 47, 0.55)',
+    core: 'radial-gradient(circle at 38% 32%, #ffd8da, #e0242f 60%, #4a0a10 100%)',
+    coreEdge: 'rgba(15, 16, 20, 0.8)',
+    coreGlow: 'rgba(224, 36, 47, 0.85)',
+  },
+
   // --- Netzschwinger: rot-blauer Held-Look, absichtlich unbenannt/unbranded
   // (siehe CLAUDE.md) ---
   'board-webslinger': {

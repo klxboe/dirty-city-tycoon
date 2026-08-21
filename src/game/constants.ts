@@ -1,6 +1,6 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
 import { BOSS_FRUITS, HERO_BOSSES, type BossFruit } from './shop';
-import { HERO_WORLD_START, isWorldBossLevel, WORLD_BOSSES, worldForLevel, WORLDS_LEVEL_COUNT } from './worlds';
+import { HERO_WORLD_START, isWorldBossLevel, worldForLevel, WORLDS_LEVEL_COUNT } from './worlds';
 import type { LevelConfig, SpinPattern } from './types';
 
 /**
@@ -482,7 +482,7 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
     appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
     bossFruitId: boss?.id,
-    worldBossId: worldBoss ? WORLD_BOSSES[worldBoss.id] : undefined,
+    worldBossId: worldBoss?.id,
     goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
     figurineIndex: figurineIndexFor(levelIndex, appleCount),
   };

@@ -1844,6 +1844,20 @@ Verifiziert: alle 5 Bosse (Sandkolossos/Frostwardin/Aschenschlund/
 Leerenwächter/Turmbrecher) erscheinen korrekt auf ihren Welt-Knoten, Wald
 bleibt bewusst ohne Abzeichen, `tsc -b` sauber, keine Konsolenfehler.
 
+**Nachgezogen, dabei gefunden:** Weltboss-Level zeigten beim ersten Bau noch
+das AUSGERÜSTETE Scheiben-Design des Spielers statt eines eigenen – die
+normalen 5-Level-Bosse (`bossFruit.boardSkinId`) haben das schon immer
+richtig gemacht, der neue Weltboss-Zweig war beim ersten Entwurf nicht
+gegengecheckt. `WORLD_BOSSES` (`worlds.ts`) trägt jetzt zusätzlich ein
+eigenes `boardSkinId` je Weltboss (`board-boss-desert` usw., eigene
+`BOARD_STYLES`-Farbeinträge in `shop.ts` als Fallback bis echte Bilder da
+sind), `activeBoardSkin` in `useAxeGame.ts` berücksichtigt das mit Vorrang
+vor dem ausgerüsteten Design – exakt dasselbe Muster wie bei den
+Boss-Früchten. Per direktem Laden von Level 21 (Wüste-Weltboss) bestätigt:
+Scheibe zeigt jetzt korrekt die eigene Sandkolossos-Farbgebung
+(`--board-rim` etc. im Inline-Style nachgeprüft) statt des ausgerüsteten
+Designs.
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)
