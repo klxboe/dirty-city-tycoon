@@ -177,15 +177,11 @@ function axeCountFor(levelIndex: number): number {
 }
 
 /**
- * Von Anfang an steckende Äxte als Hindernisse ("viele Messer drin").
- *
- * Zweiter Härte-Durchgang: Deckel von 6 auf 8 angehoben, Stufen früher erreicht.
- * Bei max. Axtzahl (12, siehe oben) + max. Hindernissen (8) sind am Levelende
- * 19 von theoretisch 36 möglichen Plätzen belegt (360° / 10°-Kollisionstoleranz,
- * 8 Hindernisse + 11 schon geworfene Äxte vor dem letzten Wurf) – deutlich enger
- * als vorher (16 von 36), aber mit Absicht immer noch lösbar.
+ * Grobe Trend-Kurve für Hindernisse – Basis für die tatsächliche Schwankung weiter
+ * unten (`obstacleCountFor`), nicht mehr direkt die Ausgabe. Werte unverändert
+ * gegenüber dem zweiten Härte-Durchgang.
  */
-function obstacleCountFor(levelIndex: number): number {
+function obstacleBaseFor(levelIndex: number): number {
   if (levelIndex < 3) return 0; // Level 1-3: erst mal die Grundmechanik lernen
   if (levelIndex < 6) return 1; // ab Level 4
   if (levelIndex < 10) return 2; // ab Level 7
@@ -195,6 +191,36 @@ function obstacleCountFor(levelIndex: number): number {
   if (levelIndex < 46) return 6; // ab Level 35
   if (levelIndex < 60) return 7; // ab Level 47
   return 8; // ab Level 61
+}
+
+/**
+ * Deckel für die tatsächliche (geschwankte) Hindernis-Zahl – höher als die Basis-Kurve
+ * oben (8), weil die Schwankung unten gelegentlich darüber hinaus ausschlägt.
+ */
+export const OBSTACLE_COUNT_CAP = 10;
+
+/**
+ * Von Anfang an steckende Äxte als Hindernisse ("viele Messer drin").
+ *
+ * Dritter Härte-Durchgang (Klaus: "es müssen nicht immer 6 Messer sein, mache
+ * unterschiedlich, aber Durchschnitt höher, damit es deutlich schwerer wird"): die
+ * alte Fassung gab für einen ganzen Level-Bereich (z.B. Level 35-45) IMMER exakt
+ * denselben Wert (6) – langweilig vorhersehbar UND ein Deckel nach oben. Jetzt
+ * schwankt die tatsächliche Zahl deterministisch UM die Basis-Kurve
+ * (`obstacleBaseFor`) herum: Level 36 kann z.B. 5 Hindernisse haben, Level 37
+ * gleich 7 – bei GLEICHEM Level aber immer IDENTISCH (reine Funktion der
+ * Levelnummer, kein `Math.random()`, reproduzierbar bei jedem Versuch wie der
+ * Rest der Level-Generierung). Die Schwankung ist absichtlich nach OBEN verzerrt
+ * (`[-1, 0, 1, 1, 2]` statt symmetrisch `[-2, -1, 0, 1, 2]`) – Schnitt liegt damit
+ * bei Basis+0,6, spürbar höher als die alte starre Kurve, nicht nur "mal mehr, mal
+ * weniger" bei gleichem Durchschnitt.
+ */
+function obstacleCountFor(levelIndex: number): number {
+  const base = obstacleBaseFor(levelIndex);
+  if (base === 0) return 0; // Level 1-3 bleiben bewusst hindernisfrei, keine Schwankung
+  const wobbleRoll = (levelIndex * 41 + 17) % 5; // 0-4, deterministisch aus der Levelnummer
+  const wobble = [-1, 0, 1, 1, 2][wobbleRoll];
+  return Math.max(1, Math.min(OBSTACLE_COUNT_CAP, base + wobble));
 }
 
 function appleCountFor(levelIndex: number): number {

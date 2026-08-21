@@ -111,6 +111,25 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
     Grenze, die nicht fallen darf (siehe Dreh-Muster-Abschnitt oben), sonst
     wird die Scheibe irgendwann unfair (fast Stillstand -> zwei Äxte landen
     an derselben Stelle -> Instant-Tod ohne eigenes Zutun).
+  **Vierte Runde (Klaus, direkt danach: "es müssen nicht immer 6 Messer sein,
+  mache unterschiedlich, aber Durchschnitt höher, damit es deutlich schwerer
+  wird"):** die Hindernis-Zahl (`obstacleCountFor`) gab für einen ganzen
+  Level-Bereich (z.B. Level 35-45) bisher IMMER exakt denselben Wert (6) –
+  vorhersehbar und zugleich ein Deckel nach oben. Umgebaut auf eine
+  Basis-Kurve (`obstacleBaseFor`, unverändert die alten Stufen) plus eine
+  deterministische Schwankung (`(levelIndex * 41 + 17) % 5` → Werte aus
+  `[-1, 0, 1, 1, 2]`): Level 36 hat jetzt z.B. 7 Hindernisse, Level 39 nur 5 –
+  bei GLEICHEM Level aber immer IDENTISCH (reproduzierbar bei jedem Versuch,
+  kein `Math.random()`, wie der Rest der Level-Generierung). Die Schwankung
+  ist bewusst nach OBEN verzerrt statt symmetrisch, damit der Schnitt über
+  alle 120 Level von 6,34 auf 6,92 Hindernisse steigt (per Simulationsskript
+  nachgerechnet) – "unterschiedlich" UND "im Schnitt höher", nicht nur eins
+  von beiden. Deckel dafür von 8 auf `OBSTACLE_COUNT_CAP = 10` angehoben,
+  weil die Schwankung gelegentlich über die alte Basis-Kurve hinausschlägt.
+  Verifiziert per echtem Spielstand: Level 63 lädt mit 10 vorplatzierten
+  Hindernis-Äxten, Level 64 mit 7 (`.target-board__axe-slot`-Elemente
+  gezählt) – unterschiedliche Level, unterschiedliche Werte, keine
+  Konsolenfehler.
   Bewusst NICHT angefasst: `COLLISION_ANGLE_TOLERANCE_DEG` (10°) – der Wert
   ist eng an `FLIGHT_DURATION_MS` gekoppelt (190ms Flugzeit bei 55°/Sek.
   Level-1-Tempo ergeben ~10,5° Drehung, also knapp ÜBER der Toleranz, siehe
@@ -1465,6 +1484,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Vierte Runde: Hindernis-Zahl schwankt statt starrer Treppenstufe**
+      (Details siehe Level-System-Abschnitt oben, 2026-08-21): gleicher
+      Level-Bereich hatte bisher immer exakt dieselbe Hindernis-Zahl (z.B.
+      immer 6 zwischen Level 35-45), jetzt deterministische Schwankung um die
+      Basis-Kurve (nach oben verzerrt, Schnitt 6,34→6,92 über alle 120
+      Level), Deckel von 8 auf 10 angehoben. Per echtem Spielstand
+      verifiziert (Level 63 = 10 Hindernisse, Level 64 = 7).
 - [x] **Weltkarte: Freischalt-Anzeige zurück auf Level-Text** (Details siehe
       Welten-Abschnitt oben, 2026-08-21): gesperrte Welten zeigten "Ab X XP"
       (abstrakte Punktzahl), jetzt wieder "Ab Level N (durch XP)" – der
