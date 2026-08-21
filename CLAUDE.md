@@ -543,6 +543,16 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   begrenzt auf 20) und erlaubt per Tap den Sprung zu einer freigeschalteten
   Welt. Gesperrte Welten zeigen "Erreiche Level X, um freizuschalten" statt
   eines Zahlenwerts.
+  **Anzeige später auf rohe XP-Zahlen umgestellt** (siehe XP-Abschnitt weiter
+  unten, "Ab 200 XP" statt Level-Text), **dann auf Klaus' Feedback wieder
+  zurück auf Level-Text geändert** ("die Level sollen man mit XP bekommen" –
+  die rohe XP-Zahl war zu abstrakt): `WorldMap.tsx` zeigt gesperrte Welten
+  jetzt wieder als `Ab Level ${startLevelIndex + 1} (durch XP)` statt
+  `Ab ${xpThreshold} XP` – der Mechanismus bleibt exakt derselbe (XP schaltet
+  frei, nicht der Highscore der laufenden Runde), nur die Beschriftung ist
+  wieder die vertraute Levelnummer statt einer abstrakten Punktzahl. Das
+  ungenutzt gewordene `xpThreshold`-Feld auf `MapNode` dabei entfernt, `Level
+  ${startLevelIndex + 1}` reicht als Anzeige-Wert.
 - **Diamanten** (`Gem.tsx`, zweite Währung neben Münzen, `SaveData.gems`):
   kommen NUR aus goldenen Äpfeln, nicht aus normalem Spielen – bewusst eine
   Glücks-Komponente, die separat vom Serien-Multiplikator läuft (Serie
@@ -1455,6 +1465,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Weltkarte: Freischalt-Anzeige zurück auf Level-Text** (Details siehe
+      Welten-Abschnitt oben, 2026-08-21): gesperrte Welten zeigten "Ab X XP"
+      (abstrakte Punktzahl), jetzt wieder "Ab Level N (durch XP)" – der
+      XP-Mechanismus selbst ist unverändert, nur die Beschriftung wieder
+      levelbasiert wie vor der XP-Wirtschaft. `tsc -b` sauber, per echtem Tap
+      auf der Weltkarte geprüft (Eis/Vulkan/Kosmos/Heldenstadt zeigen korrekt
+      "Ab Level 41/61/81/101"), keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

@@ -99,8 +99,6 @@ interface MapNode {
   unlocked: boolean;
   isCurrent: boolean;
   progress: number;
-  /** Wie viel XP nötig ist, um diese Welt freizuschalten (0 = von Anfang an frei). */
-  xpThreshold: number;
 }
 
 interface WorldMapProps {
@@ -235,7 +233,6 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
       progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL))),
-      xpThreshold: threshold,
     };
   });
 
@@ -251,7 +248,6 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: true,
       isCurrent: currentLevelIndex >= LEVEL_COUNT,
       progress: 1,
-      xpThreshold: 0,
     });
   }
 
@@ -470,7 +466,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                   <div className={`world-node__label world-node__label--${labelSide}`}>
                     <span className="world-node__name">{node.name}</span>
                     <span className="world-node__sub">
-                      {node.unlocked ? node.sublabel : `Ab ${node.xpThreshold} XP`}
+                      {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex + 1} (durch XP)`}
                     </span>
                   </div>
                 </div>
