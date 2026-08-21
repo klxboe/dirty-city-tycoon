@@ -30,6 +30,14 @@ export const BOARD_IMAGES: Record<string, string> = {
   'board-neon': '/boards/board-neon.png',
   'board-gargoyle': '/boards/board-gargoyle.png',
   'board-antenna': '/boards/board-antenna.png',
+
+  // --- Weltboss-Scheiben (siehe WORLD_BOSSES in worlds.ts) - Gemini-Bilder von
+  // Klaus geliefert, ersetzen den bisherigen Farbverlauf-Fallback ---
+  'board-boss-desert': '/boards/board-boss-desert.png',
+  'board-boss-ice': '/boards/board-boss-ice.png',
+  'board-boss-volcano': '/boards/board-boss-volcano.png',
+  'board-boss-cosmos': '/boards/board-boss-cosmos.png',
+  'board-boss-metro': '/boards/board-boss-metro.png',
 };
 
 export function getBoardImage(id: string): string | undefined {

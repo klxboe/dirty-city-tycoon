@@ -10,8 +10,9 @@ export type SkinKind = 'axe' | 'board';
  * `shop` = für Münzen kaufbar, `boss` = Belohnung aus einem Boss-Level,
  * `gem`  = für Diamanten kaufbar ("Legendär"-Reiter im Shop),
  * `egg`  = Oster-Ei – nur über ein verstecktes Geheimnis freischaltbar, nie kaufbar.
+ * `iap`  = für ECHTGELD kaufbar (siehe `priceCents`), kein Münzen-/Diamanten-Preis.
  */
-export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg';
+export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg' | 'iap';
 
 export interface SkinDef {
   id: string;
@@ -21,10 +22,23 @@ export interface SkinDef {
   blurb: string;
   /**
    * Preis in Münzen (source 'shop') oder Diamanten (source 'gem'). 0 = von Anfang an
-   * dabei. Bei 'boss'/'egg' ohne Bedeutung – die sind nie kaufbar.
+   * dabei. Bei 'boss'/'egg'/'iap' ohne Bedeutung.
    */
   price: number;
   source: SkinSource;
+  /**
+   * NUR bei `source: 'iap'` gesetzt: Preis in Cent (z.B. 299 = 2,99 €). Es gibt in
+   * diesem Projekt noch KEINE echte Zahlungs-Anbindung (kein App-Store/Play-Billing-
+   * SDK verdrahtet, das kommt erst mit Phase 2/Capacitor) – der Kauf-Button zeigt
+   * deshalb aktuell nur einen klar erkennbaren Platzhalter-Hinweis statt echt zu
+   * kassieren, siehe `Shop.tsx`.
+   */
+  priceCents?: number;
+}
+
+/** "2,99 €" aus 299 Cent – einzige Stelle, die Cent in eine Anzeige umrechnet. */
+export function formatIapPrice(cents: number): string {
+  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
 }
 
 /** Farbwerte einer Zielscheibe. Landen 1:1 als CSS-Variablen auf dem Board-Element. */
@@ -63,34 +77,33 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-standard', kind: 'axe', name: 'Holzfäller', blurb: 'Die treue Standard-Axt.', price: 0, source: 'shop' },
 
   // --- Zwölfer-Set, nach Gemini-Konzeptbildern gestaltet (Farben übernommen,
-  // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx) ---
+  // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx). Auf Klaus'
+  // Wunsch auf die zwei güngstigsten Einstiegs-Äxte eingedampft – die zehn teureren/
+  // "coolsten" Coin-Äxte dieses Sets sind raus, das zweite Zehner-Set unten übernimmt
+  // ihre Rolle als "hochwertigste Äxte", jetzt aber als Echtgeld-Käufe statt Münzen
+  // (siehe Kommentar dort). AXE_STYLES/Bilder dieser zehn entfernten Äxte bleiben
+  // bewusst unangetastet in den Daten stehen (harmlos, falls sie später wieder
+  // gebraucht werden) – nur hier aus dem Kauf-Angebot genommen. ---
   { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 700, source: 'shop' },
   { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 1300, source: 'shop' },
-  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 1900, source: 'shop' },
-  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 2500, source: 'shop' },
-  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 3000, source: 'shop' },
-  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 3400, source: 'shop' },
-  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 3800, source: 'shop' },
-  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 4400, source: 'shop' },
-  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 5300, source: 'shop' },
-  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 6200, source: 'shop' },
-  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 7200, source: 'shop' },
-  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 8300, source: 'shop' },
 
-  // --- Zweites Zehner-Set (Klaus' konkrete Kategorien-Liste, Bilder folgen separat
-  // per Gemini – siehe Prompt-Sammlung am Ende von CLAUDE.md). Bis die Bilder da sind,
-  // rendert jede über AXE_STYLES weiter unten als Farb-Skin auf der Standard-Silhouette,
-  // exakt wie das Zwölfer-Set oben es vor seinen eigenen Bildern getan hat. ---
-  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 900, source: 'shop' },
-  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 1600, source: 'shop' },
-  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 5800, source: 'shop' },
-  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 2400, source: 'shop' },
-  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 2100, source: 'shop' },
-  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 3600, source: 'shop' },
-  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 1400, source: 'shop' },
-  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 6700, source: 'shop' },
-  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 4900, source: 'shop' },
-  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 3200, source: 'shop' },
+  // --- Zweites Zehner-Set: jetzt die "coolsten, hochwertigsten" Äxte im Spiel – auf
+  // Klaus' Wunsch nicht mit Münzen kaufbar, sondern mit ECHTGELD (`source: 'iap'`,
+  // `priceCents`). Es gibt in diesem Projekt noch KEINE echte Zahlungs-Anbindung
+  // (kein App-Store/Play-Billing-SDK, das kommt erst mit Phase 2/Capacitor) – der
+  // Kauf-Button in Shop.tsx zeigt deshalb aktuell nur einen klaren Platzhalter-Hinweis
+  // statt echt zu kassieren. Bilder folgen separat per Gemini (siehe Prompt-Sammlung
+  // am Ende dieser Datei/CLAUDE.md), bis dahin Farb-Skin über AXE_STYLES. ---
+  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 0, source: 'iap', priceCents: 99 },
+  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 0, source: 'iap', priceCents: 149 },
+  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 0, source: 'iap', priceCents: 149 },
+  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 0, source: 'iap', priceCents: 199 },
+  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 0, source: 'iap', priceCents: 199 },
+  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 0, source: 'iap', priceCents: 249 },
+  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 0, source: 'iap', priceCents: 299 },
+  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 0, source: 'iap', priceCents: 349 },
+  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 0, source: 'iap', priceCents: 399 },
+  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 0, source: 'iap', priceCents: 449 },
 ];
 
 // ---------------------------------------------------------------------------

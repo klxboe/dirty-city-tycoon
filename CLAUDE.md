@@ -2359,6 +2359,57 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       im Browser bestätigt, keine Konsolenfehler – das tatsächliche
       Ruckel-Gefühl auf einem echten Handy noch nicht bestätigt (rAF-Freeze
       in der automatisierten Umgebung).
+- [x] **Monetarisierungs-Umbau der 10 neuen Äxte + echte Bilder eingebaut
+      (2026-08-21).** Klaus' Korrektur: die 10 in der vorigen Ausbaustufe
+      neu erfundenen Äxte (`axe-oldwood` … `axe-neonaxe`) sollen NICHT mit
+      Münzen kaufbar sein, sondern mit Echtgeld – und sie ersetzen dabei die
+      zehn teuersten/coolsten Äxte aus dem ursprünglichen Zwölfer-Set
+      (`axe-steampunk`, `axe-rune`, `axe-tide`, `axe-cosmic`, `axe-thorn`,
+      `axe-magma`, `axe-plague`, `axe-royal`, `axe-cyber`, `axe-holy` –
+      entfernt aus `AXE_SKINS`), nur `axe-standard`/`axe-nature`/`axe-coral`
+      bleiben als Münz-Äxte übrig. Dafür in `shop.ts` `SkinSource` um `'iap'`
+      erweitert, `SkinDef.priceCents` + `formatIapPrice()` ergänzt, Preise
+      0,99€–4,49€ nach Optik/Aufwand gestaffelt. **Es gibt noch keine echte
+      Zahlungs-Anbindung** (kein App-Store-/Play-Billing-SDK verdrahtet,
+      s. Phase 2 unten) – der Kauf-Button in `Shop.tsx` zeigt deshalb bewusst
+      einen klar gekennzeichneten Platzhalter-Hinweis statt entweder nichts
+      zu tun (verwirrend) oder das Item gratis freizuschalten (würde einen
+      Kauf vortäuschen, ohne dass Geld fließt) – Karten mit `source:'iap'`
+      bekommen einen violetten "Premium"-Rahmen/Badge (`Shop.css`) zur klaren
+      Abgrenzung von Münz-/Diamant-Ware.
+      Zusätzlich: Klaus hatte die 10 Gemini-Bilder für diese Äxte im
+      Projektordner gespeichert (als `<uuid>.jpeg` im Repo-Root, wie beim
+      Chat-Bild-Einfügen üblich) – zusammen mit 5 weiteren Bildern für die
+      Weltboss-Scheiben (`board-boss-desert/-ice/-volcano/-cosmos/-metro`,
+      bis dahin nur Farbverlauf-Fallback). Alle 15 per Bild-Inhalt erkannt
+      und den passenden Skin-IDs zugeordnet (Motiv passte eindeutig:
+      Kiefernhieb=schlichte Holzaxt, Frostwardin=Eis-Medaillon, etc.).
+      Verarbeitung (Python/Pillow-Skript im Scratchpad, nicht im Repo):
+      Gemini hatte den "transparenten Hintergrund" nur als aufgemaltes
+      Schachbrett simuliert (echte JPEGs ohne Alphakanal) – Freistellen per
+      Eck-Farbabgleich (zwei Schachbrett-Töne aus den vier Bildecken per
+      2-Cluster-Erkennung bestimmt, da Ton pro Bild unterschiedlich hell/
+      dunkel) plus Flood-Fill vom Bildrand, danach auf Inhalt zugeschnitten
+      und auf max. 900px Höhe skaliert – exakt dasselbe Prinzip wie bei den
+      bisherigen Bild-Skins. Toleranz/Weichzeichnungs-Parameter mussten PRO
+      BILD einzeln nachjustiert werden (bei sehr farbigen Äxten wie Gold/
+      Schwarzstahl auf Anhieb sauber, bei fast farbneutralen Äxten wie
+      Frostbeil/Blitzbeil/Neonbeil überschnitt sich der Objektton zu stark
+      mit dem grauen Platzhalter-Schachbrett). Ergebnis in `AXE_IMAGES`
+      (`axeShapes.ts`) und `BOARD_IMAGES` (`boardImages.ts`) verdrahtet,
+      `tsc -b` sauber, im Browser geprüft (Werkstatt zeigt alle 10 Premium-
+      Karten mit korrekten Bildern/Preisen, Klick auf Kauf-Button zeigt nur
+      den Platzhalter-Hinweis, Münzstand bleibt unverändert, keine
+      Konsolenfehler). **Bekannte kleine Bildfehler, akzeptiert statt weiter
+      nachbearbeitet:** `axe-frostaxe` hat noch ein schwaches
+      Schachbrett-Muster INNERHALB der Eisklinge (dort vom Flood-Fill nicht
+      erreichbar, weil vollständig von der Klingen-Kontur umschlossen) und
+      `axe-demon`/`axe-neonaxe` haben einen sehr schwachen Farb-Halo am
+      Glüh-Rand. Bei allen dreien wirkt die Klinge/Kontur klar erkennbar,
+      der Fehler fällt bei den tatsächlichen Render-Größen (26-92px) kaum
+      auf – falls störend: betroffenes Ausgangsbild in Gemini neu erzeugen
+      lassen (Hinweis mitgeben, dass Gemini KEIN Schachbrett-Muster ins
+      Motiv selbst einbauen soll), dann nur die Freistellung wiederholen.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

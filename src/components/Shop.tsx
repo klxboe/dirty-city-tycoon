@@ -9,6 +9,7 @@ import {
   BOSS_AXE_SKINS,
   BOSS_FRUITS,
   EASTER_EGG_SKINS,
+  formatIapPrice,
   HERO_AXE_SKINS,
   HERO_BOSSES,
   LEGENDARY_SKINS,
@@ -66,6 +67,15 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
+  /**
+   * Echtgeld-Käufe (`source: 'iap'`) haben noch KEINE echte Zahlungs-Anbindung (kein
+   * App-Store-/Play-Billing-SDK verdrahtet). Statt den Kauf-Button einfach nichts tun
+   * zu lassen (verwirrend) oder ihn kostenlos freizuschalten (falsch – würde einen
+   * Echtgeld-Kauf vortäuschen, ohne dass Geld fließt), zeigt er einen klar erkennbaren
+   * Platzhalter-Hinweis. Sobald eine echte SDK-Anbindung existiert, ersetzt deren
+   * Erfolgs-Callback einfach diesen `onBuy`-Aufruf hier.
+   */
+  const [iapNotice, setIapNotice] = useState<string | null>(null);
 
   const items =
     tab === 'axe'
@@ -141,7 +151,9 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
             const equipped =
               skin.kind === 'board' ? save.equippedBoardSkin === skin.id : save.equippedAxeSkin === skin.id;
             const currency = skin.source === 'gem' ? save.gems : save.coins;
-            const affordable = currency >= skin.price;
+            // Echtgeld-Items sind nie "erschwinglich/nicht erschwinglich" im Münz-Sinne
+            // – der Button ist immer aktiv, zeigt aber (noch) nur den Platzhalter-Hinweis.
+            const affordable = skin.source === 'iap' || currency >= skin.price;
 
             // Bei Boss-Beute zeigen wir statt eines Preises, welches Level sie freischaltet.
             // Zwei getrennte Rotationen (Boss-Früchte vs. Heldenstadt-Bosse, siehe
@@ -162,8 +174,9 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
                 key={skin.id}
                 className={`shop-card ${equipped ? 'shop-card--equipped' : ''} ${
                   !owned && (skin.source === 'boss' || skin.source === 'egg') ? 'shop-card--locked' : ''
-                }`}
+                } ${skin.source === 'iap' ? 'shop-card--premium' : ''}`}
               >
+                {skin.source === 'iap' && !owned && <span className="shop-card__premium-tag">Premium</span>}
                 {isMystery && !owned ? <div className="shop-card__preview shop-card__preview--mystery">?</div> : <SkinPreview skin={skin} />}
 
                 <div className="shop-card__info">
@@ -181,6 +194,13 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
                   <span className="shop-card__locked">Level {bossLevel}</span>
                 ) : skin.source === 'egg' ? (
                   <span className="shop-card__locked">???</span>
+                ) : skin.source === 'iap' ? (
+                  <button
+                    className="shop-card__action shop-card__action--iap"
+                    onClick={() => setIapNotice(`${skin.name} – Echtgeld-Kauf kommt mit dem App-Store-Release.`)}
+                  >
+                    💎 {formatIapPrice(skin.priceCents ?? 0)}
+                  </button>
                 ) : (
                   <button
                     className="shop-card__action shop-card__action--buy"
@@ -195,6 +215,12 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
             );
           })}
         </div>
+
+        {iapNotice && (
+          <div className="shop__iap-notice" onClick={() => setIapNotice(null)}>
+            {iapNotice}
+          </div>
+        )}
 
         <button className="shop__close" onClick={onClose}>
           Weiter werfen

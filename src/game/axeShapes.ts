@@ -278,6 +278,18 @@ export const AXE_IMAGES: Record<string, string> = {
   'axe-gargoyle': '/axes/axe-gargoyle.png',
   'axe-antenna': '/axes/axe-antenna.png',
   'axe-egg-duck': '/axes/axe-egg-duck.png',
+
+  // --- Echtgeld-Äxte (source: 'iap' in shop.ts) - Gemini-Bilder von Klaus geliefert ---
+  'axe-oldwood': '/axes/axe-oldwood.png',
+  'axe-black': '/axes/axe-black.png',
+  'axe-gold': '/axes/axe-gold.png',
+  'axe-fire': '/axes/axe-fire.png',
+  'axe-frostaxe': '/axes/axe-frostaxe.png',
+  'axe-crystalaxe': '/axes/axe-crystalaxe.png',
+  'axe-viking': '/axes/axe-viking.png',
+  'axe-demon': '/axes/axe-demon.png',
+  'axe-lightning': '/axes/axe-lightning.png',
+  'axe-neonaxe': '/axes/axe-neonaxe.png',
 };
 
 export function getAxeImage(id: string): string | undefined {
