@@ -526,6 +526,33 @@ Vulkankegel, Skyline, Mond), Glanzstreifen/Funkeln/Wippen per
 `getComputedStyle`-Inspektion bestätigt, keine Konsolenfehler bei mehreren
 echten Würfen.
 
+### Echte Foto-Hintergründe versucht, für die Spiel-Bühne wieder verworfen
+
+Ein Versuch, `WorldHorizon`/`WorldDecor` (prozedurale Silhouetten, siehe oben)
+auf der Spiel-Bühne durch echte Gemini-Bilder zu ersetzen
+(`game/worldImages.ts`, sechs Welt-Bilder unter `public/backgrounds/`,
+`App.tsx` setzte `--world-bg-image` inline als oberste `background`-Ebene) –
+Klaus' Rückmeldung: **die Welt-Bilder waren zu realistisch/düster gemalt und
+haben den Kinderspiel-Effekt kaputt gemacht**, das Foto für den
+Startbildschirm (`start-screen.jpg`, heller Cartoon-Ozean-Look) passte aber
+sehr gut. Deshalb:
+- **Bühnen-Wiring komplett zurückgebaut**: `App.tsx`/`App.css` wieder auf die
+  reine prozedurale Fassung (`WorldHorizon` zeigt sich unconditional wie
+  vorher, kein `--world-bg-image` mehr), `game/worldImages.ts` gelöscht (nach
+  dem Rückbau nirgends mehr importiert).
+- **Startbildschirm-Bild bleibt** (`StartScreen.css`, `url('/backgrounds/
+  start-screen.jpg')` als oberste `background`-Ebene, alte Verlauf-/
+  Wolkentupfen-Gradients weiter als Fallback darunter) – das war der Teil,
+  der laut Feedback gut passt.
+- Die sechs jetzt unbenutzten Welt-Bilder (`public/backgrounds/world-*.jpg`)
+  liegen noch auf der Platte (~350 KB gesamt), aber werden von keinem Code
+  mehr referenziert – bewusst NICHT gelöscht, falls sie für etwas anderes
+  (z.B. ein anderer Kontext als Bühnen-Hintergrund) noch gebraucht werden.
+  Nachfragen, ob die weg sollen, falls sie stören.
+- Verifiziert: `tsc -b` sauber, `.stage` liefert per `getComputedStyle`
+  wieder nur die alten `repeating-linear-gradient`/`linear-gradient`-Werte
+  (kein `url(...)` mehr), Level lädt ohne Konsolenfehler.
+
 ### Boss-Level
 
 - **Jedes 5. Level ist ein Boss** (`BOSS_EVERY`, `bossFruitForLevel()` in
@@ -779,6 +806,36 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   Boss-Level ist (`activeBoardSkin` in `useAxeGame.ts`) – dieselbe
   `getBoardImage()`-Zuordnung greift deshalb automatisch, ohne dass dafür
   irgendwo zusätzlicher Code nötig war.
+- **Echte Hintergrundbilder für Startbildschirm und alle 6 Welten**
+  (`game/worldImages.ts`): auf Feedback ("sieht sehr billig aus") die bisher
+  rein prozeduralen Bühnen-Hintergründe (Farbverlauf + Schatten-Streifen,
+  siehe `.stage` in App.css) durch echte Gemini-Bilder ergänzt. Technisch als
+  zusätzliche, oberste `background`-Ebene gelöst (`--world-bg-image`
+  CSS-Variable, von App.tsx pro Welt gesetzt) statt als eigenes DOM-Element –
+  dadurch bleibt der alte Farbverlauf als Fallback bestehen, falls für eine
+  Welt (oder z.B. spätere neue Welten) mal kein Bild da ist, ohne
+  Sonderfall-Code. Beim Startbildschirm ist es einfacher: nur ein festes Bild
+  (`START_SCREEN_BACKGROUND_IMAGE`), direkt in `StartScreen.css` als
+  oberste Ebene vor die bisherigen Verlauf-/Wolkentupfen-Gradients gesetzt.
+  **Wichtiger Fund dabei:** die alte, prozedurale `WorldHorizon`-Silhouette
+  (Bäume/Dünen/Berge/Vulkan/Skyline am Bühnenfuß, siehe eigener Abschnitt
+  weiter unten) zeichnet GENAU dasselbe Motiv an GENAU derselben Stelle wie
+  das neue Bild – beides gleichzeitig hätte sich sichtbar überlagert/verdoppelt.
+  `WorldHorizon` wird deshalb nur noch gerendert, wenn für die aktuelle Welt
+  kein Bild existiert (`{!worldBgImage && <WorldHorizon ... />}` in App.tsx) –
+  `WorldDecor` (die kleinen Ecken-Deko-Animationen) bleibt dagegen unverändert
+  bestehen, die ist klein/dezent genug, um mit dem neuen Bild zusammen zu
+  funktionieren. Bilder bewusst OHNE Freistellen verarbeitet (anders als bei
+  Äxten/Scheiben) – das sind volle rechteckige Szenenbilder, kein Icon vor
+  weißem Hintergrund, brauchen also keine Transparenz, nur Verkleinern/
+  Komprimieren (Python/Pillow, JPEG statt PNG spart hier deutlich Dateigröße
+  bei diesen foto-artigen Verläufen – alle 7 zusammen unter 400 KB). Beim
+  Gemini-Prompt bewusst verlangt, dass die vertikale MITTE des Bilds dunkel/
+  ruhig bleibt (Detail nur oben und am unteren Rand) – genau dort liegen
+  Zielscheibe und Axt-Flugbahn, ein zu detailreicher Hintergrund dort hätte
+  die Lesbarkeit gekostet. Geprüft: alle 7 Bilder laden mit Status 200, echter
+  Wechsel zwischen zwei Welten (Wald -> Vulkan) live bestätigt, keine
+  Konsolenfehler.
 - **Oster-Ei** (`StartScreen.tsx`): siebenmaliges schnelles Antippen des
   Titel-Logos (`SECRET_TAP_COUNT = 7` innerhalb `SECRET_TAP_WINDOW_MS = 2200ms`)
   schaltet einen geheimen Axt-Skin frei ("Quietsche-Ente", `axe-egg-duck`,
@@ -1484,6 +1541,11 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Echte Foto-Bühnenhintergründe verworfen, Startbildschirm-Foto bleibt**
+      (Details siehe eigener Abschnitt oben, 2026-08-21): realistische
+      Welt-Fotos passten laut Klaus nicht zum Kinderspiel-Look, Bühnen-Wiring
+      zurückgebaut und `worldImages.ts` gelöscht, das Startbildschirm-Foto
+      (passt laut Feedback gut) blieb erhalten.
 - [x] **Vierte Runde: Hindernis-Zahl schwankt statt starrer Treppenstufe**
       (Details siehe Level-System-Abschnitt oben, 2026-08-21): gleicher
       Level-Bereich hatte bisher immer exakt dieselbe Hindernis-Zahl (z.B.

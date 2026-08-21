@@ -15,7 +15,13 @@
   gap: var(--space-4);
   padding: var(--space-5) var(--space-4) var(--space-6);
   overflow-y: auto;
+  /* Echtes Gemini-Bild als oberste Ebene (`public/backgrounds/start-screen.jpg`) –
+     die alten Verlauf-/Wolkentupfen-Gradients bleiben als Fallback darunter
+     erhalten, falls das Bild mal fehlt/nicht lädt. Passt gut zum Cartoon-Look,
+     im Gegensatz zu den (verworfenen) realistischen Welt-Hintergrundbildern für
+     die Spiel-Bühne selbst, siehe CLAUDE.md. */
   background:
+    url('/backgrounds/start-screen.jpg') center / cover no-repeat,
     radial-gradient(ellipse 15% 3% at 15% 9%, rgba(255, 255, 255, 0.55), transparent 70%),
     radial-gradient(ellipse 11% 2.5% at 78% 5%, rgba(255, 255, 255, 0.42), transparent 70%),
     radial-gradient(ellipse 17% 3% at 48% 15%, rgba(255, 255, 255, 0.32), transparent 70%),
