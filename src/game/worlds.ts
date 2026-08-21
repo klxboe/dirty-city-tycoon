@@ -127,6 +127,37 @@ export const WORLDS: World[] = [
   },
 ];
 
+/**
+ * Weltboss je Welt – erscheint GENAU am ersten Level der jeweiligen Welt (siehe
+ * `isWorldBossLevel()` unten), als große, deutlich härtere Prüfung "vor dem Tor" zur
+ * restlichen Welt. Wald (Level 1) bekommt bewusst KEINEN Weltboss – das ist der
+ * Tutorial-Einstieg für neue Spieler, siehe eigener Kommentar bei `isWorldBossLevel()`.
+ * Rein kosmetischer Name/Bezeichner, kein eigenes Design-System nötig – die Härte
+ * selbst kommt aus generateLevel() (constants.ts), nicht aus dieser Liste.
+ */
+export const WORLD_BOSSES: Record<string, string> = {
+  desert: 'Sandkolossos',
+  ice: 'Frostwardin',
+  volcano: 'Aschenschlund',
+  cosmos: 'Leerenwächter',
+  metro: 'Turmbrecher',
+};
+
+/**
+ * Ob `levelIndex` das "Tor" vor einer Welt ist – GENAU der erste Level jeder Welt,
+ * außer Wald (Level 1): das ist für jeden neuen Spieler der allererste Level
+ * überhaupt und muss ein sanfter Tutorial-Einstieg bleiben (siehe Level-System-
+ * Abschnitt in CLAUDE.md, "Level 1-5 nervig" – ein Weltboss ausgerechnet dort wäre
+ * das genaue Gegenteil von diesem Feedback). Weil `nextLevel()`/Weltkarten-Sprünge
+ * (siehe `onSelectLevel` in WorldMap.tsx) IMMER exakt auf `world.startLevelIndex`
+ * landen, ist dieser Level automatisch ein echtes "Tor": man kann die restlichen
+ * Level einer Welt nicht erreichen, ohne hier zuerst durchzukommen – ganz ohne
+ * eigene Freischalt-/Speicher-Logik.
+ */
+export function isWorldBossLevel(levelIndex: number): boolean {
+  return WORLDS.some((w) => w.startLevelIndex === levelIndex && w.startLevelIndex > 0);
+}
+
 export function worldForLevel(levelIndex: number): World {
   // Level jenseits der Kampagne (Endlos-Modus) bleiben optisch in der letzten Welt
   // (aktuell Heldenstadt) – generisch über WORLDS.length, nicht auf eine bestimmte

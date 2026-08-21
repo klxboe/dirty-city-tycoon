@@ -453,6 +453,15 @@ function App() {
           </div>
         )}
 
+        {/* Weltboss: eigene, auffälligere Kennzeichnung als ein normaler 5-Level-Boss –
+            das hier ist das "Tor" vor der Welt, keine Routine-Prüfung. */}
+        {game.worldBossName && (
+          <div className="stage__boss-tag stage__boss-tag--world">
+            <span className="stage__boss-tag-label">⚠ Weltboss</span>
+            <span className="stage__boss-tag-name">{game.worldBossName}</span>
+          </div>
+        )}
+
         <div className="stage__board-zone">
           <TargetBoard
             ref={boardHandleRef}

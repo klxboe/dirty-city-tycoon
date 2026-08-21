@@ -46,6 +46,13 @@ export interface LevelConfig {
   preplacedAxeAngles?: number[];
   /** Gesetzt bei Boss-Leveln: welche Frucht die Zielscheibe ist (siehe shop.ts). */
   bossFruitId?: string;
+  /**
+   * Gesetzt GENAU am ersten Level einer Welt (außer Wald/Level 1, dem Tutorial-Einstieg
+   * für neue Spieler) – der "Weltboss", eine deutlich härtere Prüfung als die normale
+   * Kurve an dieser Stelle vorsähe. Siehe `isWorldBossLevel()`/`WORLD_BOSS_PHASE_SPEED_MULTIPLIER`
+   * in constants.ts für die Umsetzung, `worlds.ts` für die betroffenen Level-Indizes.
+   */
+  worldBossId?: string;
   /** Index in appleAngles, falls dieses Level einen goldenen Apfel hat (selten). */
   goldenAppleIndex?: number;
   /** Index in appleAngles, falls dieses Level eine Sammelfigur hat (nur Heldenstadt). */

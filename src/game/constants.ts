@@ -1,6 +1,6 @@
 // Alle Balancing-Zahlen an einem Ort. Zum Testen/Tunen einfach hier ändern.
 import { BOSS_FRUITS, HERO_BOSSES, type BossFruit } from './shop';
-import { HERO_WORLD_START, WORLDS_LEVEL_COUNT } from './worlds';
+import { HERO_WORLD_START, isWorldBossLevel, WORLD_BOSSES, worldForLevel, WORLDS_LEVEL_COUNT } from './worlds';
 import type { LevelConfig, SpinPattern } from './types';
 
 /**
@@ -426,6 +426,12 @@ export function bossFruitForLevel(levelIndex: number, runSeed = 0): BossFruit | 
  */
 function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
   const boss = bossFruitForLevel(levelIndex, runSeed);
+  // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
+  // siehe isWorldBossLevel()) – eine deutlich größere Prüfung als ein normaler
+  // 5-Level-Boss. Die beiden schließen sich gegenseitig aus (kein Level-Index ist
+  // gleichzeitig Vielfaches von BOSS_EVERY UND ein Welt-Start, außer Level 0 selbst,
+  // das per isWorldBossLevel() ohnehin ausgeschlossen ist).
+  const worldBoss = isWorldBossLevel(levelIndex) ? worldForLevel(levelIndex) : null;
 
   /*
    * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
@@ -436,9 +442,24 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    *  - Erzwungenes `pulse`-Muster: `spinPatternFor()` allein hätte z.B. das erste
    *    Boss-Level (Index 4) auf `steady` gesetzt – ausgerechnet der erste Boss
    *    hätte sich dann NICHT schwerer angefühlt als das Level davor.
+   *
+   * Weltboss-Runde (Klaus: "Weltbosse sollen SEHR SEHR schwer sein, mehrere Phasen"):
+   * kräftiger Tempo-Sockel (+45 statt +28°/Sek.) UND ein kleiner Axt-/Hindernis-Bonus
+   * (+1/+1). Bewusst KLEIN gehalten bei Axt/Hindernis: `axeCountFor`/`obstacleCountFor`
+   * haben an GENAU diesen Level-Indizes (20/25, 40/45, ...) bereits eine eigene, scharfe
+   * "Wall"-Stufe (siehe deren Kommentare, "direkt an Boss-Level") – ein großer Bonus
+   * ZUSÄTZLICH dazu hätte das Brett so voll gemacht, dass kaum noch lösbare Lücken
+   * übrig geblieben wären (Slot-Budget: 36 Plätze bei 10°-Kollisionstoleranz). Die
+   * eigentliche "mehrere Phasen, wird während des Kampfes härter"-Eskalation läuft
+   * deshalb NICHT über noch mehr Hindernisse (die stehen fest seit Levelstart),
+   * sondern über das TEMPO WÄHREND des Kampfes – siehe
+   * `worldBossPhaseSpeedMultiplier()` weiter unten, angewendet in `useAxeGame.ts`
+   * anhand des Fortschritts (`axesThrown / axeCount`). Erzwungenes `reverse`-Muster
+   * (unvorhersehbarer als `pulse`) als Basis, auf die die Phasen-Eskalation noch
+   * draufkommt.
    */
-  const axeCount = axeCountFor(levelIndex) + (boss ? 1 : 0);
-  const speedBonus = boss ? 28 : 0;
+  const axeCount = axeCountFor(levelIndex) + (worldBoss ? 1 : boss ? 1 : 0);
+  const speedBonus = worldBoss ? 45 : boss ? 28 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
@@ -451,19 +472,36 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
   const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53);
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97);
 
-  const obstacleCount = obstacleCountFor(levelIndex) + (boss ? 2 : 0);
+  const obstacleCount = obstacleCountFor(levelIndex) + (worldBoss ? 1 : boss ? 2 : 0);
   const appleCount = appleCountFor(levelIndex);
 
   return {
     axeCount,
     boardSpeedDegPerSec,
-    spinPattern: boss ? 'pulse' : spinPatternFor(levelIndex),
+    spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : spinPatternFor(levelIndex),
     appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
     bossFruitId: boss?.id,
+    worldBossId: worldBoss ? WORLD_BOSSES[worldBoss.id] : undefined,
     goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
     figurineIndex: figurineIndexFor(levelIndex, appleCount),
   };
+}
+
+/**
+ * Phasen-Eskalation WÄHREND eines Weltboss-Kampfes: `progress` ist der Anteil bereits
+ * geworfener Äxte (`axesThrown / axeCount`, 0 bis knapp unter 1). Die ersten ~40% laufen
+ * beim regulären Weltboss-Tempo (siehe `speedBonus` oben, "Phase 1: Muster lernen"), die
+ * mittleren ~35% ziehen deutlich an ("Phase 2: schneller, mehr Druck"), das letzte
+ * knappe Viertel ist die Spitze ("Phase 3: hoher Druck, anspruchsvolles Timing"). Bewusst
+ * eine reine Multiplikator-Funktion statt zusätzlicher Hindernisse – Hindernisse liegen
+ * seit Levelstart fest, das Tempo lässt sich dagegen sauber ohne Struktur-Änderung pro
+ * Wurf variieren (siehe `boardSpeedDegPerSec` in `useAxeGame.ts`).
+ */
+export function worldBossPhaseSpeedMultiplier(progress: number): number {
+  if (progress < 0.4) return 1;
+  if (progress < 0.75) return 1.35;
+  return 1.7;
 }
 
 export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;

@@ -1709,6 +1709,68 @@ zweites Game Over im selben Lauf zeigt korrekt NUR noch "Zurück zum Menü"
 (keine zweite Rettung). `tsc -b` sauber, keine Konsolenfehler. "Von Level 1
 starten" und "Fortschritt zurücksetzen" bestätigt aus der UI verschwunden.
 
+### Weltbosse: ein "Tor" pro Welt, ohne neues Freischalt-System
+
+Zweiter Teil-Batch derselben großen Ausbaustufe. Klaus wollte einen eigenen,
+SEHR schweren Weltboss pro Welt "als Tor vor dem eigentlichen Fortschritt".
+
+**Kein neues Speicher-/Freischalt-System nötig:** Weltkarten-Sprünge
+(`onSelectLevel` in `WorldMap.tsx`) und der automatische Levelaufstieg
+(`nextLevel()`) landen IMMER exakt auf `world.startLevelIndex` – der erste
+Level einer Welt ist dadurch schon strukturell ein echtes "Tor", man kann die
+späteren Level einer Welt gar nicht erreichen, ohne zuerst hier durchzukommen.
+Der Weltboss ist deshalb einfach eine massiv verschärfte `generateLevel()`-
+Ausgabe genau an diesen sechs Level-Indizes – keine zusätzliche
+"freigeschaltet/nicht"-Logik, kein neues Spielstand-Feld.
+
+- **`isWorldBossLevel()`/`WORLD_BOSSES`** (`worlds.ts`): Weltboss an JEDEM
+  Welt-Start AUSSER Wald/Level 1 – das ist für jeden neuen Spieler der
+  allererste Level überhaupt und muss der sanfte Tutorial-Einstieg bleiben
+  (siehe "Level 1-5 nervig"-Abschnitt weiter oben – ein Weltboss ausgerechnet
+  dort wäre exakt das Gegenteil von diesem bereits behobenen Feedback).
+  Sandkolossos (Wüste), Frostwardin (Eis), Aschenschlund (Vulkan),
+  Leerenwächter (Kosmos), Turmbrecher (Heldenstadt) – reine Namen/Bezeichner,
+  kein eigenes Grafik-System (Bilder kommen später separat, siehe
+  Gemini-Prompt-Abschnitt am Ende dieser Datei).
+- **Schwierigkeit** (`generateLevel()`, `constants.ts`): +45°/Sek. Tempo-Sockel
+  (mehr als ein normaler 5-Level-Boss mit +28), erzwungenes `reverse`-Muster
+  (unvorhersehbarer als das normale `pulse`). Axt-/Hindernis-Bonus BEWUSST
+  klein gehalten (+1/+1 statt eines großen Sprungs) – `axeCountFor`/
+  `obstacleCountFor` haben an genau diesen Level-Indizes (20/25, 40/45, ...)
+  bereits eine eigene, scharfe "Wall"-Stufe aus einem parallelen
+  Härte-Durchgang (siehe deren Kommentare "direkt an Boss-Level" – dieser Wert
+  war schon VOR dieser Session so verschärft, nicht von mir). Ein großer
+  Weltboss-Bonus zusätzlich dazu hätte das Brett auf ein rechnerisch kaum noch
+  lösbares Maß gefüllt (Slot-Budget: 36 Plätze bei 10°-Kollisionstoleranz) –
+  erst mit dem kleineren Bonus getestet: 10 Hindernis-Slots bei Level 21
+  (Wüste-Boss), ~26 von 36 Plätzen gegen Levelende belegt, angespannt aber
+  im Rahmen des an anderer Stelle bereits akzeptierten Endgame-Niveaus.
+- **Mehrere Phasen** (`worldBossPhaseSpeedMultiplier()`, `constants.ts`,
+  angewendet in `useAxeGame.ts`s abgeleitetem `boardSpeedDegPerSec`): das
+  Tempo zieht WÄHREND des Kampfes an, abhängig vom Fortschritt
+  (`axesThrown / axeCount`) – Phase 1 (<40%) beim regulären Weltboss-Tempo
+  ("Muster lernen"), Phase 2 (<75%) ×1,35 ("schneller, mehr Druck"), Phase 3
+  (Rest) ×1,7 ("hoher Druck, anspruchsvolles Timing"). Bewusst eine reine
+  Tempo-Eskalation statt zusätzlicher Hindernisse – die liegen seit
+  Levelstart fest, das Tempo lässt sich dagegen sauber pro Wurf variieren,
+  ohne die (explizit geschützte) Kollisions-/Impact-Logik anzufassen.
+  Berührt NICHTS von der geschützten Wurfmechanik: `boardSpeedDegPerSec` ist
+  seit jeher ein reiner Eingabewert für `TargetBoard`s Rotation, komplett
+  getrennt von Fluggeschwindigkeit/Flugbahn/Kollisionsprüfung/Impact/
+  Axtrotation während des Flugs.
+- **Eigenes Bühnen-Schild** (`App.tsx`/`App.css`): `.stage__boss-tag--world`,
+  Lila statt Rot, kräftigerer Puls-Glanz, "⚠ Weltboss" statt nur "Boss" –
+  soll sich wie eine echte Ansage lesen, nicht wie ein Routine-5-Level-Boss.
+
+Verifiziert: `tsc -b` sauber, Level 21 (Wüste-Weltboss) direkt geladen zeigt
+korrekt "⚠ Weltboss / Sandkolossos" und 10 vorplatzierte Hindernisse
+(passend zur Rechnung oben), keine Konsolenfehler. Das eigentliche
+Spielgefühl der Phasen-Eskalation (zieht das Tempo während eines echten
+Kampfes spürbar an?) ließ sich in der automatisierten Umgebung nicht in
+Echtzeit nachspielen (rAF-Freeze) – bitte am Gerät bestätigen, ob die drei
+Phasen als "lernen -> Druck -> Grenze" ankommen oder nachjustiert werden
+müssen (Stellschraube: die Zahlen in `worldBossPhaseSpeedMultiplier()`).
+
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
 Tippt man während eine Axt fliegt, wird der Tap gepuffert (`pendingThrowRef`)

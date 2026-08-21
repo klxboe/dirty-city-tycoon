@@ -23,6 +23,7 @@ import {
   PERFECT_APPLE_BONUS,
   REWARD_MULTIPLIER,
   streakMultiplier,
+  worldBossPhaseSpeedMultiplier,
   XP_PER_LEVEL,
 } from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
@@ -488,6 +489,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   // Ergebnis-Screen nutzt dieses Flag nur für die einmalige Glückwunsch-Anzeige.
   const isCampaignComplete = state.phase === 'levelComplete' && state.levelIndex === LEVEL_COUNT - 1;
   const bossFruit = bossFruitForLevel(state.levelIndex, state.save.runSeed);
+  // Weltboss-Phasen-Eskalation: das Tempo zieht WÄHREND des Kampfes an, je mehr Äxte
+  // schon geworfen sind (siehe worldBossPhaseSpeedMultiplier() in constants.ts). Bei
+  // normalen Leveln ist der Multiplikator schlicht 1 (kein Effekt).
+  const worldBossPhaseMultiplier = level.worldBossId
+    ? worldBossPhaseSpeedMultiplier(state.axesThrown / level.axeCount)
+    : 1;
 
   return {
     ...state,
@@ -496,12 +503,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     /** Erster Level-Index des aktuellen 10er-Blocks – dorthin geht es nach einem Game Over. */
     blockStart: blockStartIndex(state.levelIndex),
     levelsPerBlock: LEVELS_PER_BLOCK,
-    boardSpeedDegPerSec: level.boardSpeedDegPerSec * BOARD_SPEED_MULTIPLIER,
+    boardSpeedDegPerSec: level.boardSpeedDegPerSec * BOARD_SPEED_MULTIPLIER * worldBossPhaseMultiplier,
     spinPattern: level.spinPattern,
     axeCount: level.axeCount,
     appleCount: level.appleAngles.length,
     axesRemaining: level.axeCount - state.axesThrown,
     bossFruit,
+    /** Name des Weltbosses, falls dieses Level das "Tor" vor einer Welt ist (siehe
+     *  isWorldBossLevel()/WORLD_BOSSES in worlds.ts), sonst `null`. */
+    worldBossName: level.worldBossId ?? null,
     /** Im Boss-Level zeigt die Scheibe die Frucht statt des ausgerüsteten Designs. */
     activeBoardSkin: bossFruit ? bossFruit.boardSkinId : state.save.equippedBoardSkin,
     /** Wartende tägliche Belohnung, `null` wenn heute schon abgeholt. Reine Ableitung

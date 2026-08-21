@@ -705,6 +705,31 @@
   }
 }
 
+/* Weltboss: sitzt etwas TIEFER als ein normaler Boss-Tag (falls beide theoretisch
+   gleichzeitig einträfen – kommt aktuell nicht vor, aber schadet nicht, sie nicht
+   exakt zu überlagern), kräftigeres Lila/Violett statt Rot, deutlich auffälligerer
+   Puls-Glanz – soll sich wie eine echte Ansage lesen, nicht wie Routine. */
+.stage__boss-tag--world {
+  top: calc(var(--space-3) + 34px);
+  background: rgba(28, 8, 40, 0.8);
+  border-color: rgba(180, 90, 255, 0.6);
+  animation: world-boss-tag-pulse 1.6s ease-in-out infinite;
+}
+
+.stage__boss-tag--world .stage__boss-tag-label {
+  color: #d59bff;
+}
+
+@keyframes world-boss-tag-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(180, 90, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 26px 4px rgba(180, 90, 255, 0.5);
+  }
+}
+
 /*
  * Rücksicht auf "Bewegung reduzieren" (Systemeinstellung). Der Screen-Shake und die
  * schnellen Partikel sind genau die Art Effekt, die bei Bewegungsempfindlichkeit
