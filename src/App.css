@@ -189,25 +189,35 @@
   position: absolute;
   z-index: 1;
   --flight-x: 0px;
-  --flight-end-bottom: 68%;
+  --flight-travel-px: -200px;
   left: calc(50% + var(--flight-x));
   bottom: 8%;
+  /* Startwert der 0%-Keyframe unten vorwegnehmen, damit vor dem allerersten
+     Animationsframe (z.B. ein sehr langsames Gerät) keine Sekunde lang die
+     unverschobene Grundposition aufblitzt. */
+  translate: -50% 0;
   /*
-   * ZWEI getrennte Animationen statt einer: Position (bottom) lief früher gemeinsam
-   * mit Drehung/Squash in EINEM @keyframes-Block. Da `bottom` dort nur bei 0%/100%
-   * stand, das Transform aber zusätzlich bei 12%, bekam `bottom` die komplette
+   * ZWEI getrennte Animationen statt einer: Position lief früher gemeinsam mit
+   * Drehung/Squash in EINEM @keyframes-Block. Da die Position dort nur bei 0%/100%
+   * stand, das Transform aber zusätzlich bei 12%, bekam sie die komplette
    * vorne-geladene Kurve über die GESAMTE Distanz gestreckt – nach ca. 10% der
    * Flugzeit war die Axt schon fast am Ziel und "hing" für den Rest sichtbar fest
    * (gemeldetes Gefühl: "bremst kurz vor dem Treffer ab"). Jetzt läuft die Position
    * linear/gleichmäßig bis zum letzten Frame durch.
    *
-   * Drehung und Squash bleiben bewusst ZUSAMMEN in einem `transform` (nicht weiter
-   * in einzelne `rotate`/`scale`-Eigenschaften aufgeteilt): einzelne Transform-
-   * Eigenschaften komponieren in einer FESTEN Browser-Reihenfolge (translate, rotate,
-   * scale), während das kombinierte `transform` in der hier geschriebenen Reihenfolge
-   * angewendet wird. Eine erste Fassung hatte sie aufgeteilt – dadurch drehte sich die
-   * Streckung MIT der Axt statt zur Bildschirmachse zu bleiben, was wie ein
-   * unnatürlich langer Stiel aussah. Zurück zur ursprünglichen, bewährten Kombination.
+   * Die Position läuft über die eigenständige `translate`-Eigenschaft (nicht mehr
+   * über `bottom`, siehe `axe-fly-position` unten – Performance-Fix, "ruckelt extrem
+   * beim Werfen"), Drehung/Squash weiterhin über die eigenständige `transform`-
+   * Eigenschaft. Beide sind reine Compositor-Eigenschaften (kein Reflow), können aber
+   * trotzdem UNABHÄNGIG voneinander per eigenem `animation-timing-function` laufen,
+   * weil es zwei GETRENNTE CSS-Eigenschaften sind – `translate`/`rotate`/`scale`/
+   * `transform` komponieren laut Spezifikation in dieser FESTEN Reihenfolge
+   * (`translate` zuerst, ganz am Ende `transform`). Rotation und Squash bleiben dabei
+   * bewusst ZUSAMMEN in einem `transform` (nicht zusätzlich in `rotate`+`scale`
+   * aufgeteilt): DEREN Reihenfolge untereinander ist nicht vertauschbar (siehe
+   * Kommentar bei `axe-fly-transform`) – nur die reine Verschiebung (`translate`)
+   * lässt sich gefahrlos herauslösen, weil zwei Verschiebungen kommutieren, in
+   * welcher Reihenfolge man sie auch komponiert.
    */
   animation-name: axe-fly-position, axe-fly-transform;
   animation-timing-function: linear, cubic-bezier(0.05, 0.9, 0.1, 1);
@@ -215,13 +225,19 @@
   pointer-events: none;
 }
 
-/* Reine, gleichmäßige Bewegung von Start bis Einschlag – keine Verlangsamung. */
+/*
+ * Reine, gleichmäßige Bewegung von Start bis Einschlag – keine Verlangsamung. Läuft
+ * über `translate` statt `bottom`: eine mit `bottom` animierte Position zwingt den
+ * Browser bei JEDEM Frame zu einem Reflow (Layout-Neuberechnung), 190ms lang bei
+ * JEDEM Wurf – auf schwächeren Handys sichtbar ruckelig. `translate` läuft dagegen
+ * rein auf dem Compositor-Thread, wie `transform`.
+ */
 @keyframes axe-fly-position {
   0% {
-    bottom: 8%;
+    translate: -50% 0;
   }
   100% {
-    bottom: var(--flight-end-bottom);
+    translate: -50% var(--flight-travel-px);
   }
 }
 
@@ -238,13 +254,13 @@
  */
 @keyframes axe-fly-transform {
   0% {
-    transform: translateX(-50%) scale(0.68, 1.42) rotate(0deg);
+    transform: scale(0.68, 1.42) rotate(0deg);
   }
   12% {
-    transform: translateX(-50%) scale(1.1, 0.92) rotate(70deg);
+    transform: scale(1.1, 0.92) rotate(70deg);
   }
   100% {
-    transform: translateX(-50%) scale(1, 1) rotate(190deg);
+    transform: scale(1, 1) rotate(190deg);
   }
 }
 
@@ -373,7 +389,14 @@
   pointer-events: none;
 }
 
-/* Ausbreitender Ring am Einschlag – gibt dem Treffer Wucht. */
+/*
+ * Ausbreitender Ring am Einschlag – gibt dem Treffer Wucht. `border-width` blieb
+ * bewusst FEST (2px, Mittelwert der alten 4px->1px-Animation) statt animiert: eine
+ * animierte `border-width` ist eine Layout-Eigenschaft und zwang den Browser bei
+ * JEDEM Frame zu einem Reflow (Performance-Fix, "ruckelt extrem beim Aufkommen") –
+ * der optische Effekt "Ring wird beim Wachsen dünner" bleibt trotzdem erhalten, weil
+ * derselbe feste Rand bei größer werdendem `scale()` relativ automatisch dünner wirkt.
+ */
 .hit-effect__shockwave {
   position: absolute;
   left: 0;
@@ -382,7 +405,7 @@
   height: 14px;
   margin: -7px 0 0 -7px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 236, 190, 0.9);
+  border: 2px solid rgba(255, 236, 190, 0.9);
   animation: shockwave-expand 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
@@ -390,12 +413,10 @@
   0% {
     transform: scale(0.4);
     opacity: 0.95;
-    border-width: 4px;
   }
   100% {
     transform: scale(5.5);
     opacity: 0;
-    border-width: 1px;
   }
 }
 

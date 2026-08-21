@@ -274,6 +274,19 @@ wir). Name/Branding "Knife Hit" wird nirgends verwendet.
   Schwierigkeitsgefühl von Level 1-10 ließ sich wie immer nicht per
   Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
   echtes Spielen steht noch aus.
+  **Neunter Härte-Durchgang, direkt danach (Klaus: "die ersten 4 Level sind
+  leider deutlich zu einfach und zu langweilig"):** hebt die alte, mehrfach
+  bekräftigte Design-Entscheidung "Level 1-3 bleiben hindernisfrei" bewusst
+  auf – aktuelles Feedback wiegt schwerer als eine ältere Design-Prämisse.
+  Vorher waren Level 1-3 hindernisfrei UND (je nach Parität) liefen bis zu
+  vier Level am Stück mit `steady`-Drehung – mehrere fast identische, ruhige
+  Level hintereinander. Jetzt bleibt NUR Level 1 unangetastet (ein einziger
+  ruhiger Eintritts-Wurf ohne Hindernis, `steady`-Drehung, zum Zeigen des
+  Tap-Mechanismus) – ab Level 2 steht sofort ein Hindernis auf dem Brett
+  (`obstacleBaseFor`) UND wechselt sich sofort Pulsieren ein
+  (`spinPatternFor`). Verifiziert per echtem Spielstand: Level 1 weiterhin 0
+  Hindernisse, Level 2 jetzt 2 Hindernisse (vorher 0) bei unveränderter
+  Axt-Zahl (6). `tsc -b` sauber, keine Konsolenfehler.
 - **Dreh-Muster** (`spinPattern`) sorgen für Abwechslung, ohne an den
   Grundwerten zu drehen: `steady` (gleichmäßig, nur bis Level 19), `pulse`
   (Tempo schwankt) und `reverse` (Scheibe dreht periodisch die Richtung um).
@@ -1206,6 +1219,54 @@ hunderte Grad weiterspringen, mitten in einem Spiel, in dem die genaue Position
 Hintergrund-Tab die Scheibe komplett einfriert – nützlich zu wissen, wenn man
 das Spiel automatisiert testet.)
 
+### Performance-Fix: Ruckeln beim Werfen und beim Einschlag (2026-08-21)
+
+Klaus' Feedback nach echtem Spielen auf dem Handy: "ruckelt extrem beim
+Werfen und Aufkommen". Zwei konkrete, unabhängige CSS-Stellen animierten
+bisher LAYOUT-Eigenschaften statt reiner Compositor-Eigenschaften – genau
+der Klassiker für Web-Performance-Probleme, weil der Browser bei einer
+Layout-Eigenschaft JEDEN Animationsframe neu einsortieren muss (Reflow),
+statt die Änderung wie bei `transform`/`opacity` direkt an die GPU
+weiterzureichen:
+
+- **Der Axt-Flug selbst** (`axe-fly-position` in `App.css`, seit dem
+  Stall-Bug-Fix oben eine EIGENE Animation): animierte `bottom` – bei JEDEM
+  Wurf 190ms lang, bei jedem Frame ein Reflow. Umgestellt auf die
+  eigenständige `translate`-CSS-Eigenschaft (`translate: -50% var(--flight-
+  travel-px)`), rein compositor-basiert. Die Reichweite kommt jetzt als
+  Pixel-Wert aus App.tsx (`flightTravelPx`, negativ = nach oben), berechnet
+  aus derselben gemessenen Scheibenposition wie bisher `flightEndBottom` –
+  nur die Bewegungs-STRECKE statt eines `bottom`-Zielwerts. `.axe-flying`
+  selbst bleibt bei einem STATISCHEN `bottom: 8%` (nur einmal beim Mounten
+  berechnet, kein Reflow pro Frame). `translateX(-50%)` wanderte dabei aus
+  dem `transform` von `axe-fly-transform` in dasselbe `translate` (jetzt
+  `translate: -50% ...`) – WICHTIG dabei: nur reine Verschiebungen
+  (`translate`) lassen sich gefahrlos aus einem `transform` herauslösen,
+  weil zwei Verschiebungen in jeder Reihenfolge zum selben Ergebnis führen
+  (kommutieren). Rotation und Squash (`scale`+`rotate`) bleiben bewusst
+  WEITERHIN zusammen in einem `transform` – deren Reihenfolge ist NICHT
+  vertauschbar (siehe die ausführliche Herleitung beim ursprünglichen
+  Stall-Bug-Fix weiter oben, "unnatürlich langer Stiel"-Regression).
+- **Der Trefferring** (`shockwave-expand` in `App.css`): animierte
+  zusätzlich zu `transform`/`opacity` auch `border-width` (4px→1px) – bei
+  JEDEM Treffer ein Reflow. `border-width` jetzt FEST bei 2px (Mittelwert
+  der alten Spanne); der optische "wird beim Wachsen dünner"-Effekt bleibt
+  trotzdem erhalten, weil ein fester Rand bei größer werdendem `scale()`
+  relativ automatisch dünner wirkt.
+
+Alle anderen `@keyframes`-Blöcke im Spiel wurden gezielt durchsucht (`grep`
+über alle Komponenten-CSS-Dateien) – keine weiteren Layout-Eigenschaften
+(`top`/`left`/`right`/`bottom`/`width`/`height`/`margin`/`padding`/
+`border-width`/`font-size`) in Animationen gefunden, nur noch `transform`,
+`opacity`, `box-shadow` und `translate`. Verifiziert: `tsc -b` sauber, die
+geladenen Stylesheet-Regeln im Browser bestätigt per CSSOM-Inspektion
+(`document.styleSheets`) – `axe-fly-position` animiert jetzt `translate`
+statt `bottom`, `shockwave-expand` enthält kein `border-width` mehr, keine
+Konsolenfehler. Das tatsächliche Ruckel-Gefühl auf einem echten (ggf.
+schwächeren) Handy ließ sich wie bei allen Timing-/Performance-Themen
+NICHT per Browser-Automatisierung nachspielen (rAF-Freeze, siehe Abschnitt
+oben) – Bestätigung durch echtes Spielen steht noch aus.
+
 ### Die Winkel-Logik (der kniffligste Teil, kurz erklärt)
 
 - Die Zielscheibe rotiert kontinuierlich (Weltwinkel, 0° = oben, im Uhrzeigersinn).
@@ -1301,6 +1362,86 @@ das Spiel automatisiert testet.)
   den Einschlagpunkt). Beides wieder entfernt, auf ausdrücklichen Wunsch: "mach
   doch das egal wo man auf den Bildschirm drückt es gerade aus geht, genauso wie
   bei Knife Hit". Der einzige Skill ist wieder rein das TIMING.
+
+### Axt-Treffer: echter Mikro-Ruckler + Schwebe-Effekt gefunden und behoben
+
+Klaus' Feedback ("Axt-Treffer final perfektionieren", sehr detaillierte
+Analyse-Anleitung mit gezielten Verdachtspunkten): beim Übergang Flug→Steckend
+gab es einen kleinen sichtbaren Ruckler, und steckende Äxte wirkten, als
+würden sie leicht vor der Scheibe schweben statt sauber Kontakt zu haben.
+
+**Ursache gefunden, EXAKT die im Feedback vermutete Fallart ("wird die Axt
+beim Treffer zweimal positioniert", "setzen Flugbewegung und Stuck-Position im
+selben Frame unterschiedliche Werte"):** `App.tsx` berechnete das Flugziel
+schon länger mit einem "Einstech"-Zuschlag (`AXE_BITE_PX = 6`, lokale
+Konstante) – die fliegende Axt landete also sichtbar auf Radius 114 (Steck-
+Radius 120 minus 6). Die STECKENDE Axt-Darstellung in `TargetBoard.tsx`
+kannte diesen Zuschlag aber nicht und rendert stur auf Radius 120. Eine
+React-Render-Vorlage nach dem Einschlag sprang die Axt dadurch sichtbar 6px
+nach außen – ein exakter, bei JEDEM Wurf reproduzierbarer Sprung GENAU im
+Übergangsframe. Derselbe Fehlertyp, den ein Kommentar bei `stickRadiusPx()`
+(App.tsx) schon einmal beschreibt (damals 10px, gemessener Scheiben- vs.
+Steck-Radius) – hier als kleinere 6px-Variante durch eine spätere, nicht
+gegengeprüfte Änderung wieder eingeschleppt. Erklärt vermutlich auch das
+Schweben: die Axt "sackt" nach der Landung sichtbar wieder 6px nach außen,
+weg von der Stelle, an der sie gerade eben noch sauber im Holz saß.
+**Fix:** ein EINZIGER, benannter, dokumentierter Parameter
+`AXE_EMBED_DEPTH_PX` (`constants.ts`, Wert 6, rein visuell, komplett
+unabhängig von `COLLISION_ANGLE_TOLERANCE_DEG`/der Winkel-Trefferlogik) wird
+jetzt an BEIDEN Stellen verwendet: `App.tsx` (Flugziel, wie vorher) UND
+`TargetBoard.tsx` (`STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX`,
+neu). Beide Systeme zielen jetzt auf exakt denselben Radius (114px) – der
+Übergang braucht keinen Sprung mehr. Zum Nachjustieren ("etwas mehr/weniger
+drin") reicht es künftig, NUR `AXE_EMBED_DEPTH_PX` zu ändern.
+Verifiziert per DOM-Inspektion (`slot.style.transform`, direkt aus dem Inline-
+Style ablesbar): vorher `translateY(-120px)`, nachher `translateY(-114px)`,
+exakt passend zur Flugziel-Rechnung. `tsc -b` sauber, kein Konsolenfehler
+nach echtem Reload.
+
+**Dabei im Arbeitsverzeichnis vorgefunden (nicht in dieser Runde selbst
+geschrieben, aber übernommen, weil eindeutig zum selben Problem gehörig und
+funktional geprüft):** ein bereits vorhandener, noch uncommitteter
+Performance-Fix in `App.tsx`/`App.css` – die Flugbahn der Axt animierte
+bisher `bottom` (eine Layout-Eigenschaft, zwingt den Browser bei JEDEM
+Animationsframe zu einem Reflow, 190ms lang bei JEDEM Wurf) und der
+Trefferring animierte `border-width` (ebenfalls Layout). Beides jetzt auf
+reine Compositor-Eigenschaften umgestellt: die Flugbahn läuft über eine neue
+`--flight-travel-px`/`translate`-Eigenschaft (`flightTravelPx` in App.tsx,
+`axe-fly-position`-Keyframe in App.css), der Trefferring nutzt einen festen
+2px-Rand statt animierter Breite (wirkt durch das gleichzeitig wachsende
+`scale()` optisch weiterhin dünner werdend). Trägt denselben
+`AXE_EMBED_DEPTH_PX`-Wert korrekt weiter (`flightEndBottom` unverändert in
+die neue `flightTravelPx`-Rechnung eingebunden). Per echtem Wurf
+gegengeprüft (Kollisions-Pfad bis Game-Over-Fenster durchlaufen, keine neuen
+Konsolenfehler) – funktioniert, wurde aber nicht Zeile für Zeile von mir
+hergeleitet wie der Radius-Fix oben.
+
+**Bewusst NICHT angefasst, mangels Beweis:** die Rotations-Seite der Frage
+("wird die Rotation beim Treffer ebenfalls zweimal gesetzt"). Es GIBT
+tatsächlich zwei separate Rotationsebenen für eine steckende Axt –
+`rotate(boardLocalAngleDeg)` am `.target-board__axe-slot` (radiale
+Ausrichtung/Position, hängt vom Wurf-Weltwinkel ab) UND ein statisches
+`rotate(180deg)` am inneren `.target-board__axe-flip` (dreht die Grafik in
+die "steckende" Orientierung, plus eine kurze ±3°-Wackel-Keyframe-Animation
+`axe-land-wiggle` beim Landen, die sauber wieder bei 180° einrastet – ein
+bestehender, offensichtlich bewusst gebauter Landungs-Effekt, kein Bug). Die
+fliegende Axt dreht sich währenddessen rein dekorativ von 0° auf 190°
+(`axe-fly-transform`-Keyframe, "wie ein taumelnder Tomahawk", siehe Grafik-
+Abschnitt weiter oben) – KEINE dieser beiden Rotationen ist rechnerisch an
+die jeweils andere gekoppelt. Rein numerisch ergibt das einen relativ großen
+Rotations-Sprung am Übergang (deutlich mehr als die "Mikro"-Größenordnung, die
+Klaus beschrieben hat), was eher dagegen spricht, dass GENAU das der
+gemeldete Ruckler ist – ein Sprung dieser Größe wäre vermutlich schon vorher
+aufgefallen, die 190°-Taumel-Rotation ist zudem seit mehreren Grafik-
+Durchgängen unverändert und nie beanstandet worden. Ohne echte visuelle
+Prüfung am Gerät (Browser-Pane komponiert hier keine Frames, siehe
+rAF-Freeze-Abschnitt – Screenshots sind in dieser Umgebung nicht möglich)
+wollte ich diese länger bewährte, mehrfach bewusst abgestimmte Animation
+nicht ohne handfesten Beleg anfassen und riskieren, etwas Funktionierendes zu
+verschlechtern. Falls nach dem Radius-Fix am echten Gerät noch ein Ruckler
+sichtbar ist: das ist die nächste Stelle zum Ansetzen
+(`axe-fly-transform`-Endwert in `App.css` bzw. der `axe-land-wiggle`-Start-
+wert in `TargetBoard.css`).
 
 ### Gepufferte Taps: warum das NICHT in der setState-Updater-Funktion stehen darf
 
@@ -1667,6 +1808,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Axt-Treffer: 6px-Positionssprung beim Übergang Flug→Steckend behoben**
+      (Details siehe eigener Abschnitt oben, 2026-08-21): die fliegende Axt
+      zielte schon länger auf Radius 114 (Steck-Radius minus Einstechtiefe),
+      die steckende Darstellung kannte diesen Zuschlag nicht und rendert auf
+      120 – ein exakter 6px-Sprung bei jedem Treffer, dabei vermutlich auch
+      Ursache des "schwebt vor der Scheibe"-Eindrucks. Neuer, gemeinsamer
+      Parameter `AXE_EMBED_DEPTH_PX` jetzt an beiden Stellen. Rotations-Seite
+      geprüft, aber mangels visueller Verifizierbarkeit NICHT angefasst
+      (bestehende, wahrscheinlich unbeteiligte Animation).
 - [x] **Fünfte Runde: Basis-Tempo angehoben, Level 1-5 fühlen sich weniger
       zäh an** (Details siehe Level-System-Abschnitt oben, 2026-08-21):
       Klaus' Feedback "Level 1-5 nervig, Brett dreht zu langsam, kann nicht
@@ -1721,6 +1871,24 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Hindernisse, Winkel rotieren um +97° zwischen zwei Runden; Level 5:
       Boss-Frucht wechselt zwischen den Runden, Axt-/Hindernis-Zahl bleibt
       gleich).
+- [x] **Neunter Härte-Durchgang: die ersten 4 Level entschärft-Entscheidung
+      aufgehoben** (Details siehe Level-System-Abschnitt oben, 2026-08-21):
+      Klaus fand Level 1-4 direkt nach dem achten Durchgang immer noch "zu
+      einfach und zu langweilig" – die alte Regel "Level 1-3 hindernisfrei"
+      wurde deshalb bewusst gekippt. Nur noch Level 1 bleibt ein ruhiger
+      Eintritts-Wurf, ab Level 2 gibt es sofort ein Hindernis und Pulsieren
+      statt `steady`. Per echtem Spielstand verifiziert (Level 2 = 2
+      Hindernisse statt vorher 0, Axt-Zahl unverändert).
+- [x] **Performance-Fix: Ruckeln beim Werfen/Einschlag behoben** (Details
+      siehe eigener Abschnitt oben, 2026-08-21): zwei CSS-Animationen
+      (Axt-Flug-Position, Trefferring) animierten Layout-Eigenschaften
+      (`bottom`, `border-width`) statt reiner Compositor-Eigenschaften – bei
+      JEDEM Wurf/Treffer ein Reflow pro Animationsframe. Umgestellt auf
+      `translate`/festen Rand, beide jetzt komplett compositor-basiert wie
+      die restlichen Effekte im Spiel. `tsc -b` sauber, per CSSOM-Inspektion
+      im Browser bestätigt, keine Konsolenfehler – das tatsächliche
+      Ruckel-Gefühl auf einem echten Handy noch nicht bestätigt (rAF-Freeze
+      in der automatisierten Umgebung).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

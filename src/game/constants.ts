@@ -78,6 +78,33 @@ export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 export const APPLE_HIT_TOLERANCE_DEG = 30;
 
 /**
+ * Wie tief die Axtspitze optisch ins Holz einsticht (px), gemessen vom Steck-Radius
+ * (`BOARD_RADIUS` in TargetBoard.tsx) nach INNEN. Rein visuell, komplett unabhängig von
+ * `COLLISION_ANGLE_TOLERANCE_DEG` (Winkel-Hitbox) – eine Änderung hier verschiebt nie
+ * die Trefferlogik, nur wie tief die Axt aussieht.
+ *
+ * GEFUNDENER BUG (Klaus: "Mikro-Ruckler genau beim Aufkommen" + "Axt schwebt leicht vor
+ * der Zielscheibe"): dieser Wert wurde bisher NUR beim Berechnen der Flugbahn-Endposition
+ * verwendet (App.tsx, lokale Konstante `AXE_BITE_PX`), aber NICHT bei der Steck-Position
+ * in `TargetBoard.tsx` (die renderte stur bei `BOARD_RADIUS`, ohne Abzug). Der fliegende
+ * Axt-Kopf landete dadurch sichtbar 6px weiter innen (Radius 114) als die Axt eine
+ * React-Render-Volage später als "stuckAxe" erschien (Radius 120) – ein exakter,
+ * reproduzierbarer 6px-Sprung GENAU im Übergangsframe Flug→Steckend. Klassischer
+ * "zwei Stellen, eine vergessen"-Fehler: dieselbe Fallart, die laut Kommentar bei
+ * `stickRadiusPx()` (App.tsx) schon einmal mit 10px (gemessener Scheiben-Radius vs.
+ * Steck-Radius) passiert war, hier nur kleiner und durch eine spätere Änderung wieder
+ * eingeschleppt. Jetzt EIN gemeinsamer, benannter Parameter für BEIDE Stellen – siehe
+ * `App.tsx` (Flugziel) und `TargetBoard.tsx` (Steck-Position, `BOARD_RADIUS -
+ * AXE_EMBED_DEPTH_PX`).
+ *
+ * Wert klein gehalten (deutlich kleiner als der 10px-Sicherheitsabstand des Steck-Radius
+ * zum sichtbaren Scheibenrand) – "nur so weit, dass die Axt sauber Kontakt hat", nicht
+ * tief vergraben. Zum Nachjustieren ("etwas mehr/weniger drin") reicht es, NUR diese
+ * eine Zahl zu ändern.
+ */
+export const AXE_EMBED_DEPTH_PX = 6;
+
+/**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten
  * (0° = oben, im Uhrzeigersinn) – also unten an der Scheibe.
  * Zielt man daneben, wandert der Einschlag auf den Punkt senkrecht über der
@@ -215,19 +242,20 @@ function axeCountFor(levelIndex: number): number {
 
 /**
  * Grobe Trend-Kurve für Hindernisse – Basis für die tatsächliche Schwankung weiter
- * unten (`obstacleCountFor`), nicht mehr direkt die Ausgabe. Werte unverändert
- * gegenüber dem zweiten Härte-Durchgang, AUSSER dem Wall-Fenster Level 20-25 (siehe
- * `axeCountFor` oben) und dem Fenster Level 4-19 (Achter Härte-Durchgang, Klaus:
- * "die Anfangs-Level 1-10 noch ein Stück schwerer, aber nicht immer mehr Äxte,
- * einfach nur schwerer"): `axeCountFor` bewusst UNANGETASTET gelassen, stattdessen
- * hier die Hindernis-Basis für Level 4-19 angehoben (Level 4-6 1→2, Level 7-10 2→3,
- * Level 11-19 3→4, einheitlich mit der bisherigen 17-19-Stufe statt eines eigenen
- * Zwischenschritts). Level 1-3 bleiben bewusst UNANGETASTET (0 Hindernisse) – die
- * ersten drei Level sind die reine Grundmechanik-Einführung, siehe Kommentar dort.
+ * unten (`obstacleCountFor`), nicht mehr direkt die Ausgabe.
+ *
+ * Neunter Härte-Durchgang (Klaus, direkt nach dem achten: "die ersten 4 Level sind
+ * leider deutlich zu einfach und zu langweilig"): die bisherige Regel "Level 1-3
+ * bleiben hindernisfrei, reine Grundmechanik-Einführung" (siehe vorherige Fassung
+ * dieses Kommentars) wird hiermit AUFGEHOBEN – Klaus' aktuelles Feedback wiegt
+ * schwerer als die alte Design-Entscheidung. Nur noch Level 1 bleibt hindernisfrei
+ * (ein einziger ruhiger Eintritts-Wurf, um den Tap-Mechanismus zu zeigen), ab Level 2
+ * steht sofort ein Hindernis auf dem Brett.
  */
 function obstacleBaseFor(levelIndex: number): number {
-  if (levelIndex < 3) return 0; // Level 1-3: erst mal die Grundmechanik lernen
-  if (levelIndex < 6) return 2; // Level 4-6
+  if (levelIndex < 1) return 0; // Level 1: einziger ruhiger Eintritts-Wurf
+  if (levelIndex < 4) return 1; // Level 2-4
+  if (levelIndex < 6) return 2; // Level 5-6
   if (levelIndex < 10) return 3; // Level 7-10
   if (levelIndex < 19) return 4; // Level 11-19
   if (levelIndex < 25) return 8; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
@@ -312,7 +340,7 @@ function figurineIndexFor(levelIndex: number, appleCount: number): number | unde
 export const GEMS_PER_FIGURINE = 2;
 
 /**
- * Dreh-Muster. Level 1-2 laufen gleichmäßig (Einstieg), ab Level 3 wechselt sich
+ * Dreh-Muster. Nur Level 1 läuft gleichmäßig (Einstieg), ab Level 2 wechselt sich
  * Pulsieren ein. Ab Level 20 gibt es `steady` gar nicht mehr im Zyklus – ab dann ist
  * IMMER etwas in Bewegung (Pulsieren oder Richtungswechsel), nie mehr eine ruhige,
  * gleichmäßige Drehung. Wie erratisch sich Pulsieren/Richtungswechsel selbst anfühlen
@@ -326,9 +354,15 @@ export const GEMS_PER_FIGURINE = 2;
  * `steady` schon ab Level 5 komplett (nicht erst ab 20) – Level 5-19 laufen jetzt
  * durchgehend mit Pulsieren/Richtungswechsel statt gelegentlich ruhig, ohne dass dafür
  * Axt- oder Hindernis-Zahl angefasst wurde.
+ *
+ * Neunter Härte-Durchgang (Klaus, direkt danach: "die ersten 4 Level sind zu einfach
+ * und zu langweilig"): vorher liefen Level 1-3 (und, je nach Parität, auch Level 5)
+ * komplett `steady` – drei bis vier fast identische, ruhige Level hintereinander.
+ * Jetzt ist NUR noch Level 1 `steady` (der eine ruhige Eintritts-Wurf, siehe
+ * `obstacleBaseFor`), ab Level 2 wechselt sich sofort Pulsieren ein.
  */
 function spinPatternFor(levelIndex: number): SpinPattern {
-  if (levelIndex < 2) return 'steady';
+  if (levelIndex < 1) return 'steady';
   if (levelIndex < 5) return levelIndex % 2 === 0 ? 'steady' : 'pulse';
   if (levelIndex < 20) {
     const cycle: SpinPattern[] = ['pulse', 'reverse', 'pulse'];

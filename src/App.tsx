@@ -13,7 +13,7 @@ import { WorldDecor } from './components/WorldDecor';
 import { WorldHorizon } from './components/WorldHorizon';
 import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
-import { FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
+import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import { worldForLevel, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
 import {
@@ -30,9 +30,6 @@ import type { ThrowOutcome } from './game/types';
 import './App.css';
 
 const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95, -120, 130];
-
-/** Wie tief der Axtkopf über den Steck-Radius hinaus ins Holz fährt (px). */
-const AXE_BITE_PX = 6;
 
 /**
  * Lage der Scheibe innerhalb der Bühne, in Pixeln. Grundlage für die Flugbahn –
@@ -300,8 +297,21 @@ function App() {
   const flightX = boardGeom?.centerX ?? 0;
   const impactY = (boardGeom?.centerY ?? 0) + stickRadiusPx(boardGeom);
   // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
-  // daher die Differenz. AXE_BITE_PX kommt DAZU, damit die Axt ins Holz fährt.
-  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_BITE_PX;
+  // daher die Differenz. AXE_EMBED_DEPTH_PX kommt DAZU, damit die Axt ins Holz fährt
+  // (siehe Kommentar dort – MUSS mit der Steck-Position in TargetBoard.tsx übereinstimmen).
+  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_EMBED_DEPTH_PX;
+  /**
+   * Reichweite des Flugs in Pixeln, als NEGATIVE `translate`-Strecke (Werfen behoben,
+   * Klaus: "ruckelt extrem beim Werfen und Aufkommen"). Vorher animierte
+   * `axe-fly-position` (App.css) direkt `bottom` – eine Layout-Eigenschaft, die der
+   * Browser bei JEDEM Animationsframe neu einsortieren muss (Reflow), 190ms lang bei
+   * JEDEM Wurf. `translate`/`transform` dagegen laufen rein auf dem Compositor, ohne
+   * Layout. `.axe-flying` startet weiterhin bei `bottom: 8%` (STATISCH, nur einmal
+   * berechnet), die Bewegung von dort bis zum Einschlag läuft jetzt komplett über
+   * `translate` – deshalb hier dieselbe 8%-Basis nochmal in Pixeln nachgerechnet.
+   */
+  const flightStartBottom = (boardGeom?.height ?? 0) * 0.08;
+  const flightTravelPx = -(flightEndBottom - flightStartBottom);
 
   const overlayOpen = shopOpen || settingsOpen || worldMapOpen;
   const world = worldForLevel(game.levelIndex);
@@ -484,7 +494,7 @@ function App() {
             style={{
               animationDuration: `${FLIGHT_DURATION_MS}ms`,
               ['--flight-x' as string]: `${flightX}px`,
-              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
+              ['--flight-travel-px' as string]: `${flightTravelPx}px`,
             }}
           >
             <Axe size={42} skin={game.save.equippedAxeSkin} />

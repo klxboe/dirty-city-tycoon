@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
-import { BASE_SPEED_DEG_PER_SEC, HIT_STOP_MS, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
+import { AXE_EMBED_DEPTH_PX, BASE_SPEED_DEG_PER_SEC, HIT_STOP_MS, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
 import { boardStyleVars } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
@@ -143,6 +143,18 @@ export const BOARD_RADIUS = 120;
  * ein sichtbarer Sprung von 10px, und der Späne-Burst saß daneben.
  */
 export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
+/**
+ * Tatsächlicher Render-Radius für steckende Äxte – `BOARD_RADIUS` MINUS die
+ * Einstecktiefe (`AXE_EMBED_DEPTH_PX`, `constants.ts`), damit diese Position exakt dort
+ * landet, wo die Flugbahn in App.tsx bereits hinzielt (`stickRadiusPx() +
+ * AXE_EMBED_DEPTH_PX`, dieselbe Zahl, nur an der Flugseite als Zuschlag statt als Abzug
+ * formuliert). GEFUNDENER BUG (Mikro-Ruckler beim Einschlag + "Axt schwebt vor der
+ * Scheibe"): vorher stand hier einfach `BOARD_RADIUS` ohne den Abzug – die fliegende Axt
+ * landete sichtbar 6px weiter innen, als die Axt eine Render-Vorlage später als
+ * "steckend" erschien, macht sich als kleiner Sprung GENAU im Einschlagmoment bemerkbar.
+ * Siehe ausführliche Herleitung im Kommentar bei `AXE_EMBED_DEPTH_PX`.
+ */
+const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 152;
 const APPLE_STEM_LENGTH = 20;
@@ -400,7 +412,9 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
           <div
             key={axe.id}
             className="target-board__axe-slot"
-            style={{ transform: `translate(-50%, -50%) rotate(${axe.boardLocalAngleDeg}deg) translateY(-${BOARD_RADIUS}px)` }}
+            style={{
+              transform: `translate(-50%, -50%) rotate(${axe.boardLocalAngleDeg}deg) translateY(-${STUCK_AXE_RADIUS}px)`,
+            }}
           >
             <div className="target-board__axe-flip target-board__axe-flip--landed">
               <Axe size={40} skin={axeSkin} />
