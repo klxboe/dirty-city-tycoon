@@ -1,33 +1,16 @@
 import { useState } from 'react';
-import type { Difficulty } from '../game/types';
 import './LevelCompleteModal.css';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
   soundOn: boolean;
   bestLevel: number;
-  difficulty: Difficulty;
   onToggleSound: (on: boolean) => void;
-  onSetDifficulty: (difficulty: Difficulty) => void;
   onResetProgress: () => void;
   onClose: () => void;
 }
 
-const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
-  { value: 'easy', label: 'Leicht' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'hard', label: 'Schwer' },
-];
-
-export function SettingsModal({
-  soundOn,
-  bestLevel,
-  difficulty,
-  onToggleSound,
-  onSetDifficulty,
-  onResetProgress,
-  onClose,
-}: SettingsModalProps) {
+export function SettingsModal({ soundOn, bestLevel, onToggleSound, onResetProgress, onClose }: SettingsModalProps) {
   // Zurücksetzen löscht alles – deshalb erst nach einer ausdrücklichen Bestätigung.
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -42,23 +25,6 @@ export function SettingsModal({
             <span className="settings-toggle__knob" />
           </span>
         </button>
-
-        <div className="settings-row settings-row--static settings-row--column">
-          <span className="settings-row__label">Schwierigkeitsgrad</span>
-          <div className="settings-difficulty">
-            {DIFFICULTY_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                className={`settings-difficulty__option ${
-                  difficulty === option.value ? 'settings-difficulty__option--active' : ''
-                }`}
-                onClick={() => onSetDifficulty(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="settings-row settings-row--static">
           <span className="settings-row__label">Highscore</span>

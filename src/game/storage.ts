@@ -6,9 +6,7 @@
 // Spiel läuft dann trotzdem, der Fortschritt ist eben nur nicht dauerhaft.
 import { COINS_PER_LEGACY_APPLE, CURRENCY_SAVE_KEY, SAVE_KEY } from './constants';
 import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
-import type { Difficulty } from './types';
 
-const VALID_DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface SaveData {
@@ -39,8 +37,6 @@ export interface SaveData {
   soundOn: boolean;
   /** Wurde die Einstiegs-Erklärung schon gezeigt? */
   tutorialSeen: boolean;
-  /** Schwierigkeitsgrad – skaliert Board-Tempo und Münz-Belohnung, siehe types.ts. */
-  difficulty: Difficulty;
   /** Sammelfiguren aus der Heldenstadt-Welt, gegen Diamanten eintauschbar (siehe Shop). */
   figurines: number;
   /** Tage in Folge eingeloggt (für die tägliche Belohnung), siehe game/daily.ts. */
@@ -69,7 +65,6 @@ const EMPTY_SAVE: SaveData = {
   streak: 0,
   soundOn: true,
   tutorialSeen: false,
-  difficulty: 'normal',
   figurines: 0,
   dailyStreak: 0,
   lastDailyClaim: '',
@@ -106,7 +101,6 @@ export function loadSave(): SaveData {
         streak: Math.max(0, Math.floor(toFiniteNumber(parsed.streak, 0))),
         soundOn: parsed.soundOn !== false,
         tutorialSeen: parsed.tutorialSeen === true,
-        difficulty: VALID_DIFFICULTIES.includes(parsed.difficulty as Difficulty) ? (parsed.difficulty as Difficulty) : 'normal',
         figurines: Math.max(0, Math.floor(toFiniteNumber(parsed.figurines, 0))),
         dailyStreak: Math.max(0, Math.floor(toFiniteNumber(parsed.dailyStreak, 0))),
         lastDailyClaim: typeof parsed.lastDailyClaim === 'string' && ISO_DATE_PATTERN.test(parsed.lastDailyClaim) ? parsed.lastDailyClaim : '',

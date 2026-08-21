@@ -35,14 +35,6 @@ export interface FlyingAxe {
  */
 export type SpinPattern = 'steady' | 'pulse' | 'reverse';
 
-/**
- * Schwierigkeitsgrad, in den Einstellungen wählbar. Ändert NICHT die Level-Formel
- * selbst (die bliebe sonst für alle drei Stufen unterschiedlich austariert), sondern
- * skaliert nur zwei Stellschrauben nachträglich: Board-Tempo und Münz-Belohnung
- * (siehe DIFFICULTY_SPEED_MULTIPLIER / DIFFICULTY_REWARD_MULTIPLIER in constants.ts).
- */
-export type Difficulty = 'easy' | 'normal' | 'hard';
-
 /** Alle Balancing-Werte für ein Level. */
 export interface LevelConfig {
   axeCount: number;

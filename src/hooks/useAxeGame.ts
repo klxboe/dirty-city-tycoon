@@ -11,10 +11,9 @@ import {
   blockCompletionBonus,
   blockStartIndex,
   bossFruitForLevel,
+  BOARD_SPEED_MULTIPLIER,
   BOSS_REPEAT_BONUS,
   COINS_PER_APPLE,
-  DIFFICULTY_REWARD_MULTIPLIER,
-  DIFFICULTY_SPEED_MULTIPLIER,
   GEMS_PER_FIGURINE,
   GEMS_PER_GOLDEN_APPLE,
   LEVEL_COUNT,
@@ -22,6 +21,7 @@ import {
   LEVELS_PER_BLOCK,
   levelCompletionBonus,
   PERFECT_APPLE_BONUS,
+  REWARD_MULTIPLIER,
   streakMultiplier,
   XP_PER_LEVEL,
 } from '../game/constants';
@@ -29,7 +29,7 @@ import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
 import { setMuted } from '../game/sound';
-import type { Difficulty, GameState, LevelReward, StuckAxe } from '../game/types';
+import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
 function createLevelState(levelIndex: number, runSeed: number): Omit<GameState, 'save' | 'streak'> {
   const level = levelConfigAt(levelIndex, runSeed);
@@ -363,14 +363,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  const setDifficulty = useCallback((difficulty: Difficulty) => {
-    setState((prev) => {
-      const nextSave: SaveData = { ...prev.save, difficulty };
-      saveSave(nextSave);
-      return { ...prev, save: nextSave };
-    });
-  }, []);
-
   /**
    * Oster-Ei: schaltet einen versteckten Skin frei, ausgelöst über ein Geheimnis in
    * der UI (siehe StartScreen.tsx – mehrfaches Antippen des Logos). Bewusst
@@ -469,7 +461,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     /** Erster Level-Index des aktuellen 10er-Blocks – dorthin geht es nach einem Game Over. */
     blockStart: blockStartIndex(state.levelIndex),
     levelsPerBlock: LEVELS_PER_BLOCK,
-    boardSpeedDegPerSec: level.boardSpeedDegPerSec * DIFFICULTY_SPEED_MULTIPLIER[state.save.difficulty],
+    boardSpeedDegPerSec: level.boardSpeedDegPerSec * BOARD_SPEED_MULTIPLIER,
     spinPattern: level.spinPattern,
     axeCount: level.axeCount,
     appleCount: level.appleAngles.length,
@@ -491,7 +483,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     equipSkin,
     unlockEasterEgg,
     setSoundOn,
-    setDifficulty,
     tradeFigurines,
     claimDailyReward,
     markTutorialSeen,
@@ -513,7 +504,6 @@ function loadSaveFresh(): SaveData {
     streak: 0,
     soundOn: true,
     tutorialSeen: true,
-    difficulty: 'normal',
     figurines: 0,
     dailyStreak: 0,
     lastDailyClaim: '',
@@ -562,10 +552,11 @@ function computeReward(
 
   const multiplier = streakMultiplier(streak);
   const raw = apples + base + perfect + block + bossCoins;
-  // Der Schwierigkeitsgrad multipliziert die Endsumme zusätzlich zur Serie, taucht aber
-  // NICHT in `streakMultiplier` auf – dieses Feld beschriftet im Ergebnis-Screen explizit
-  // "Serie ×N", ein zweiter Faktor darin würde die Anzeige verfälschen.
-  const total = Math.round(raw * multiplier * DIFFICULTY_REWARD_MULTIPLIER[save.difficulty]);
+  // REWARD_MULTIPLIER (der frühere "Schwer"-Bonus, siehe constants.ts) multipliziert die
+  // Endsumme zusätzlich zur Serie, taucht aber NICHT in `streakMultiplier` auf – dieses
+  // Feld beschriftet im Ergebnis-Screen explizit "Serie ×N", ein zweiter Faktor darin
+  // würde die Anzeige verfälschen.
+  const total = Math.round(raw * multiplier * REWARD_MULTIPLIER);
 
   return {
     apples,

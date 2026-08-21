@@ -346,9 +346,7 @@ function App() {
           <SettingsModal
             soundOn={game.save.soundOn}
             bestLevel={game.save.bestLevel}
-            difficulty={game.save.difficulty}
             onToggleSound={game.setSoundOn}
-            onSetDifficulty={game.setDifficulty}
             onResetProgress={game.resetProgress}
             onClose={() => setSettingsOpen(false)}
           />
@@ -566,9 +564,7 @@ function App() {
         <SettingsModal
           soundOn={game.save.soundOn}
           bestLevel={game.save.bestLevel}
-          difficulty={game.save.difficulty}
           onToggleSound={game.setSoundOn}
-          onSetDifficulty={game.setDifficulty}
           onResetProgress={() => {
             game.resetProgress();
             setScreen('start');

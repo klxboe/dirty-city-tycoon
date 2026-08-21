@@ -20,43 +20,6 @@
   cursor: default;
 }
 
-.settings-row--column {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-2);
-}
-
-/* Dreiteiliger Schwierigkeitsgrad-Umschalter, wie ein Segmented Control. */
-.settings-difficulty {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.settings-difficulty__option {
-  flex: 1;
-  padding: var(--space-2);
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 13px;
-  cursor: pointer;
-  box-shadow: 0 2px 0 var(--color-border);
-}
-
-.settings-difficulty__option--active {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: #08210f;
-  box-shadow: 0 2px 0 var(--color-primary-dark);
-}
-
-.settings-difficulty__option:not(.settings-difficulty__option--active):active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 var(--color-border);
-}
-
 .settings-row__label {
   font-size: 15px;
   font-weight: 700;

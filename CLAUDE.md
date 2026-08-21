@@ -1007,20 +1007,27 @@ Leveln/Boss/Münzen dazu, ohne die Level-Formel selbst anzufassen:
   je nach Stand "Los geht's" oder "Weiter – Level N" (plus "Von Level 1
   starten"). Beim allerersten Start stehen dort zusätzlich die vier Regeln –
   danach nie wieder (`tutorialSeen` im Spielstand).
-- `SettingsModal.tsx`: Ton/Vibration an-aus, **Schwierigkeitsgrad** (Leicht/
-  Normal/Schwer) und "Fortschritt zurücksetzen" (mit Rückfrage, weil es alles
-  löscht).
-- **Schwierigkeitsgrad** (`SaveData.difficulty`, `Difficulty` in `types.ts`):
-  rührt bewusst NICHT an `generateLevel()` – die 100 Level bleiben eine
-  einzige, für alle geltende Formel, sonst müsste man drei komplette Kurven
-  pflegen. Stattdessen skaliert `useAxeGame.ts` zwei Werte nachträglich über
-  `DIFFICULTY_SPEED_MULTIPLIER`/`DIFFICULTY_REWARD_MULTIPLIER` (`constants.ts`):
-  Board-Tempo (×0.8 / ×1 / ×1.25) und die Münz-Endsumme aus `computeReward()`
-  (×0.75 / ×1 / ×1.4). Mehr Risiko bei "Schwer" bringt bewusst auch mehr
-  Münzen – sonst gäbe es keinen Grund, es zu wählen. Der Faktor steckt NICHT
-  in `LevelReward.streakMultiplier` (der Ergebnis-Screen beschriftet dieses
-  Feld explizit als "Serie ×N"), sondern wird separat auf `total` multipliziert.
-  Diamanten aus goldenen Äpfeln bleiben unberührt – die sind ohnehin reines
+- `SettingsModal.tsx`: Ton/Vibration an-aus und "Fortschritt zurücksetzen"
+  (mit Rückfrage, weil es alles löscht).
+- **Schwierigkeitsgrad-Auswahl entfernt** (Klaus: "die Wahl soll weg, es soll
+  automatisch immer nur eine geben, und die soll schwer sein"). Es gab
+  vorher Leicht/Normal/Schwer (`SaveData.difficulty`, `Difficulty` in
+  `types.ts`), umgesetzt über zwei nachträgliche Multiplikatoren in
+  `useAxeGame.ts` (`DIFFICULTY_SPEED_MULTIPLIER`/`DIFFICULTY_REWARD_MULTIPLIER`
+  in `constants.ts`: Board-Tempo ×0.8/×1/×1.25, Münz-Endsumme ×0.75/×1/×1.4).
+  Komplett entfernt statt nur versteckt: `Difficulty`-Typ, `SaveData.difficulty`
+  (samt Migrations-/Validierungscode in `storage.ts`), `setDifficulty()`,
+  die Segmented-Control-UI samt CSS in `SettingsModal.tsx`/`.css`. Die beiden
+  Multiplikatoren selbst blieben als einzelne, feste Konstanten
+  `BOARD_SPEED_MULTIPLIER = 1.25` / `REWARD_MULTIPLIER = 1.4` in
+  `constants.ts` erhalten – das waren die "Schwer"-Werte, jetzt
+  bedingungslos für jeden Lauf angewendet statt nur bei aktiver Auswahl.
+  `generateLevel()` selbst blieb unangetastet (war ohnehin nie Teil der
+  Schwierigkeitsgrad-Logik). Alte Spielstände mit gespeichertem
+  `difficulty`-Feld brechen nicht – das Feld wird beim Laden einfach nicht
+  mehr gelesen (kein Migrationscode nötig, da nur ein bislang gelesenes
+  Feld wegfällt, keine Werte-Umrechnung wie beim alten Apfel-Zähler).
+  Diamanten aus goldenen Äpfeln unberührt – die sind ohnehin reines
   Fund-Glück, kein Skill-Ertrag.
 - **Vibration** (`vibrate()` in `sound.ts`) bei Treffer, Apfel und Game Over.
   Läuft über denselben Schalter wie der Ton. iOS-Safari kennt
@@ -1925,6 +1932,15 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       gelassen. `tsc -b` sauber, App lädt ohne Konsolenfehler – tatsächliches
       Spielgefühl noch nicht durch echtes Spielen bestätigt (rAF-Freeze in der
       automatisierten Umgebung, siehe eigener Abschnitt).
+- [x] **Schwierigkeitsgrad-Auswahl komplett entfernt, immer "Schwer"**
+      (Details siehe Startbildschirm-Abschnitt oben, 2026-08-21): Klaus wollte
+      keine Wahl mehr in den Einstellungen – automatisch immer die härteste
+      Stufe. `Difficulty`-Typ, `SaveData.difficulty`, `setDifficulty()` und
+      die Segmented-Control-UI restlos entfernt statt nur versteckt; die
+      beiden "Schwer"-Multiplikatoren blieben als feste Konstanten
+      (`BOARD_SPEED_MULTIPLIER`, `REWARD_MULTIPLIER`) erhalten und gelten
+      jetzt immer. `tsc -b` sauber, Einstellungen-Fenster zeigt keinen Regler
+      mehr, ein echter Wurf berechnet die Belohnung weiterhin korrekt.
 - [x] **Flugzeit auf 140ms verkürzt, ohne die Flüssigkeit zu verlieren**
       (Details siehe eigener Abschnitt oben, 2026-08-21): `FLIGHT_DURATION_MS`
       190→140ms (~26%), sonst NICHTS an Easing/Kollision/Rotation-Kopplung
