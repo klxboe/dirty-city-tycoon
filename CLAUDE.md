@@ -2487,6 +2487,43 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Werkstatt/Einstellungen, KEIN sofort wiederkehrendes Game-Over-Fenster. Danach
         "Los geht's" geklickt -> Level 1 startet normal ("Tippen zum Werfen"), kein
         Modal, keine Konsolenfehler. `tsc -b` sauber.
+- [x] **Boss-Korrektur nach Praxistest: Zacken raus, Axt-/Hindernis-Bonus raus,
+      Boss-Level-Retry (2026-08-22).** Klaus nach dem ersten Ausprobieren: "die Bosse
+      sind wieder deutlich zu schwer, fast unmöglich – Tempo und Richtungswechsel
+      passen, aber viel zu viele Äxte, die Zacken sind unnötig, lass die weg. Und
+      wenn man beim Bosskampf verkackt und 'Nochmal spielen' klickt, kommt man wieder
+      zum normalen und bleibt nicht beim Bosskampf." Drei separate Korrekturen:
+      - **Zacken-Hindernisse komplett entfernt** (voriger Eintrag oben, selbe
+        Ausbaustufe): `LevelConfig.spikeAngles`, `collidesWithSpike` (engine.ts),
+        `spikeCountFor`/Spike-Seed (constants.ts), die Optik samt Keyframe
+        (TargetBoard.tsx/.css) und `ThrowOutcome`-Wert `'spiked'` inkl. `hitSpike`-Prop
+        in GameOverModal wieder sauber ausgebaut statt nur deaktiviert – ungenutzter
+        Code bleibt nicht im Projekt.
+      - **Axt-/Hindernis-Bonus für Bosse entfernt** (`generateLevel()` in
+        constants.ts): sowohl der Fruchtboss-Bonus (+1 Axt/+2 Hindernisse) als auch
+        der Weltboss-Bonus (+1/+1) sind wieder weg – `axeCountFor`/`obstacleCountFor`
+        haben an genau diesen Level-Indizes ohnehin schon eine eigene "Wall"-Stufe,
+        der zusätzliche Bonus obendrauf hat das Brett zu voll gemacht. **Tempo-Bonus
+        (+28/+45°/Sek.) UND die erzwungenen Dreh-Muster (`pulse`/`reverse`) blieben
+        unangetastet** – das fand Klaus explizit gut so, ebenso die Phasen-Eskalation
+        während des Weltboss-Kampfes (`worldBossPhaseSpeedMultiplier`/
+        `worldBossPhaseSpinPattern`, siehe voriger Eintrag).
+      - **Boss-Level-Retry**: `restartRun()` (useAxeGame.ts) prüft jetzt, ob das
+        Level, an dem man gestorben ist, ein Boss-Level war (Fruchtboss ODER
+        Weltboss) – wenn ja, setzt "Nochmal spielen" GENAU DORT wieder auf statt bei
+        Level 1. Technisch derselbe Mechanismus wie die einmalige Video-Rettung
+        (`rescueRun`), nur ohne deren "nur einmal pro Lauf"-Grenze. Normale
+        (Nicht-Boss-)Level bleiben beim bisherigen Highscore-Prinzip (Reset auf
+        Level 1) – nur Bosse bekommen die Ausnahme.
+      - Per echtem Spielablauf verifiziert (Board-Winkel in der automatisierten
+        Umgebung eingefroren, siehe rAF-Freeze-Hinweis – zwei Würfe kollidieren
+        dadurch garantiert): Level 21 (Weltboss "Sandkolossos") zeigt jetzt 9
+        Hindernisse statt vorher 10, 0 Zacken. Game Over erzwungen, "Nochmal spielen"
+        geklickt -> Spielstand bleibt bei `currentLevel: 20` (= Level 21), NICHT bei
+        0 – Level wird direkt fortgesetzt. `tsc -b` sauber, frischer Browser-Tab ohne
+        Konsolenfehler (ein alter Tab zeigte zwischenzeitlich Vite-HMR-Restfehler aus
+        dem Editier-Verlauf – nach frischem Tab/Reload bestätigt weg, kein echter
+        Laufzeitfehler).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

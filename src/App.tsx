@@ -470,7 +470,6 @@ function App() {
             paused={game.phase === 'levelComplete' || game.phase === 'gameOver' || overlayOpen || paused}
             stuckAxes={game.stuckAxes}
             apples={game.apples}
-            spikeAngles={game.spikeAngles}
             boardSkin={game.activeBoardSkin}
             axeSkin={game.save.equippedAxeSkin}
             broken={game.phase === 'levelComplete' && game.lastOutcome === 'stuck'}
@@ -642,7 +641,6 @@ function App() {
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}
           axeSkin={game.save.equippedAxeSkin}
-          hitSpike={game.lastOutcome === 'spiked'}
           rescueAvailable={!game.rescueUsedThisRun}
           onWatchVideo={() => setVideoRescueOpen(true)}
           onPlayAgain={game.restartRun}

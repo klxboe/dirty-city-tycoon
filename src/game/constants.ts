@@ -381,20 +381,6 @@ function spinPatternFor(levelIndex: number): SpinPattern {
   return hardCycle[levelIndex % hardCycle.length];
 }
 
-/**
- * Wie viele Zacken-Hindernisse ein Boss-Level bekommt (siehe `LevelConfig.spikeAngles`).
- * Klaus: "die Weltbosse sollen richtig schwer sein, mit Zacken, die man nicht treffen
- * darf" – bei normalen Fruchtbossen dasselbe Prinzip, aber "nicht so schwer": nur EIN
- * Zacken statt drei, kein zusätzlicher Effekt auf Tempo/Muster (siehe
- * `worldBossPhaseSpinPattern` unten, die läuft ausschließlich für Weltbosse).
- * Normale Level (kein Boss) bekommen nie Zacken.
- */
-function spikeCountFor(isWorldBoss: boolean, isFruitBoss: boolean): number {
-  if (isWorldBoss) return 3;
-  if (isFruitBoss) return 1;
-  return 0;
-}
-
 /** Jedes BOSS_EVERY-te Level ist ein Boss-Level mit Frucht-Zielscheibe. */
 export const BOSS_EVERY = 5;
 
@@ -449,30 +435,24 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
 
   /*
    * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
-   * Level mit anderer Farbe. Drei Stellschrauben statt nur einer:
-   *  - Tempo-Bonus, zweiter Härte-Durchgang von 20 auf 28°/Sek. angehoben.
-   *  - ZWEI zusätzliche Hindernisse statt einem obendrauf – volleres Brett, engere
-   *    Lücken (vorher +1, zweiter Härte-Durchgang: +2).
-   *  - Erzwungenes `pulse`-Muster: `spinPatternFor()` allein hätte z.B. das erste
-   *    Boss-Level (Index 4) auf `steady` gesetzt – ausgerechnet der erste Boss
-   *    hätte sich dann NICHT schwerer angefühlt als das Level davor.
-   *
-   * Weltboss-Runde (Klaus: "Weltbosse sollen SEHR SEHR schwer sein, mehrere Phasen"):
-   * kräftiger Tempo-Sockel (+45 statt +28°/Sek.) UND ein kleiner Axt-/Hindernis-Bonus
-   * (+1/+1). Bewusst KLEIN gehalten bei Axt/Hindernis: `axeCountFor`/`obstacleCountFor`
-   * haben an GENAU diesen Level-Indizes (20/25, 40/45, ...) bereits eine eigene, scharfe
-   * "Wall"-Stufe (siehe deren Kommentare, "direkt an Boss-Level") – ein großer Bonus
-   * ZUSÄTZLICH dazu hätte das Brett so voll gemacht, dass kaum noch lösbare Lücken
-   * übrig geblieben wären (Slot-Budget: 36 Plätze bei 10°-Kollisionstoleranz). Die
-   * eigentliche "mehrere Phasen, wird während des Kampfes härter"-Eskalation läuft
-   * deshalb NICHT über noch mehr Hindernisse (die stehen fest seit Levelstart),
-   * sondern über das TEMPO WÄHREND des Kampfes – siehe
-   * `worldBossPhaseSpeedMultiplier()` weiter unten, angewendet in `useAxeGame.ts`
-   * anhand des Fortschritts (`axesThrown / axeCount`). Erzwungenes `reverse`-Muster
-   * (unvorhersehbarer als `pulse`) als Basis, auf die die Phasen-Eskalation noch
-   * draufkommt.
+   * Level mit anderer Farbe – aber NUR über TEMPO und Dreh-Muster, nicht über mehr
+   * Äxte/Hindernisse. Frühere Fassungen gaben zusätzlich einen Axt-/Hindernis-Bonus
+   * obendrauf (+1/+2 bei Fruchtbossen, +1/+1 bei Weltbossen) UND bei Weltbossen noch
+   * Zacken-Hindernisse dazu – Klaus' Feedback danach: "die Bosse sind wieder deutlich
+   * zu schwer, viel zu viele Äxte, die Zacken sind unnötig, lass die weg – Tempo und
+   * Richtungswechsel passen aber". Beide Boni deshalb wieder entfernt: `axeCountFor`/
+   * `obstacleCountFor` haben an GENAU diesen Level-Indizes (20/25, 40/45, ...) ohnehin
+   * schon eine eigene, scharfe "Wall"-Stufe (siehe deren Kommentare, "direkt an
+   * Boss-Level") – das allein macht ein Boss-Level schon voller als seine Nachbarn,
+   * ein zusätzlicher Bonus obendrauf war zu viel. Übrig bleiben zwei Stellschrauben:
+   *  - Tempo-Bonus (+28°/Sek. Fruchtboss, +45°/Sek. Weltboss).
+   *  - Erzwungenes Dreh-Muster (`pulse` bzw. `reverse` – unvorhersehbarer als
+   *    `spinPatternFor()` an genau dieser Stelle liefern würde).
+   * Bei Weltbossen kommt zusätzlich die Phasen-Eskalation aus `worldBossPhaseSpeedMultiplier()`/
+   * `worldBossPhaseSpinPattern()` weiter unten dazu (WÄHREND des Kampfes, nicht am
+   * Levelstart) – die blieb unangetastet, genau die fand Klaus gut so.
    */
-  const axeCount = axeCountFor(levelIndex) + (worldBoss ? 1 : boss ? 1 : 0);
+  const axeCount = axeCountFor(levelIndex);
   const speedBonus = worldBoss ? 45 : boss ? 28 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
@@ -485,13 +465,9 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
   // Apfel-/Hindernis-ZAHL optisch identisch aus, nur "gedreht").
   const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53);
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97);
-  // Eigener, dritter Seed-Faktor (61/149/71) – teilerfremd zu den beiden oben, damit
-  // Zacken nicht zwangsläufig an denselben Winkeln wie Hindernis-Äxte oder Äpfel landen.
-  const spikeSeed = normalizeDeg(levelIndex * 61 + 149 + runSeed * 71);
 
-  const obstacleCount = obstacleCountFor(levelIndex) + (worldBoss ? 1 : boss ? 2 : 0);
+  const obstacleCount = obstacleCountFor(levelIndex);
   const appleCount = appleCountFor(levelIndex);
-  const spikeCount = spikeCountFor(!!worldBoss, !!boss);
 
   return {
     axeCount,
@@ -499,7 +475,6 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
     spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : spinPatternFor(levelIndex),
     appleAngles: spreadAngles(appleCount, appleSeed),
     preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
-    spikeAngles: spikeCount > 0 ? spreadAngles(spikeCount, spikeSeed) : undefined,
     bossFruitId: boss?.id,
     worldBossId: worldBoss?.id,
     goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),

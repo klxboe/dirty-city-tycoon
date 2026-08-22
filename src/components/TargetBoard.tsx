@@ -37,14 +37,6 @@ interface TargetBoardProps {
   paused: boolean;
   stuckAxes: StuckAxe[];
   apples: AppleData[];
-  /**
-   * Zacken-Hindernisse (siehe LevelConfig.spikeAngles, nur bei Bossen gesetzt) – ragen
-   * anders als Hindernis-Äxte sichtbar ÜBER den Scheibenrand hinaus statt im Holz zu
-   * stecken, damit sie sich klar als eigene, "nicht anfassen"-Gefahr von den normalen
-   * Hindernis-Äxten abheben. Kollisionslogik läuft separat über `collidesWithSpike`
-   * (engine.ts) – rein visuell hier, das Feld selbst kommt fertig aus dem Level.
-   */
-  spikeAngles: number[];
   /** ID des ausgerüsteten Scheiben-Skins (siehe shop.ts), steuert nur die Optik. */
   boardSkin: string;
   /** ID des ausgerüsteten Axt-Skins, damit steckende Äxte wie die geworfene aussehen. */
@@ -165,12 +157,6 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
 const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 152;
-/**
- * Radius für Zacken-Hindernisse – zwischen Scheibenrand (130) und Apfel-Radius (152),
- * damit sie sichtbar über die Scheibe hinausragen ("rausstehen", Klaus' Wortwahl),
- * aber nicht mit den Äpfeln auf derselben Höhe konkurrieren.
- */
-const SPIKE_RADIUS = 142;
 const APPLE_STEM_LENGTH = 20;
 const APPLE_STEM_RADIUS = 128 + APPLE_STEM_LENGTH / 2;
 
@@ -181,7 +167,7 @@ const APPLE_STEM_RADIUS = 128 + APPLE_STEM_LENGTH / 2;
  * (useAxeGame) lesen den aktuellen Winkel bei Bedarf über `getAngleDeg()`.
  */
 export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(function TargetBoard(
-  { speedDegPerSec, spinPattern, paused, stuckAxes, apples, spikeAngles, boardSkin, axeSkin, broken = false },
+  { speedDegPerSec, spinPattern, paused, stuckAxes, apples, boardSkin, axeSkin, broken = false },
   ref,
 ) {
   const boardElRef = useRef<HTMLDivElement>(null);
@@ -433,27 +419,6 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             <div className="target-board__axe-flip target-board__axe-flip--landed">
               <Axe size={40} skin={axeSkin} />
             </div>
-          </div>
-        ))}
-
-        {/* Zacken-Hindernisse: eigene Optik (ragt über den Rand hinaus, siehe SPIKE_RADIUS
-            oben), damit sie sich klar von den im Holz steckenden Hindernis-Äxten
-            abheben – "nicht anfassen" soll man ihnen sofort ansehen. */}
-        {spikeAngles.map((angle, i) => (
-          <div
-            key={i}
-            className="target-board__spike-slot"
-            style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${SPIKE_RADIUS}px)` }}
-          >
-            <svg className="target-board__spike" viewBox="0 0 34 26" width="30" height="23">
-              <path
-                d="M2,24 L7,2 L12,16 L17,0 L22,16 L27,2 L32,24 Z"
-                fill="#1a1210"
-                stroke="#ff3b30"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-            </svg>
           </div>
         ))}
 

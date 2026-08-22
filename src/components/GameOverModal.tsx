@@ -12,10 +12,6 @@ interface GameOverModalProps {
   totalCoins: number;
   /** Nur fürs Icon oben im Fenster – zerspringt in zwei Hälften beim Erscheinen. */
   axeSkin: string;
-  /** true, wenn der Lauf an einem Zacken-Hindernis endete statt an der eigenen Axt
-   *  (siehe LevelConfig.spikeAngles / ThrowOutcome 'spiked') – eigener Text, damit die
-   *  angezeigte Todesursache stimmt. */
-  hitSpike: boolean;
   /** Ob die einmalige Video-Rettung in diesem Lauf noch verfügbar ist (siehe useAxeGame.ts). */
   rescueAvailable: boolean;
   /** Öffnet den (simulierten) Rettungs-Video-Flow, siehe VideoRescueModal.tsx. */
@@ -45,8 +41,7 @@ interface GameOverModalProps {
 const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
 
 /**
- * Erscheint, wenn eine Axt eine bereits steckende Axt ODER ein Zacken-Hindernis trifft
- * (siehe `hitSpike`, nur bei Bossen). Das beendet den Lauf –
+ * Erscheint, wenn eine Axt eine bereits steckende Axt trifft. Das beendet den Lauf –
  * weiter geht es immer bei Level 1 (Highscore-Prinzip: ein Fehler irgendwo wirft
  * konsequent auf Los zurück), ES SEI DENN der Spieler nutzt die Video-Rettung.
  *
@@ -62,7 +57,6 @@ export function GameOverModal({
   coinsLost,
   totalCoins,
   axeSkin,
-  hitSpike,
   rescueAvailable,
   onWatchVideo,
   onPlayAgain,
@@ -97,14 +91,8 @@ export function GameOverModal({
           </div>
         </div>
 
-        <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">
-          {hitSpike ? 'Am Zacken zersplittert!' : 'Axt zersplittert!'}
-        </div>
-        <div className="modal-card__body">
-          {hitSpike
-            ? `Du hast einen Zacken getroffen – in Level ${level}.`
-            : `Du hast deine eigene Axt getroffen – in Level ${level}.`}
-        </div>
+        <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">Axt zersplittert!</div>
+        <div className="modal-card__body">Du hast deine eigene Axt getroffen – in Level {level}.</div>
 
         <div className="modal-card__record">
           Highscore: <strong>Level {bestLevel}</strong>

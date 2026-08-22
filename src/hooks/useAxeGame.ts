@@ -6,7 +6,7 @@
 // damit die Drehung flüssig bleibt und nicht 60x/Sekunde die ganze App neu rendert.
 // Dieser Hook fragt den aktuellen Winkel nur bei Bedarf über `getBoardAngleDeg` ab.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { collidesWithSpike, collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
+import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
 import {
   blockCompletionBonus,
   blockStartIndex,
@@ -159,19 +159,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         };
       }
 
-      // Zacken-Hindernis getroffen (siehe LevelConfig.spikeAngles, nur bei Bossen) ->
-      // genauso Lauf vorbei, aber eigener `lastOutcome`-Wert, damit GameOverModal die
-      // richtige Todesursache anzeigen kann statt fälschlich "eigene Axt getroffen".
-      if (collidesWithSpike(localAngle, level.spikeAngles ?? [])) {
-        return {
-          ...prev,
-          phase: 'gameOver',
-          flyingAxe: null,
-          lastOutcome: 'spiked',
-          axesThrown: prev.axesThrown + 1,
-        };
-      }
-
       // id = laufende Wurfnummer: pro Wurf entsteht genau eine Axt, also innerhalb eines
       // Levels eindeutig – und rein berechnet statt aus einem hochgezählten Ref.
       const stuckAxes = [...prev.stuckAxes, { id: prev.axesThrown, boardLocalAngleDeg: localAngle }];
@@ -309,13 +296,23 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, []);
 
   /**
-   * Nach einem Game Over: Neustart immer bei Level 1. Münzen/XP/Skins bleiben.
-   * `runSeed` ist an dieser Stelle schon erhöht (siehe Game-Over-Effekt oben) – hier
-   * NICHT nochmal anfassen, sonst springt die Rotation bei jedem Tod um 2 statt 1.
+   * Nach einem Game Over: normalerweise Neustart bei Level 1 (Highscore-Prinzip).
+   * AUSNAHME (Klaus: "wenn man beim Bosskampf verkackt und nochmal spielen klickt,
+   * kommt man wieder zum normalen und bleibt nicht beim Bosskampf" – gemeint war
+   * kein Bug, sondern der Wunsch, ausgerechnet bei Bossen NICHT komplett auf Level 1
+   * zurückgeworfen zu werden): starb man an einem Boss-Level (Fruchtboss ODER
+   * Weltboss), setzt "Nochmal spielen" GENAU DORT wieder auf, statt bei Level 1 –
+   * derselbe Mechanismus wie die einmalige Video-Rettung (`rescueRun` unten), nur
+   * beliebig oft und ohne die dortige "nur einmal pro Lauf"-Beschränkung. Münzen/XP/
+   * Skins bleiben in beiden Fällen erhalten. `runSeed` ist an dieser Stelle schon
+   * erhöht (siehe Game-Over-Effekt oben) – hier NICHT nochmal anfassen, sonst springt
+   * die Rotation bei jedem Tod um 2 statt 1.
    */
   const restartRun = useCallback(() => {
     setState((prev) => {
-      const target = 0;
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
+      const diedOnBoss = Boolean(level.bossFruitId) || Boolean(level.worldBossId);
+      const target = diedOnBoss ? prev.levelIndex : 0;
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);
@@ -527,9 +524,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     axeCount: level.axeCount,
     appleCount: level.appleAngles.length,
     axesRemaining: level.axeCount - state.axesThrown,
-    /** Zacken-Hindernisse dieses Levels (siehe LevelConfig.spikeAngles) – nur bei
-     *  Bossen gesetzt, sonst ein leeres Array statt `undefined` fürs Rendern. */
-    spikeAngles: level.spikeAngles ?? [],
     bossFruit,
     /** Name des Weltbosses, falls dieses Level das "Tor" vor einer Welt ist (siehe
      *  isWorldBossLevel()/WORLD_BOSSES in worlds.ts), sonst `null`. */

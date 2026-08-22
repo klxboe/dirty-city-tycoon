@@ -32,18 +32,6 @@ export function collidesWithStuckAxe(candidateLocalAngle: number, stuckAxes: Stu
   return stuckAxes.some((axe) => angularDistance(candidateLocalAngle, axe.boardLocalAngleDeg) < COLLISION_ANGLE_TOLERANCE_DEG);
 }
 
-/**
- * true, wenn der neue Einschlagpunkt zu nah an einem "Zacken"-Hindernis liegt (siehe
- * `LevelConfig.spikeAngles` – eigene, von den Hindernis-Äxten unabhängige Gefahrenzone
- * bei Bossen, sieht anders aus und braucht deshalb eine eigene Kollisionsprüfung statt
- * `collidesWithStuckAxe` wiederzuverwenden). Gleiche Toleranz wie bei Äxten, damit sich
- * die "Hitbox" für den Spieler nicht anders anfühlt als gewohnt – nur die Position ist
- * neu, nicht die Fairness-Regel dahinter.
- */
-export function collidesWithSpike(candidateLocalAngle: number, spikeAngles: number[]): boolean {
-  return spikeAngles.some((angle) => angularDistance(candidateLocalAngle, angle) < COLLISION_ANGLE_TOLERANCE_DEG);
-}
-
 /** Gibt den Apfel zurück, der von einem Einschlag an diesem Winkel abgeworfen würde (falls vorhanden). */
 export function findHitApple(candidateLocalAngle: number, apples: Apple[]): Apple | null {
   return (
