@@ -2590,6 +2590,19 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       VOR den 10 Echtgeld-Äxten (Dampfschmiede…Lichtschwinge), reine
       Reihenfolgen-Änderung, keine Preise/Quellen angefasst. Per echtem Spielstand
       verifiziert (Werkstatt-Reiter "Äxte"), `tsc -b` sauber, keine Konsolenfehler.
+- [x] **Weltboss nochmal leichter: Hindernis-Deckel 4→2, neuer Axt-Deckel (2026-08-22).**
+      Klaus: "noch etwas leichter, weniger Äxte vor allem". Zwei Änderungen in
+      `generateLevel()` (constants.ts):
+      - Hindernis-Deckel von 4 auf 2 gesenkt (`Math.min(obstacleCountFor(levelIndex), 2)`).
+      - NEUER Deckel für die Gesamt-Wurfzahl (`axeCount`): Weltboss-Level litten am
+        selben Effekt wie zuvor die Hindernisse – `axeCountFor()` liefert an den
+        Welt-Start-Indizes (20/40/60/80/100) rein zufällig hohe Werte (13-19), weil
+        die "Wall"-Stufen der normalen Kurve genau dort liegen. Jetzt
+        `Math.min(axeCountFor(levelIndex), 8)` NUR für Weltbosse – ein Kampf braucht
+        jetzt höchstens 8 Würfe statt bis zu 19, kürzer UND mit weniger Gelegenheiten,
+        sich selbst zu treffen. Fruchtbosse/normale Level unverändert.
+      - Per echtem Spielstand verifiziert: Level 21 (Sandkolossos) zeigt jetzt 2
+        Hindernisse statt 4, `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

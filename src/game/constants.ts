@@ -471,8 +471,17 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * weiter unten – die Phasen-Spitze wurde im selben Zug von ×1,3 auf ×1,2
    * abgeschwächt, damit sich die Eskalation zum Ende hin nicht mehr so extrem
    * anfühlt wie mit dem alten (höheren) Sockel.
+   *
+   * Nochmal leichter (Klaus: "noch etwas leichter, weniger Äxte vor allem"):
+   * `axeCountFor()` liefert an Weltboss-Level-Indizes (20/40/60/80/100) genau wie
+   * `obstacleCountFor()` oben rein zufällig hohe Werte (13-19, siehe Wall-Stufe
+   * 20-25 bzw. Kurven-Ende ab Level 56), weil Weltbosse auf denselben "Wall"-Punkten
+   * der normalen Kurve landen. Deshalb jetzt auch hier ein fester Deckel (8) NUR für
+   * Weltboss-Level – ein kürzerer Kampf mit weniger nötigen Würfen insgesamt, nicht
+   * nur ein leereres Brett. Fruchtbosse und normale Level nutzen weiterhin die volle
+   * Kurve unverändert.
    */
-  const axeCount = axeCountFor(levelIndex);
+  const axeCount = worldBoss ? Math.min(axeCountFor(levelIndex), 8) : axeCountFor(levelIndex);
   const speedBonus = worldBoss ? 22 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
@@ -497,8 +506,11 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * was die normale Kurve an dieser Stelle sonst liefern würde – die Schwierigkeit
    * eines Weltboss-Kampfes kommt jetzt (siehe oben) ohnehin fast komplett aus Tempo
    * und Dreh-Muster, nicht aus einem vollgestellten Brett.
+   *
+   * Deckel nochmal von 4 auf 2 gesenkt (Klaus: "noch etwas leichter, weniger Äxte
+   * vor allem").
    */
-  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 4) : obstacleCountFor(levelIndex);
+  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 2) : obstacleCountFor(levelIndex);
   const appleCount = appleCountFor(levelIndex);
 
   return {
