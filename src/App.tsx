@@ -18,6 +18,8 @@ import { useAxeGame } from './hooks/useAxeGame';
 import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import { worldForLevel, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
+import { initAds } from './game/ads';
+import { initPurchases } from './game/purchases';
 import {
   playAppleSound,
   playBossSound,
@@ -76,6 +78,15 @@ function App() {
   const boardHandleRef = useRef<TargetBoardHandle>(null);
   const getBoardAngleDeg = useCallback(() => boardHandleRef.current?.getAngleDeg() ?? 0, []);
   const game = useAxeGame(getBoardAngleDeg);
+
+  // Einmal beim App-Start: SDK-Initialisierung + EU/UK-Consent-Flow für Rewarded
+  // Video (siehe game/ads.ts). Läuft im Web-Preview ins Leere (kein natives AdMob
+  // vorhanden), blockiert dort aber nichts – die Video-Rettung scheitert dann später
+  // beim tatsächlichen Zeigen sauber mit einer Fehlermeldung statt zu crashen.
+  useEffect(() => {
+    initAds();
+    initPurchases();
+  }, []);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const prevHitsRef = useRef(game.hits);
@@ -360,7 +371,7 @@ function App() {
         />
 
         {shopOpen && (
-          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onGrantPurchase={game.grantPurchasedSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
         )}
         {settingsOpen && (
           <SettingsModal
@@ -610,7 +621,7 @@ function App() {
       </div>
 
       {shopOpen && (
-        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onGrantPurchase={game.grantPurchasedSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
       )}
 
       {settingsOpen && (

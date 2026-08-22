@@ -444,6 +444,30 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, []);
 
   /**
+   * Schaltet eine Axt nach einem ECHTEN, vom Store bestätigten Kauf frei (siehe
+   * `purchaseSkin()` in game/purchases.ts, aufgerufen aus Shop.tsx NACHDEM
+   * RevenueCat/StoreKit den Kauf bestätigt hat – niemals vorher). Gleiche
+   * Freischalt-Logik wie `unlockEasterEgg` (Ownership + Ausrüsten, keine
+   * Währungsprüfung), aber bewusst ein eigener, klar benannter Pfad statt die
+   * Oster-Ei-Funktion wiederzuverwenden – unterschiedliche Bedeutung (echtes Geld
+   * vs. Geschenk), auch wenn der Code identisch ist.
+   */
+  const grantPurchasedSkin = useCallback((skinId: string) => {
+    setState((prev) => {
+      if (prev.save.ownedSkins.includes(skinId)) return prev;
+      const skin = getSkin(skinId);
+      if (!skin) return prev;
+      const nextSave: SaveData = {
+        ...prev.save,
+        ownedSkins: [...prev.save.ownedSkins, skinId],
+        ...(skin.kind === 'axe' ? { equippedAxeSkin: skinId } : { equippedBoardSkin: skinId }),
+      };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
+  /**
    * Alle gesammelten Figuren auf einmal gegen Diamanten eintauschen (siehe Shop,
    * Extras-Reiter). Bewusst ein simpler Gesamt-Eintausch statt Einzelauswahl – die
    * Figuren sind ein reiner Vorrat, keine Sammlung unterschiedlicher, eindeutiger
@@ -546,6 +570,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     buySkin,
     equipSkin,
     unlockEasterEgg,
+    grantPurchasedSkin,
     setSoundOn,
     tradeFigurines,
     claimDailyReward,

@@ -2716,6 +2716,67 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Session). Offen: echte AdMob-/StoreKit-Anbindung (Klaus bat darum, wartet noch
       auf eine Datei von ihm, die zeigt, wie er das bei seiner ersten App ohne
       eigenen Mac gelöst hat, bevor der native Code dafür angefasst wird).
+- [x] **Echtes AdMob + RevenueCat + Codemagic aufgesetzt (2026-08-22).** Klaus:
+      "kannst du auch alles machen, ich hab keinen Mac gebraucht, hab alles auch
+      hier drüber gemacht" – und teilte `STATUS.md`/`KONZEPT-v2.md` seiner ersten
+      App (Habituo, `momentum-preview`) als Referenz. Diese zeigen exakt sein
+      bewährtes Setup: **Codemagic** für Mac-lose Cloud-Builds, **AdMob**
+      (`@capacitor-community/admob`) für Rewarded Video, **RevenueCat** für Käufe –
+      alles 1:1 für Axe Throw übernommen, inklusive der dort bereits gefundenen Bugs.
+      - **`src/game/ads.ts`** (neu): `initAds()`/`showRewardedAd()`/
+        `showAdPrivacyOptions()`. Reihenfolge bewusst `initialize()` VOR
+        `requestConsentInfo()` (Habituo hatte das genau andersrum, Ergebnis war
+        "No ViewController" trotz bestätigter AdMob-Verifizierung – hier von Anfang
+        an richtig). Hänger-Schutz von Anfang an eingebaut:
+        `MIN_GAP_AFTER_DISMISS_MS`+`SHOW_TIMEOUT_MS`-Watchdog (Habituo mmusste das
+        nachträglich gegen ein iOS-Vollbild-Freeze-Race einbauen). `npa: true`
+        (nicht-personalisiert) → kein ATT-Prompt nötig, DSGVO/UK-Consent trotzdem
+        über Googles UMP-Flow. `USE_TEST_AD = true` + Googles offizielle Test-IDs
+        als Default (Rewarded Ad Unit `ca-app-pub-3940256099942544/1712485313`,
+        App-ID `ca-app-pub-3940256099942544~1458002511` auch in Info.plist
+        `GADApplicationIdentifier`) – ECHTE IDs (`REAL_APP_ID`/
+        `REAL_REWARDED_AD_UNIT_ID`) müssen für eine NEUE, EIGENE AdMob-App
+        "Axe Throw" angelegt werden (nicht Habituos IDs wiederverwenden).
+        `VideoRescueModal.tsx` ruft jetzt `showRewardedAd()` echt auf, mit
+        sauberem Loading-/Erfolgs-/Fehler-Zustand (kein endloses Hängen bei
+        Ladefehler, siehe App-Store-Audit).
+      - **`src/game/purchases.ts`** (neu): `initPurchases()`/`purchaseSkin(productId)`
+        über `Purchases.getProducts`+`purchaseStoreProduct` (RevenueCat), exakt wie
+        Habituos `purchaseCoinPack()`. `REVENUECAT_API_KEY_IOS` ist ein Platzhalter –
+        MUSS im RevenueCat-Dashboard für ein neues, eigenes Axe-Throw-Projekt erzeugt
+        werden. Jede der 10 Echtgeld-Äxte (`shop.ts`) hat jetzt ein `productId`-Feld
+        (Konvention `axethrow_axe_<name>`) – MUSS als Non-Consumable in App Store
+        Connect angelegt und in RevenueCat gespiegelt werden, bevor ein Kauf
+        tatsächlich funktioniert; bis dahin scheitert `purchaseSkin()` kontrolliert
+        mit "Produkt nicht gefunden" (kein Crash). Neue Funktion
+        `grantPurchasedSkin()` in useAxeGame.ts schaltet die Axt NUR nach echter
+        Kauf-Bestätigung frei (kein Münzabzug, analog zu `unlockEasterEgg`, aber
+        bewusst eigenständig benannt). `Shop.tsx`: Kauf-Button zeigt "Wird
+        gekauft…" während des Vorgangs, Fehler zeigen eine Notiz (Abbruch durch
+        den Nutzer selbst zeigt bewusst KEINE Fehlermeldung). Die 10 Karten bleiben
+        vorerst aus dem Shop ausgeblendet (siehe voriger Audit-Eintrag) – erst
+        wieder einblenden, sobald die echten Produkt-IDs existieren.
+      - **`codemagic.yaml`** (neu, 1:1 nach Habituos Vorlage, ohne Widget-Target):
+        Cloud-Build auf `mac_mini_m2`, npm install → Web-Build → `cap sync ios` →
+        Signing über App-Store-Connect-Integration → Archiv → TestFlight-Upload.
+        `BUNDLE_ID`/`TEAM_ID` auf Axe-Throw-Werte gesetzt (Team-ID identisch zu
+        Habituo, gleicher Apple-Developer-Account) – `APP_STORE_APPLE_ID` und alle
+        Codemagic-Secrets (Zertifikat, API-Key) müssen in Codemagic selbst für
+        dieses neue Projekt hinterlegt werden.
+      - `Info.plist`: `GADApplicationIdentifier` (Test-ID, siehe oben) +
+        `SKAdNetworkItems` mit Googles eigener, sicher bekannter ID
+        (`cstr6suwn9.skadnetwork`) ergänzt – die VOLLE von Google empfohlene Liste
+        weiterer Mediation-Netzwerk-IDs bewusst NICHT erfunden/geraten, muss vor
+        echter Einreichung aus der aktuellen offiziellen AdMob-Doku ergänzt werden.
+      - Per Browser verifiziert: Video-Rettung zeigt sauberen Loading-Zustand ohne
+        Crash (Web-Stub feuert keine echten Events, Timeout-Watchdog fängt das aber
+        auf – erwartetes, dokumentiertes Verhalten NUR in der Browser-Vorschau).
+        `tsc -b` sauber, `npm run build` + `npx cap sync ios` laufen durch, beide
+        Plugins korrekt im nativen Projekt registriert (Package.swift).
+      **Noch offen, ausschließlich externe Konten-Einrichtung (kein Code):** neue
+      AdMob-App+Ad-Unit für Axe Throw, neues RevenueCat-Projekt+API-Key, 10
+      App-Store-Connect-IAP-Produkte, Codemagic-Projekt+Secrets, volle
+      SKAdNetwork-Liste aus aktueller Google-Doku.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

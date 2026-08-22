@@ -20,6 +20,7 @@ import {
 import { getBoardImage } from '../game/boardImages';
 import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
 import { HERO_WORLD_START } from '../game/worlds';
+import { purchaseSkin } from '../game/purchases';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
 
@@ -29,6 +30,8 @@ interface ShopProps {
   save: SaveData;
   onBuy: (skinId: string) => void;
   onEquip: (skinId: string) => void;
+  /** Schaltet eine Axt nach einem ECHTEN, vom Store bestätigten Kauf frei (siehe `purchaseSkin` unten). */
+  onGrantPurchase: (skinId: string) => void;
   onTradeFigurines: () => void;
   onClose: () => void;
 }
@@ -65,17 +68,35 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'extras', label: 'Extras' },
 ];
 
-export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
+export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
-  /**
-   * Echtgeld-Käufe (`source: 'iap'`) haben noch KEINE echte Zahlungs-Anbindung (kein
-   * App-Store-/Play-Billing-SDK verdrahtet). Statt den Kauf-Button einfach nichts tun
-   * zu lassen (verwirrend) oder ihn kostenlos freizuschalten (falsch – würde einen
-   * Echtgeld-Kauf vortäuschen, ohne dass Geld fließt), zeigt er einen klar erkennbaren
-   * Platzhalter-Hinweis. Sobald eine echte SDK-Anbindung existiert, ersetzt deren
-   * Erfolgs-Callback einfach diesen `onBuy`-Aufruf hier.
-   */
+  /** Fehlermeldung nach einem gescheiterten Echtgeld-Kauf (siehe `handlePurchase` unten). */
   const [iapNotice, setIapNotice] = useState<string | null>(null);
+  /** Welche Karte gerade einen Kauf-Vorgang laufen hat – zeigt "Wird gekauft…" statt des Preis-Buttons. */
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+
+  /**
+   * Echter Kauf-Flow über RevenueCat/StoreKit (siehe game/purchases.ts). Schaltet
+   * die Axt NUR über `onGrantPurchase` frei, wenn der Store den Kauf tatsächlich
+   * bestätigt hat – ein Abbruch durch den Nutzer selbst zeigt bewusst KEINE
+   * Fehlermeldung (kein Fehler, nur eine Entscheidung), alles andere schon.
+   */
+  const handlePurchase = async (skin: SkinDef) => {
+    if (!skin.productId || purchasingId) return;
+    setPurchasingId(skin.id);
+    const result = await purchaseSkin(skin.productId);
+    setPurchasingId(null);
+    if (result.success) {
+      onGrantPurchase(skin.id);
+      return;
+    }
+    if (result.error === 'cancelled') return;
+    setIapNotice(
+      result.error === 'not-configured' || result.error === 'product-not-found'
+        ? `${skin.name} ist im Store noch nicht verfügbar – versuch es später nochmal.`
+        : `Kauf von ${skin.name} hat nicht geklappt – versuch es nochmal.`,
+    );
+  };
 
   const items =
     tab === 'axe'
@@ -203,9 +224,10 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
                 ) : skin.source === 'iap' ? (
                   <button
                     className="shop-card__action shop-card__action--iap"
-                    onClick={() => setIapNotice(`${skin.name} – Echtgeld-Kauf kommt mit dem App-Store-Release.`)}
+                    disabled={purchasingId === skin.id}
+                    onClick={() => handlePurchase(skin)}
                   >
-                    💎 {formatIapPrice(skin.priceCents ?? 0)}
+                    {purchasingId === skin.id ? 'Wird gekauft…' : `💎 ${formatIapPrice(skin.priceCents ?? 0)}`}
                   </button>
                 ) : (
                   <button

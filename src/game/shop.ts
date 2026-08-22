@@ -27,13 +27,20 @@ export interface SkinDef {
   price: number;
   source: SkinSource;
   /**
-   * NUR bei `source: 'iap'` gesetzt: Preis in Cent (z.B. 299 = 2,99 €). Es gibt in
-   * diesem Projekt noch KEINE echte Zahlungs-Anbindung (kein App-Store/Play-Billing-
-   * SDK verdrahtet, das kommt erst mit Phase 2/Capacitor) – der Kauf-Button zeigt
-   * deshalb aktuell nur einen klar erkennbaren Platzhalter-Hinweis statt echt zu
-   * kassieren, siehe `Shop.tsx`.
+   * NUR bei `source: 'iap'` gesetzt: Preis in Cent (z.B. 299 = 2,99 €), nur für die
+   * Anzeige (`formatIapPrice`) – der ECHTE Preis kommt zur Laufzeit von StoreKit
+   * selbst (`PurchasesStoreProduct.priceString`, siehe game/purchases.ts), dieser
+   * Wert ist nur die geplante Preisstufe fürs App-Store-Connect-Produkt.
    */
   priceCents?: number;
+  /**
+   * NUR bei `source: 'iap'` gesetzt: die Produkt-ID für RevenueCat/App Store Connect
+   * (siehe game/purchases.ts, `purchaseSkin()`). MUSS als eigenständiges Non-
+   * Consumable-Produkt in App Store Connect angelegt und in RevenueCat gespiegelt
+   * werden, BEVOR ein Kauf hierüber funktionieren kann – bis dahin schlägt
+   * `purchaseSkin()` mit `'product-not-found'` fehl (kein Crash, siehe Shop.tsx).
+   */
+  productId?: string;
 }
 
 /** "2,99 €" aus 299 Cent – einzige Stelle, die Cent in eine Anzeige umrechnet. */
@@ -100,21 +107,23 @@ export const AXE_SKINS: SkinDef[] = [
   // Echtgeld-Äxte (`source: 'iap'`, violett markierte Karten im Shop). Auf Klaus'
   // Wunsch ganz ans ENDE der Liste gestellt ("die lilanen ... geb die ganz nach
   // unten"), damit die normalen Münz-Äxte zuerst kommen und die Echtgeld-Käufe klar
-  // als eigener Abschnitt danach folgen. Es gibt in diesem Projekt noch KEINE echte
-  // Zahlungs-Anbindung (kein App-Store/Play-Billing-SDK, das kommt erst mit Phase 2/
-  // Capacitor) – der Kauf-Button in Shop.tsx zeigt deshalb aktuell nur einen klaren
-  // Platzhalter-Hinweis statt echt zu kassieren. `priceCents` grob proportional zu
-  // den alten Münz-Preisen gestaffelt. ---
-  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 0, source: 'iap', priceCents: 199 },
-  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 0, source: 'iap', priceCents: 249 },
-  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 0, source: 'iap', priceCents: 299 },
-  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 0, source: 'iap', priceCents: 349 },
-  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 0, source: 'iap', priceCents: 399 },
-  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 0, source: 'iap', priceCents: 449 },
-  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 0, source: 'iap', priceCents: 499 },
-  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 0, source: 'iap', priceCents: 599 },
-  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 0, source: 'iap', priceCents: 699 },
-  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 0, source: 'iap', priceCents: 799 },
+  // als eigener Abschnitt danach folgen. `priceCents` grob proportional zu den alten
+  // Münz-Preisen gestaffelt (nur Anzeige, siehe Kommentar bei SkinDef.priceCents).
+  // `productId` folgt der Konvention `axethrow_axe_<name>` – MUSS 1:1 so (oder mit
+  // final abweichendem Namen, dann hier UND in App Store Connect/RevenueCat
+  // synchron ändern) als Non-Consumable-Produkt angelegt werden, siehe
+  // game/purchases.ts. Vor der echten Anlage schlägt ein Kauf-Versuch kontrolliert
+  // mit "Produkt nicht gefunden" fehl (siehe Shop.tsx), kein Crash. ---
+  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 0, source: 'iap', priceCents: 199, productId: 'axethrow_axe_steampunk' },
+  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 0, source: 'iap', priceCents: 249, productId: 'axethrow_axe_rune' },
+  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 0, source: 'iap', priceCents: 299, productId: 'axethrow_axe_tide' },
+  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 0, source: 'iap', priceCents: 349, productId: 'axethrow_axe_cosmic' },
+  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 0, source: 'iap', priceCents: 399, productId: 'axethrow_axe_thorn' },
+  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 0, source: 'iap', priceCents: 449, productId: 'axethrow_axe_magma' },
+  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 0, source: 'iap', priceCents: 499, productId: 'axethrow_axe_plague' },
+  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 0, source: 'iap', priceCents: 599, productId: 'axethrow_axe_royal' },
+  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 0, source: 'iap', priceCents: 699, productId: 'axethrow_axe_cyber' },
+  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 0, source: 'iap', priceCents: 799, productId: 'axethrow_axe_holy' },
 ];
 
 // ---------------------------------------------------------------------------

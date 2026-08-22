@@ -1,0 +1,94 @@
+workflows:
+  ios-app-store:
+    name: iOS App Store Build
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: Codemagic
+
+    environment:
+      groups:
+        - personal account
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        # Platzhalter, siehe capacitor.config.ts – vor der echten Registrierung final
+        # bestätigen, danach nicht mehr änderbar.
+        BUNDLE_ID: "com.klxboe.axethrow"
+        TEAM_ID: "A9KD44K3C8"
+        APP_STORE_APPLE_ID: $APP_STORE_APPLE_ID
+      node: 22
+      xcode: latest
+
+    scripts:
+      - name: Install npm dependencies
+        script: npm install --legacy-peer-deps
+
+      - name: Build web app
+        script: npm run build
+
+      - name: Capacitor sync iOS
+        script: npx cap sync ios
+
+      - name: Set up keychain
+        script: keychain initialize
+
+      - name: Fetch signing files
+        script: |
+          # Veraltete Profile löschen, damit sie mit aktuellen Capabilities neu erzeugt werden
+          app-store-connect list-provisioning-profiles \
+            --bundle-id-identifier "$BUNDLE_ID" \
+            --profile-type IOS_APP_STORE \
+            --json 2>/dev/null \
+            | python3 -c "import sys,json; [print(p['id']) for p in json.load(sys.stdin).get('data',[])]" \
+            | xargs -I {} app-store-connect delete-provisioning-profile {} 2>/dev/null || true
+          # Frische Profile holen
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key "@env:CERTIFICATE_PRIVATE_KEY" \
+            --create
+          echo "=== All .mobileprovision files ==="
+          find / -name "*.mobileprovision" 2>/dev/null | grep -v ".git" | head -20
+          echo "=== All .p12 files ==="
+          find / -name "*.p12" 2>/dev/null | grep -v "keychain" | head -20
+
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+
+      - name: Set up code signing
+        script: xcode-project use-profiles
+
+      - name: Set build number
+        script: |
+          cd ios/App
+          BUILD_NUMBER=$(date +%s)
+          agvtool new-version -all $BUILD_NUMBER
+
+      - name: Build and archive
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" || {
+            echo "=== XCODE BUILD LOG - ERRORS ==="
+            find /tmp/xcodebuild_logs -name "*.log" 2>/dev/null | while read f; do
+              echo "--- $f ---"
+              grep -E "error:|warning: '.*' is unavailable|BUILD FAILED|\*\* ARCHIVE" "$f" | tail -100
+            done
+            echo "=== FULL LOG TAIL ==="
+            find /tmp/xcodebuild_logs -name "*.log" 2>/dev/null -exec tail -200 {} \;
+            exit 1
+          }
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - /tmp/xcode_build_output.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        submit_to_app_store: false

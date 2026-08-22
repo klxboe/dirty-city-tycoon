@@ -1,68 +1,88 @@
 import { useEffect, useState } from 'react';
+import { showRewardedAd } from '../game/ads';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 import './VideoRescueModal.css';
 
 interface VideoRescueModalProps {
-  /** Wird aufgerufen, sobald das (simulierte) Video zu Ende ist und der Spieler bestätigt hat. */
+  /** Wird aufgerufen, sobald die Belohnung wirklich verdient wurde (Nutzer hat das Video zu Ende gesehen). */
   onFinished: () => void;
   onCancel: () => void;
 }
 
-/** Wie lange die Platzhalter-Anzeige "läuft" (Sekunden), bevor man sie schließen kann. */
-const FAKE_AD_SECONDS = 3;
+type Status = 'loading' | 'success' | 'error';
 
 /**
- * Simuliert eine Rewarded-Video-Anzeige für die einmalige Game-Over-Rettung (siehe
- * `rescueRun()` in useAxeGame.ts). Es gibt in diesem Projekt (noch) KEINE echte
- * Ad-SDK-Anbindung (kein AdMob o.ä. verdrahtet – das braucht erst das native
- * Capacitor-Projekt, siehe "Phase 2" in CLAUDE.md) – dieser Screen ist intern ein
- * einfacher Zähler statt eines echten Videos, damit die Spiel-Logik (einmalige
- * Rettung, Fortsetzen im selben Level) schon jetzt vollständig funktioniert.
+ * Zeigt ein echtes Rewarded Video (Google AdMob, siehe `game/ads.ts`) für die
+ * einmalige Game-Over-Rettung (`rescueRun()` in useAxeGame.ts). Ersetzt die frühere
+ * simulierte Zähler-Anzeige – siehe CLAUDE.md für die Historie dieses Umbaus.
  *
- * WICHTIG fürs App-Store-Review (Audit 2026-08-22): der angezeigte TEXT darf NICHT
- * verraten, dass hier kein echtes Video läuft ("Platzhalter-Anzeige..." stand vorher
- * hier und wäre für Apple ein klares "unfertige Testversion"-Signal gewesen) – deshalb
- * neutrale Formulierungen unten. Das ändert NICHTS an der zugrunde liegenden Technik:
- * es ist weiterhin kein echtes Ad-SDK angebunden, nur der sichtbare Text lügt nicht
- * mehr über den Zustand. Vor der tatsächlichen Einreichung MUSS diese Komponente durch
- * eine echte Rewarded-Video-Integration ersetzt werden – eine App, die eine "Werbung"
- * zeigt, die keine ist, bleibt ein Risiko, auch mit neutralem Text. `onFinished` bleibt
- * der Vertrag dafür ("Belohnung gutschreiben"), der Rest der App ändert sich nicht.
+ * Drei Zustände statt nur "läuft/fertig": `showRewardedAd()` kann auch fehlschlagen
+ * (kein Fill, kein Internet, Ladefehler) – dafür ein eigener Fehler-Zustand mit
+ * "Erneut versuchen" statt die App in einem endlosen Lade-Zustand hängen zu lassen
+ * (siehe App-Store-Audit 2026-08-22, Abschnitt "Offline/Netzwerkverhalten").
  */
 export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps) {
-  const [secondsLeft, setSecondsLeft] = useState(FAKE_AD_SECONDS);
+  const [status, setStatus] = useState<Status>('loading');
 
   useEffect(() => {
-    if (secondsLeft <= 0) return;
-    const timeout = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearTimeout(timeout);
-  }, [secondsLeft]);
+    let cancelled = false;
+    setStatus('loading');
+    showRewardedAd().then((result) => {
+      if (cancelled) return;
+      setStatus(result.success ? 'success' : 'error');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const done = secondsLeft <= 0;
+  const retry = () => setStatus('loading');
 
   return (
     <div className="modal-backdrop">
       <div className="modal-card video-rescue">
         <div className="video-rescue__screen">
-          {done ? (
-            <span className="video-rescue__icon">🎁</span>
-          ) : (
-            <span className="video-rescue__countdown">{secondsLeft}</span>
-          )}
+          {status === 'success' && <span className="video-rescue__icon">🎁</span>}
+          {status === 'loading' && <span className="video-rescue__countdown">📺</span>}
+          {status === 'error' && <span className="video-rescue__icon">⚠️</span>}
         </div>
-        <div className="modal-card__title">{done ? 'Belohnung erhalten!' : 'Werbevideo läuft …'}</div>
-        <div className="modal-card__body">
-          {done ? 'Du machst genau da weiter, wo du aufgehört hast.' : 'Danke fürs Anschauen – gleich geht’s weiter.'}
-        </div>
-        {done ? (
-          <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>
-            Weiter geht's
-          </button>
-        ) : (
-          <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
-            Abbrechen
-          </button>
+
+        {status === 'loading' && (
+          <>
+            <div className="modal-card__title">Werbevideo läuft …</div>
+            <div className="modal-card__body">Danke fürs Anschauen – gleich geht’s weiter.</div>
+            <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
+              Abbrechen
+            </button>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <div className="modal-card__title">Belohnung erhalten!</div>
+            <div className="modal-card__body">Du machst genau da weiter, wo du aufgehört hast.</div>
+            <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>
+              Weiter geht's
+            </button>
+          </>
+        )}
+
+        {status === 'error' && (
+          <>
+            <div className="modal-card__title">Video nicht verfügbar</div>
+            <div className="modal-card__body">
+              Gerade ist kein Video verfügbar – bitte prüfe deine Internetverbindung und versuch es
+              nochmal.
+            </div>
+            <button className="modal-card__button modal-card__button--ocean" onClick={retry}>
+              Erneut versuchen
+            </button>
+            <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
+              Abbrechen
+            </button>
+          </>
         )}
       </div>
     </div>

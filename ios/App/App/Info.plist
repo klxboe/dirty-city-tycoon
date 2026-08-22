@@ -62,5 +62,25 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!--
+	  AdMob (siehe src/game/ads.ts). GADApplicationIdentifier steht hier auf Googles
+	  offizieller TEST-App-ID (siehe https://developers.google.com/admob/ios/test-ads),
+	  passend zu `USE_TEST_AD = true` dort – MUSS zusammen mit `USE_TEST_AD`/
+	  `REAL_APP_ID` in ads.ts auf die ECHTE, für Axe Throw neu angelegte AdMob-App-ID
+	  umgestellt werden, bevor echt eingereicht wird.
+	  SKAdNetworkItems: nur Googles eigene ID eingetragen (sicher bekannt, seit Jahren
+	  stabil dieselbe) – die VOLLE von Google empfohlene Liste (deutlich mehr Einträge
+	  für Mediation-Netzwerke) MUSS vor der echten Einreichung aus der aktuellen
+	  offiziellen AdMob-Doku ergänzt werden, hier absichtlich NICHT erfunden/geraten.
+	-->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 </dict>
 </plist>
