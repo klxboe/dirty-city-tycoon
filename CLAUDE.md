@@ -2603,6 +2603,14 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         sich selbst zu treffen. Fruchtbosse/normale Level unverändert.
       - Per echtem Spielstand verifiziert: Level 21 (Sandkolossos) zeigt jetzt 2
         Hindernisse statt 4, `tsc -b` sauber, keine Konsolenfehler.
+- [x] **Weltboss-Korrektur zurückgerudert: "jetzt viel zu einfach" (2026-08-22).**
+      Nach dem letzten Runterdrehen (Hindernis-Deckel 2, Axt-Deckel 8, Tempo-Sockel 22)
+      kam sofort das Gegenteil-Feedback. Alle drei Hebel in `generateLevel()` moderat
+      wieder angehoben, aber bewusst NICHT auf die alten Ausgangswerte zurück:
+      Hindernis-Deckel 2→5, Axt-Deckel 8→13, Tempo-Sockel 22→30°/Sek. Ziel: irgendwo
+      zwischen "fast unmöglich" (Ausgangslage) und "viel zu einfach" (letzter Stand)
+      landen. Per echtem Spielstand verifiziert (Level 21, Sandkolossos: 5 Hindernisse),
+      `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

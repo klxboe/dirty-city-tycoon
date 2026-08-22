@@ -476,13 +476,20 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * `axeCountFor()` liefert an Weltboss-Level-Indizes (20/40/60/80/100) genau wie
    * `obstacleCountFor()` oben rein zufällig hohe Werte (13-19, siehe Wall-Stufe
    * 20-25 bzw. Kurven-Ende ab Level 56), weil Weltbosse auf denselben "Wall"-Punkten
-   * der normalen Kurve landen. Deshalb jetzt auch hier ein fester Deckel (8) NUR für
+   * der normalen Kurve landen. Deshalb jetzt auch hier ein fester Deckel NUR für
    * Weltboss-Level – ein kürzerer Kampf mit weniger nötigen Würfen insgesamt, nicht
    * nur ein leereres Brett. Fruchtbosse und normale Level nutzen weiterhin die volle
    * Kurve unverändert.
+   *
+   * Zurückgerudert (Klaus, direkt danach: "jetzt ist es viel zu einfach") – der
+   * Deckel von 8 UND der Tempo-Sockel von 22 zusammen waren zu viel auf einmal
+   * runtergedreht. Beide wieder etwas angehoben (Axt-Deckel 8 -> 13, Tempo-Sockel
+   * 22 -> 30), aber NICHT auf die alten Ausgangswerte zurück – zusammen mit dem
+   * weiterhin gedeckelten Hindernis-Wert (siehe unten) soll sich das in der Mitte
+   * zwischen "fast unmöglich" und "viel zu einfach" einpendeln.
    */
-  const axeCount = worldBoss ? Math.min(axeCountFor(levelIndex), 8) : axeCountFor(levelIndex);
-  const speedBonus = worldBoss ? 22 : boss ? 38 : 0;
+  const axeCount = worldBoss ? Math.min(axeCountFor(levelIndex), 13) : axeCountFor(levelIndex);
+  const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
@@ -508,9 +515,11 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * und Dreh-Muster, nicht aus einem vollgestellten Brett.
    *
    * Deckel nochmal von 4 auf 2 gesenkt (Klaus: "noch etwas leichter, weniger Äxte
-   * vor allem").
+   * vor allem"), dann auf 5 zurückgerudert (Klaus direkt danach: "jetzt ist es
+   * viel zu einfach" – siehe auch Axt-/Tempo-Korrektur oben, alle drei Hebel
+   * standen zusammen zu weit unten).
    */
-  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 2) : obstacleCountFor(levelIndex);
+  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 5) : obstacleCountFor(levelIndex);
   const appleCount = appleCountFor(levelIndex);
 
   return {
