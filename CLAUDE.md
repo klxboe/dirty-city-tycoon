@@ -2703,6 +2703,19 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       braucht zwingend einen Mac (oder einen Cloud-Mac-Dienst) – das lässt sich
       technisch nicht umgehen. `tsc -b` sauber, Web-Build (`npm run build`)
       erfolgreich, `npx cap sync ios` sauber durchgelaufen.
+- [x] **Echte Privacy-Policy-/Support-URL live via GitHub Pages (2026-08-22).** Zwei
+      der P0-Blocker aus dem App-Store-Audit behoben, ohne irgendetwas zu erfinden:
+      `docs/privacy.html` + `docs/support.html` angelegt (ehrlicher Inhalt: kein
+      Konto, Fortschritt nur lokal, optionale Rewarded Ads/IAP – Kontaktweg GitHub
+      Issues), GitHub Pages per `gh api` auf `main`/`/docs` aktiviert. Echte, live
+      geprüfte URLs (200 OK, Inhalt im Browser bestätigt):
+      - Privacy: https://klxboe.github.io/dirty-city-tycoon/privacy.html
+      - Support: https://klxboe.github.io/dirty-city-tycoon/support.html
+      Dafür alle 15 seit Sessionbeginn lokal aufgelaufenen Commits nach `origin/main`
+      gepusht (Klaus explizit gefragt und bestätigt bekommen, da erster Push dieser
+      Session). Offen: echte AdMob-/StoreKit-Anbindung (Klaus bat darum, wartet noch
+      auf eine Datei von ihm, die zeigt, wie er das bei seiner ersten App ohne
+      eigenen Mac gelöst hat, bevor der native Code dafür angefasst wird).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
