@@ -407,6 +407,7 @@ function App() {
         gemsFlash={gemsFlash}
         streak={game.streak}
         isBoss={!!game.bossFruit}
+        isWorldBoss={!!game.worldBossName}
         onOpenShop={() => setShopOpen(true)}
       />
 
@@ -578,7 +579,7 @@ function App() {
         {(game.phase === 'levelComplete' || game.phase === 'gameOver') && !modalVisible && (
           <div
             className={`outcome-banner outcome-banner--${
-              game.phase === 'gameOver' ? 'fail' : game.bossFruit ? 'boss' : 'win'
+              game.phase === 'gameOver' ? 'fail' : game.bossFruit || game.worldBossName ? 'boss' : 'win'
             }`}
           >
             <span
@@ -587,7 +588,13 @@ function App() {
                 animationDuration: `${game.phase === 'gameOver' ? GAME_OVER_DELAY_MS : LEVEL_COMPLETE_DELAY_MS}ms`,
               }}
             >
-              {game.phase === 'gameOver' ? 'Axt zersplittert!' : game.bossFruit ? 'Boss besiegt!' : 'Geschafft!'}
+              {game.phase === 'gameOver'
+                ? 'Axt zersplittert!'
+                : game.worldBossName
+                  ? 'Weltboss besiegt!'
+                  : game.bossFruit
+                    ? 'Boss besiegt!'
+                    : 'Geschafft!'}
             </span>
           </div>
         )}

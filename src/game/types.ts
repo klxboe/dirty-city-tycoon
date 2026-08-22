@@ -112,6 +112,14 @@ export interface LevelReward {
   xp: number;
   /** Bei Boss-Leveln: welche Frucht besiegt wurde. */
   bossFruitId?: string;
+  /**
+   * Bei Weltboss-Leveln: die WELT-ID (z.B. 'desert') des besiegten Weltbosses – siehe
+   * `WORLD_BOSSES` in worlds.ts für Name/Optik. Eigenes Feld statt `bossFruitId`
+   * mitzubenutzen, weil ein Weltboss-Sieg einen komplett anderen Text braucht
+   * ("Weltboss besiegt!" statt "Level X geschafft") und KEINE Levelnummer zeigen
+   * soll (Klaus: "Level gibt es nur im normalen [Modus], der Boss hat kein Level").
+   */
+  worldBossId?: string;
   /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */
   unlockedAxeSkinId?: string;
 }

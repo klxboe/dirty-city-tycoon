@@ -17,6 +17,13 @@ interface HUDProps {
   streak: number;
   /** Boss-Level: die Levelnummer wird hervorgehoben. */
   isBoss: boolean;
+  /**
+   * Weltboss-"Tor" (siehe worlds.ts) – zeigt WEDER Levelnummer NOCH Block-Fortschritt.
+   * Klaus: "Level gibt es nur im normalen Modus, der Boss hat kein Level, der ist der
+   * Boss" – ein Weltboss ist kein Level X von Y in einem 10er-Block, sondern eine
+   * eigenständige Prüfung, deshalb bekommt er hier eine eigene, zahlenfreie Anzeige.
+   */
+  isWorldBoss: boolean;
   onOpenShop: () => void;
 }
 
@@ -28,27 +35,37 @@ interface HUDProps {
  * wie weit ein Game Over zurückwerfen würde. Der Stern am Ende markiert den
  * Block-Abschluss.
  */
-export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, streak, isBoss, onOpenShop }: HUDProps) {
+export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, streak, isBoss, isWorldBoss, onOpenShop }: HUDProps) {
   return (
     <header className="hud">
       <div className={`hud__level ${isBoss ? 'hud__level--boss' : ''}`}>
-        <span className="hud__level-number">{level}</span>
-        <span className="hud__level-label">{isBoss ? 'Boss' : 'Level'}</span>
+        {isWorldBoss ? (
+          <span className="hud__level-label hud__level-label--world-boss">⚔ Weltboss</span>
+        ) : (
+          <>
+            <span className="hud__level-number">{level}</span>
+            <span className="hud__level-label">{isBoss ? 'Boss' : 'Level'}</span>
+          </>
+        )}
         {/* Serie erst ab dem ersten wirksamen Multiplikator zeigen – vorher wäre sie nur Zahlensalat. */}
         {streak >= 5 && <span className="hud__streak">🔥 {streak}</span>}
       </div>
 
-      <div className="hud__progress" aria-label={`Level ${levelInBlock + 1} von ${LEVELS_PER_BLOCK} im Block`}>
-        {Array.from({ length: LEVELS_PER_BLOCK }).map((_, i) => (
-          <span
-            key={i}
-            className={`hud__dot ${i < levelInBlock ? 'hud__dot--done' : ''} ${
-              i === levelInBlock ? 'hud__dot--current' : ''
-            }`}
-          />
-        ))}
-        <span className="hud__star">★</span>
-      </div>
+      {/* Block-Fortschritt ist ein reines Normal-Modus-Konzept (10er-Block), bei einem
+          Weltboss ausgeblendet statt eine falsche Zugehörigkeit vorzugaukeln. */}
+      {!isWorldBoss && (
+        <div className="hud__progress" aria-label={`Level ${levelInBlock + 1} von ${LEVELS_PER_BLOCK} im Block`}>
+          {Array.from({ length: LEVELS_PER_BLOCK }).map((_, i) => (
+            <span
+              key={i}
+              className={`hud__dot ${i < levelInBlock ? 'hud__dot--done' : ''} ${
+                i === levelInBlock ? 'hud__dot--current' : ''
+              }`}
+            />
+          ))}
+          <span className="hud__star">★</span>
+        </div>
+      )}
 
       <div className="hud__wallet">
         <button

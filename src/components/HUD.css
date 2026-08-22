@@ -51,6 +51,17 @@
   color: var(--color-text-muted);
 }
 
+/* Weltboss: ersetzt Levelnummer+Label komplett, kein Zahlenbezug (siehe HUD.tsx). */
+.hud__level-label--world-boss {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--color-danger);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
 /* Punktreihe: ein Punkt je Level im aktuellen 10er-Block, Stern für den Abschluss. */
 .hud__progress {
   display: flex;

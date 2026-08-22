@@ -5,6 +5,7 @@ import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { useCountUp } from '../hooks/useCountUp';
 import { getBossFruit, getSkin } from '../game/shop';
+import { WORLD_BOSSES } from '../game/worlds';
 import type { LevelReward } from '../game/types';
 import './LevelCompleteModal.css';
 
@@ -56,12 +57,22 @@ export function LevelCompleteModal({
   }, []);
 
   const boss = reward.bossFruitId ? getBossFruit(reward.bossFruitId) : undefined;
+  // Weltboss-Sieg (siehe LevelReward.worldBossId): eigener Text OHNE Levelnummer –
+  // Klaus: "Level gibt es nur im normalen Modus, der Boss hat kein Level, der ist
+  // der Boss". `getBossFruit`/`boss` oben bleibt unberührt (Weltboss und Fruchtboss
+  // schließen sich laut generateLevel() gegenseitig aus, nie beide gleichzeitig gesetzt).
+  const worldBoss = reward.worldBossId ? WORLD_BOSSES[reward.worldBossId] : undefined;
   const unlockedAxe = reward.unlockedAxeSkinId ? getSkin(reward.unlockedAxeSkinId) : undefined;
 
   return (
     <div className="modal-backdrop">
-      <div className={`modal-card ${boss ? 'modal-card--boss' : ''}`}>
-        {boss ? (
+      <div className={`modal-card ${boss || worldBoss ? 'modal-card--boss' : ''}`}>
+        {worldBoss ? (
+          <>
+            <div className="modal-card__kicker">Weltboss besiegt</div>
+            <div className="modal-card__title">{worldBoss.name} bezwungen!</div>
+          </>
+        ) : boss ? (
           <>
             <div className="modal-card__kicker">Boss besiegt</div>
             <div className="modal-card__title">{boss.name} geknackt!</div>
@@ -168,7 +179,7 @@ export function LevelCompleteModal({
             einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}
         {isCampaignComplete && <div className="modal-card__badge">Alle 100 Level gemeistert! 🎉</div>}
         <button className="modal-card__button modal-card__button--auto" onClick={onNext}>
-          {isCampaignComplete ? 'Weiter im Endlos-Modus' : `Weiter zu Level ${level + 1}`}
+          {isCampaignComplete ? 'Weiter im Endlos-Modus' : worldBoss ? 'Weiter geht’s' : `Weiter zu Level ${level + 1}`}
           <span className="modal-card__auto-bar" style={{ animationDuration: `${AUTO_ADVANCE_MS}ms` }} />
         </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>

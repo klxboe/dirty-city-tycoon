@@ -2611,6 +2611,35 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       zwischen "fast unmöglich" (Ausgangslage) und "viel zu einfach" (letzter Stand)
       landen. Per echtem Spielstand verifiziert (Level 21, Sandkolossos: 5 Hindernisse),
       `tsc -b` sauber, keine Konsolenfehler.
+- [x] **Weltboss zeigt keine Levelnummer mehr, eigener Sieg-Text (2026-08-22).** Klaus:
+      "irgendwie komm ich nach dem Bosskampf zu Level 22, was gar keinen Sinn macht,
+      mach diese Level-Scheiße weg, die gibt es nur im normalen [Modus], der Boss hat
+      kein Level, der ist der Boss, und wenn man ihn besiegt steht so Gratulation oder
+      sowas". Levelnummern/Block-Fortschritt sind ein Normal-Modus-Konzept, ein
+      Weltboss ist eine eigenständige Prüfung ohne Levelzahl. Vier Stellen angepasst:
+      - `HUD.tsx`/`.css`: neue Prop `isWorldBoss` – ersetzt Levelnummer+Label komplett
+        durch "⚔ Weltboss" (keine Zahl), blendet die Block-Fortschritt-Punktreihe
+        (10er-Block-Konzept) komplett aus. `App.tsx` übergibt
+        `isWorldBoss={!!game.worldBossName}`.
+      - `types.ts`: `LevelReward` bekommt `worldBossId?: string` (analog zu
+        `bossFruitId`, aber eigenes Feld – Weltboss-Sieg braucht einen komplett
+        anderen Text). In `useAxeGame.ts`s `computeReward()` befüllt.
+      - `LevelCompleteModal.tsx`: bei gesetztem `worldBossId` (Nachschlagen über
+        `WORLD_BOSSES` aus worlds.ts) zeigt der Titel "Weltboss besiegt! {Name}
+        bezwungen!" statt "Level X geschafft", der Weiter-Button zeigt "Weiter geht's"
+        statt "Weiter zu Level X+1" (keine Zahl im Text).
+      - `App.tsx`: der kurze Ausgangs-Banner (`outcome-banner`, erscheint VOR dem
+        vollen Fenster) zeigt jetzt ebenfalls "Weltboss besiegt!" statt generisch
+        "Geschafft!", wenn `game.worldBossName` gesetzt ist.
+      - Per echtem Spielstand verifiziert: HUD zeigt bei Level 21 (Sandkolossos) jetzt
+        "⚔ WELTBOSS" ohne Zahl, keine Punktreihe. Den tatsächlichen SIEG (levelComplete-
+        Phase) konnte ich in dieser Umgebung NICHT nachspielen – der rAF-Loop der
+        Scheibendrehung läuft hier nachweislich gar nicht (Transform bleibt über 2
+        Sekunden komplett leer, kein einziger Tick), jeder simulierte Wurf landet
+        dadurch am exakt selben Winkel und der zweite kollidiert deshalb IMMER mit dem
+        ersten – ein echter Levelabschluss lässt sich so nicht erzwingen. Titel-/Text-
+        Logik der Sieg-Anzeige ist deshalb nur per Code-Review, nicht per echtem Sieg
+        bestätigt. `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

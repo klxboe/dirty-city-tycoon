@@ -618,6 +618,7 @@ function computeReward(
     // Fortschrittsbalken Richtung nächste Welt.
     xp: XP_PER_LEVEL,
     bossFruitId: boss?.id,
+    worldBossId: level.worldBossId,
     unlockedAxeSkinId,
   };
 }
