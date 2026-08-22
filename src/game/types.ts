@@ -20,8 +20,11 @@ export interface Apple {
   figurine: boolean;
 }
 
-/** Ergebnis eines einzelnen Wurfs, für kurzes Feedback nach der Flugphase. */
-export type ThrowOutcome = 'stuck' | 'collided';
+/** Ergebnis eines einzelnen Wurfs, für kurzes Feedback nach der Flugphase.
+ *  `'spiked'` = eigene Axt an einem Zacken-Hindernis getroffen (siehe LevelConfig.spikeAngles) –
+ *  eigener Wert statt `'collided'` wiederzuverwenden, damit GameOverModal die richtige
+ *  Todesursache anzeigen kann ("Axt getroffen" vs. "Zacken getroffen"). */
+export type ThrowOutcome = 'stuck' | 'collided' | 'spiked';
 
 export interface FlyingAxe {
   startedAt: number;
@@ -44,6 +47,16 @@ export interface LevelConfig {
   appleAngles: number[];
   /** Äxte, die schon zu Levelbeginn im Brett stecken (Hindernisse). Optional. */
   preplacedAxeAngles?: number[];
+  /**
+   * Zacken-Hindernisse: eigene Gefahrenzone nur bei Bossen (Klaus: "Zacken, die
+   * rausstehen, die man nicht treffen darf, richtig schwer"), ragen optisch über den
+   * Scheibenrand hinaus statt im Holz zu stecken. Funktional identisch gefährlich wie
+   * eine Hindernis-Axt (Treffer = Game Over, siehe `collidesWithSpike` in engine.ts),
+   * aber eigene Optik UND eigene Positions-Seed, damit sie sich nicht zwangsläufig mit
+   * den Hindernis-Äxten überschneiden. Siehe `spikeCountFor`/`generateLevel` in
+   * constants.ts.
+   */
+  spikeAngles?: number[];
   /** Gesetzt bei Boss-Leveln: welche Frucht die Zielscheibe ist (siehe shop.ts). */
   bossFruitId?: string;
   /**

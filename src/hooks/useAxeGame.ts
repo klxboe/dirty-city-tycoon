@@ -6,7 +6,7 @@
 // damit die Drehung flüssig bleibt und nicht 60x/Sekunde die ganze App neu rendert.
 // Dieser Hook fragt den aktuellen Winkel nur bei Bedarf über `getBoardAngleDeg` ab.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
+import { collidesWithSpike, collidesWithStuckAxe, computeBoardLocalAngle, findHitApple } from '../game/engine';
 import {
   blockCompletionBonus,
   blockStartIndex,
@@ -24,6 +24,7 @@ import {
   REWARD_MULTIPLIER,
   streakMultiplier,
   worldBossPhaseSpeedMultiplier,
+  worldBossPhaseSpinPattern,
   XP_PER_LEVEL,
 } from '../game/constants';
 import { loadSave, saveSave, type SaveData } from '../game/storage';
@@ -154,6 +155,19 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
           phase: 'gameOver',
           flyingAxe: null,
           lastOutcome: 'collided',
+          axesThrown: prev.axesThrown + 1,
+        };
+      }
+
+      // Zacken-Hindernis getroffen (siehe LevelConfig.spikeAngles, nur bei Bossen) ->
+      // genauso Lauf vorbei, aber eigener `lastOutcome`-Wert, damit GameOverModal die
+      // richtige Todesursache anzeigen kann statt fälschlich "eigene Axt getroffen".
+      if (collidesWithSpike(localAngle, level.spikeAngles ?? [])) {
+        return {
+          ...prev,
+          phase: 'gameOver',
+          flyingAxe: null,
+          lastOutcome: 'spiked',
           axesThrown: prev.axesThrown + 1,
         };
       }
@@ -494,7 +508,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   // schon geworfen sind (siehe worldBossPhaseSpeedMultiplier() in constants.ts). Bei
   // normalen Leveln ist der Multiplikator schlicht 1 (kein Effekt).
   const worldBoss = level.worldBossId ? WORLD_BOSSES[level.worldBossId] : undefined;
-  const worldBossPhaseMultiplier = worldBoss ? worldBossPhaseSpeedMultiplier(state.axesThrown / level.axeCount) : 1;
+  const worldBossProgress = state.axesThrown / level.axeCount;
+  const worldBossPhaseMultiplier = worldBoss ? worldBossPhaseSpeedMultiplier(worldBossProgress) : 1;
+  // Phasen-Eskalation Teil 2 (siehe worldBossPhaseSpinPattern in constants.ts): bei
+  // Weltbossen wechselt das Dreh-Muster WÄHREND des Kampfes, nicht nur das Tempo.
+  // Normale Level und Fruchtbosse behalten ihr festes `level.spinPattern`.
+  const spinPattern = worldBoss ? worldBossPhaseSpinPattern(worldBossProgress) : level.spinPattern;
 
   return {
     ...state,
@@ -504,10 +523,13 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     blockStart: blockStartIndex(state.levelIndex),
     levelsPerBlock: LEVELS_PER_BLOCK,
     boardSpeedDegPerSec: level.boardSpeedDegPerSec * BOARD_SPEED_MULTIPLIER * worldBossPhaseMultiplier,
-    spinPattern: level.spinPattern,
+    spinPattern,
     axeCount: level.axeCount,
     appleCount: level.appleAngles.length,
     axesRemaining: level.axeCount - state.axesThrown,
+    /** Zacken-Hindernisse dieses Levels (siehe LevelConfig.spikeAngles) – nur bei
+     *  Bossen gesetzt, sonst ein leeres Array statt `undefined` fürs Rendern. */
+    spikeAngles: level.spikeAngles ?? [],
     bossFruit,
     /** Name des Weltbosses, falls dieses Level das "Tor" vor einer Welt ist (siehe
      *  isWorldBossLevel()/WORLD_BOSSES in worlds.ts), sonst `null`. */

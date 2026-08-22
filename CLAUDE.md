@@ -2410,6 +2410,52 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       auf – falls störend: betroffenes Ausgangsbild in Gemini neu erzeugen
       lassen (Hinweis mitgeben, dass Gemini KEIN Schachbrett-Muster ins
       Motiv selbst einbauen soll), dann nur die Freistellung wiederholen.
+- [x] **Zacken-Hindernisse + mehrphasige Weltbosse (2026-08-22).** Klaus: "Zacken,
+      die rausstehen, die man nicht treffen darf, richtig richtig schwer, kein
+      First-Try" – auf Nachfrage präzisiert: eine ECHTE neue Hindernis-Art (eigene
+      Grafik + eigene Kollisionszone, nicht nur ein Reskin der Hindernis-Äxte), plus
+      "mehrere Pflicht-Phasen" statt nur mehr Tempo. Danach: "auch bei den Frucht-
+      Bossen, aber nicht so schwer".
+      - **Neue Gefahrenzone `LevelConfig.spikeAngles`** (`types.ts`/`constants.ts`):
+        eigener, von den Hindernis-Äxten (`preplacedAxeAngles`) unabhängiger Seed
+        (`spikeSeed`, Faktoren 61/149/71 – teilerfremd zu den beiden bestehenden
+        Seeds), damit Zacken nicht zwangsläufig an denselben Winkeln wie Hindernis-
+        Äxte oder Äpfel landen. `spikeCountFor()`: Weltboss = 3 Zacken, normaler
+        Fruchtboss (jedes 5. Level) = 1 Zacken ("nicht so schwer"), normale Level = 0.
+      - **Eigene Optik statt Axt-Reskin** (`TargetBoard.tsx`/`.css`): ein gezacktes
+        3-Zinken-Symbol (Inline-SVG, dunkler Kern + rot pulsierender Warn-Glow,
+        `spike-warning-pulse`-Keyframe), positioniert auf `SPIKE_RADIUS` (142) –
+        bewusst ZWISCHEN Scheibenrand (130) und Apfel-Radius (152), damit es sichtbar
+        über die Scheibe hinausragt statt im Holz zu stecken (Klaus' "rausstehen").
+      - **Eigene Kollisionsprüfung** `collidesWithSpike()` (`engine.ts`) statt
+        `collidesWithStuckAxe()` wiederzuverwenden – gleiche Toleranz
+        (`COLLISION_ANGLE_TOLERANCE_DEG`), damit sich die Hitbox nicht anders anfühlt,
+        nur die Position/Optik ist neu. In `useAxeGame.ts` direkt nach der
+        Axt-Kollisionsprüfung eingehängt, mit eigenem `ThrowOutcome`-Wert `'spiked'`
+        (statt `'collided'` wiederzuverwenden), damit `GameOverModal` die richtige
+        Todesursache zeigen kann ("Du hast einen Zacken getroffen" statt "Du hast
+        deine eigene Axt getroffen") – neue Prop `hitSpike` in `GameOverModal.tsx`.
+      - **Mehrphasige Weltboss-Eskalation, Teil 2** (`worldBossPhaseSpinPattern()` in
+        `constants.ts`, dieselben Fortschritts-Schwellen wie das bestehende
+        `worldBossPhaseSpeedMultiplier()`: <40 % / <75 % / Rest): bisher änderte sich
+        während eines Weltboss-Kampfes nur das TEMPO, das Dreh-Muster blieb fest auf
+        `'reverse'`. Jetzt wechselt Phase 2 hart auf `'pulse'` (wer sich gerade an
+        Richtungswechsel gewöhnt hat, muss plötzlich auf schwankendes Tempo
+        umschalten), Phase 3 zurück zu `'reverse'`, kombiniert mit dem ×1.3-Tempo-
+        Bonus – die unvorhersehbarste Kombination kommt bewusst zuletzt. In
+        `useAxeGame.ts` wird `spinPattern` für Weltboss-Level jetzt aus
+        `worldBossPhaseSpinPattern(progress)` abgeleitet statt aus dem festen
+        `level.spinPattern`; normale Level und Fruchtbosse (nur 1 Zacken, kein
+        Phasenwechsel – das ist das "nicht so schwer") bleiben unverändert bei ihrem
+        festen Muster.
+      - Per echtem Spielstand verifiziert (localStorage-Level-Sprung, da Weltboss-
+        Level ohne genug XP über die Weltkarte nicht regulär erreichbar sind): Level 5
+        (Fruchtboss "Wassermelone") zeigt genau 1 Zacken, Level 21 (Weltboss-Tor
+        "Sandkolossos") zeigt genau 3 Zacken + korrektes "⚠ WELTBOSS"-Tag, `tsc -b`
+        sauber, keine Konsolenfehler. Die Phasen-Umschaltung selbst (Muster wechselt
+        NACH X geworfenen Äxten) konnte nicht live nachgespielt werden (rAF-Freeze in
+        der automatisierten Umgebung, wie schon beim Tempo-Balancing zuvor) – rein
+        rechnerisch/per Code-Review begründet.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
