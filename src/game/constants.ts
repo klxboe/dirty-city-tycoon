@@ -479,7 +479,19 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
   const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53);
   const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97);
 
-  const obstacleCount = obstacleCountFor(levelIndex);
+  /*
+   * Weltboss-Level liegen IMMER auf einem Welt-Start-Index (20/40/60/80/100) – bei
+   * genau diesen Level-Indizes liefert `obstacleCountFor()` fast durchgehend einen
+   * hohen Wert (8-10, siehe deren Kommentar zur "Wall"-Stufe bei 20-25 bzw. dem
+   * Kurven-Ende ab Level 61), weil das rein zufällig mit der normalen
+   * Schwierigkeits-Kurve zusammenfällt – NICHT, weil ein Weltboss das bräuchte.
+   * Klaus nach erneutem Testen: "weniger Messer beim Weltboss, es ist zu schwer".
+   * Deshalb ein fester, niedriger Deckel NUR für Weltboss-Level, unabhängig davon,
+   * was die normale Kurve an dieser Stelle sonst liefern würde – die Schwierigkeit
+   * eines Weltboss-Kampfes kommt jetzt (siehe oben) ohnehin fast komplett aus Tempo
+   * und Dreh-Muster, nicht aus einem vollgestellten Brett.
+   */
+  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 4) : obstacleCountFor(levelIndex);
   const appleCount = appleCountFor(levelIndex);
 
   return {

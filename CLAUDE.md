@@ -2536,6 +2536,20 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       zackiger ohne eigene Eskalation. Tempo-Bonus-Mechanik selbst, Dreh-Muster-
       Erzwingung und die Weltboss-Phasen-Eskalation blieben unangetastet – nur die
       beiden Basiswerte wurden verschoben. `tsc -b` sauber.
+- [x] **Weltboss: fester niedriger Hindernis-Deckel (2026-08-22).** Klaus: "weniger
+      Messer bei dem Weltboss, es ist zu schwer". Ursache: Weltboss-Level liegen
+      IMMER auf einem Welt-Start-Index (20/40/60/80/100) – rein zufällig liefert
+      `obstacleCountFor()` an genau diesen Indizes fast durchgehend einen hohen Wert
+      (8-10, siehe "Wall"-Stufe 20-25 bzw. Kurven-Ende ab Level 61), obwohl das
+      NICHTS mit dem Weltboss selbst zu tun hat, sondern reiner Zufall der normalen
+      Schwierigkeits-Kurve ist. `generateLevel()` (constants.ts): Weltboss-Level
+      bekommen jetzt `Math.min(obstacleCountFor(levelIndex), 4)` statt des rohen
+      Kurvenwerts – ein fester Deckel bei 4, unabhängig davon, was die Kurve an der
+      Stelle sonst liefern würde. Fruchtbosse und normale Level unverändert. Die
+      Weltboss-Schwierigkeit steckt damit fast komplett in Tempo + Dreh-Muster (siehe
+      vorige zwei Einträge), nicht mehr in einem vollgestellten Brett. Per echtem
+      Spielstand verifiziert: Level 21 (Sandkolossos) zeigt jetzt 4 Hindernisse statt
+      vorher 9, `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
