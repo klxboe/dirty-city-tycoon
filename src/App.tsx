@@ -646,6 +646,15 @@ function App() {
           rescueAvailable={!game.rescueUsedThisRun}
           onWatchVideo={() => setVideoRescueOpen(true)}
           onPlayAgain={game.restartRun}
+          onBackToMenu={() => {
+            // `restartRun()` zuerst: `game.phase` steht sonst weiter auf 'gameOver'
+            // (nur der SAVE-Stand wird beim Game Over selbst schon zurückgesetzt,
+            // siehe useAxeGame.ts) – ohne diesen Reset würde das Game-Over-Fenster
+            // sofort wieder erscheinen, sobald man vom Startbildschirm aus erneut
+            // "Los geht's" tippt.
+            game.restartRun();
+            setScreen('start');
+          }}
         />
       )}
 

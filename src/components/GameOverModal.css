@@ -213,6 +213,26 @@
   box-shadow: 0 2px 0 #123f94;
 }
 
+/* Dritte, bewusst zurückhaltende Möglichkeit zurück zum Hauptmenü – keine eigene
+   Farbfläche/Schatten wie die beiden Haupt-Buttons darüber, nur Text, damit die
+   Blick-Hierarchie klar bleibt (Video/Nochmal spielen zuerst, das hier ist die
+   Notbremse für alle, die eigentlich zur Weltkarte/Werkstatt wollen). */
+.modal-card__button--ghost {
+  background: none;
+  box-shadow: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: var(--space-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.modal-card__button--ghost:active {
+  transform: none;
+  opacity: 0.6;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop--danger::before {
     animation: none;

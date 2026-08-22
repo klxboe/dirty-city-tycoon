@@ -30,6 +30,16 @@ interface GameOverModalProps {
    * Bildschirm bereits auf "game" steht – kein Screen-Wechsel nötig.
    */
   onPlayAgain: () => void;
+  /**
+   * Zurück zum Startbildschirm (Weltkarte/Werkstatt/Einstellungen). War bewusst
+   * entfernt worden ("extrem klare UI, keine dritten Buttons"), musste aber wieder
+   * rein: ohne diesen Button gab es nach einem Game Over KEINEN Weg mehr zum Menü,
+   * nur noch "Fortschritt mit Video" oder direkt weiterspielen (Klaus: "man kann
+   * nicht mehr zurück zum Menü"). Deshalb bewusst als dritter, aber sichtbar
+   * zurückhaltenderer Button (siehe `modal-card__button--ghost` in GameOverModal.css) –
+   * die ersten beiden bleiben die Hauptaktionen, das hier ist die Notbremse.
+   */
+  onBackToMenu: () => void;
 }
 
 const SPARK_ANGLES = [-100, -55, -20, 20, 55, 100, 145, -145];
@@ -56,6 +66,7 @@ export function GameOverModal({
   rescueAvailable,
   onWatchVideo,
   onPlayAgain,
+  onBackToMenu,
 }: GameOverModalProps) {
   return (
     <div className="modal-backdrop modal-backdrop--danger">
@@ -115,6 +126,9 @@ export function GameOverModal({
         )}
         <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>
           Nochmal spielen
+        </button>
+        <button className="modal-card__button modal-card__button--ghost" onClick={onBackToMenu}>
+          Zum Hauptmenü
         </button>
       </div>
     </div>

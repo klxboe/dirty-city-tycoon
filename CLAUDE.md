@@ -2456,6 +2456,37 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         NACH X geworfenen Äxten) konnte nicht live nachgespielt werden (rAF-Freeze in
         der automatisierten Umgebung, wie schon beim Tempo-Balancing zuvor) – rein
         rechnerisch/per Code-Review begründet.
+- [x] **Dritter Button "Zum Hauptmenü" im Game-Over-Fenster (2026-08-22).** Klaus:
+      "man kann nicht mehr zurück zum Menü" – seit der vorigen Änderung (Game-Over
+      bewusst auf GENAU 2 Buttons reduziert, "Nochmal spielen" startet direkt einen
+      neuen Lauf statt über den Startbildschirm zu gehen) gab es tatsächlich KEINEN
+      Weg mehr zurück zur Weltkarte/Werkstatt/Einstellungen nach einem Game Over –
+      das Fenster blockiert alles darunter (auch den Pause-Button), und beide
+      verbliebenen Buttons führen direkt zurück ins Spiel. Auf Nachfrage: Klaus wollte
+      trotz der vorherigen "keine dritten Buttons"-Regel einen ECHTEN dritten Button.
+      - `GameOverModal.tsx`: neue Prop `onBackToMenu`, dritter Button "Zum Hauptmenü" –
+        bewusst zurückhaltender gestylt (`modal-card__button--ghost` in
+        `GameOverModal.css`: kein Farbverlauf/Schatten, nur unterstrichener Text),
+        damit die Blick-Hierarchie klar bleibt: Video-Rettung/Nochmal-spielen sind
+        weiterhin die Hauptaktionen, das hier ist die "Notbremse" für alle, die
+        eigentlich in den Shop/zur Weltkarte wollen.
+      - `App.tsx`: `onBackToMenu` ruft ERST `game.restartRun()` auf, DANACH
+        `setScreen('start')` – **wichtiger Bug, den ich beim Bauen selbst gefunden
+        habe:** ein Game Over setzt zwar sofort den SAVE-Stand zurück (`currentLevel:
+        0`, siehe useAxeGame.ts), aber NICHT `game.phase` selbst (bleibt `'gameOver'`,
+        bis ein echter State-Übergang wie `restartRun()`/`goToLevel()` läuft). Ohne
+        den `restartRun()`-Aufruf hier wäre man zwar auf dem Startbildschirm gelandet,
+        aber ein Klick auf "Los geht's" hätte SOFORT wieder dasselbe Game-Over-Fenster
+        gezeigt (weil `screen==='game'` wieder gerendert worden wäre, während
+        `game.phase` immer noch `'gameOver'` war) – nur mit `restartRun()` UND
+        `setScreen('start')` zusammen ist der Zustand wirklich sauber zurückgesetzt.
+      - Verifiziert über echten Spielablauf (nicht nur Code-Lesen): Game Over erzwungen
+        (Board-Winkel in der automatisierten Umgebung eingefroren, siehe rAF-Freeze-
+        Hinweis oben – zwei Würfe landen dadurch garantiert am selben Winkel), "Zum
+        Hauptmenü" geklickt -> Startbildschirm erscheint sauber mit Weltkarte/
+        Werkstatt/Einstellungen, KEIN sofort wiederkehrendes Game-Over-Fenster. Danach
+        "Los geht's" geklickt -> Level 1 startet normal ("Tippen zum Werfen"), kein
+        Modal, keine Konsolenfehler. `tsc -b` sauber.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
