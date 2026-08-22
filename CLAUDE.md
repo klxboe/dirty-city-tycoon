@@ -2560,6 +2560,29 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Hindernis-Deckel (4) und Fruchtboss-Werte unangetastet. `tsc -b` sauber – reine
       Zahlenänderung ohne DOM-Auswirkung, deshalb nicht zusätzlich live im Browser
       nachgeprüft (wie schon beim vorigen Tempo-Balancing-Schritt).
+- [x] **Korrektur: Monetarisierung war vertauscht (2026-08-22).** Klaus (deutlich):
+      "DU SOLLTEST SIE NICHT LÖSCHEN, DU SOLLTEST NUR DIE GEILEN UM GELD MACHEN UND
+      DIE NEUEN SOLLEN MIT COINS ERHÄLTLICH SEIN". Beim ursprünglichen Umbau (voriger
+      "Monetarisierungs-Umbau"-Eintrag) hatte ich die Zuordnung genau andersrum
+      verstanden: die ZEHN ALTEN, aufwendig gestalteten Äxte (Dampfschmiede, Runenbeil,
+      Gezeitenklinge, Sternenschneide, Dornengift, Lavabruch, Pestbeil, Königsbeil,
+      Datenbeil, Lichtschwinge – eigene AXE_SHAPES-Silhouetten statt Foto) wurden aus
+      `AXE_SKINS` entfernt, die ZEHN NEUEN (Gemini-Fotos) wurden zu Echtgeld-Käufen.
+      Gemeint war das Gegenteil: die alten, "geileren" Äxte sollen die Echtgeld-Käufe
+      sein, die neuen sollen ganz normale Münz-Äxte werden. In `shop.ts` korrigiert:
+      - Die zehn alten Äxte WIEDER in `AXE_SKINS` eingetragen, jetzt mit `source:'iap'`
+        + `priceCents` (1,99€-7,99€, grob proportional zu ihren alten Münzpreisen
+        gestaffelt) statt ihres ursprünglichen Münzpreises. `AXE_SHAPES`/`AXE_IMAGES`
+        in `axeShapes.ts` waren nie angetastet worden (nur der Kauf-Angebots-Eintrag
+        in `AXE_SKINS` fehlte) – nach dem Wiedereintragen funktionieren Bild UND
+        Formen sofort wieder, ohne dort etwas ändern zu müssen.
+      - Die zehn neuen Äxte von `source:'iap'` zurück auf `source:'shop'` mit
+        Münzpreisen (1900-8300, 1:1 die alten Münzpreise der zehn alten Äxte in
+        gleicher Reihenfolge übernommen statt neu zu erfinden).
+      - Per echtem Spielstand verifiziert: Werkstatt zeigt jetzt beide Zehner-Sets
+        korrekt (alte zehn als "Premium"/Echtgeld-Karten, neue zehn als normale
+        Münz-Karten mit Preis), alle 20 Axt-Bilder laden mit 200 OK, `tsc -b` sauber,
+        keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
