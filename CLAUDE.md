@@ -2640,6 +2640,34 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         ersten – ein echter Levelabschluss lässt sich so nicht erzwingen. Titel-/Text-
         Logik der Sieg-Anzeige ist deshalb nur per Code-Review, nicht per echtem Sieg
         bestätigt. `tsc -b` sauber, keine Konsolenfehler.
+- [x] **App-Store-Vorbereitungs-Audit, erste Fixrunde (2026-08-22).** Klaus wollte
+      eine komplette App-Store-Freigabe-Vorbereitung. Ground-Truth-Check zuerst: kein
+      `ios/`-Ordner, kein Capacitor, kein Xcode-Projekt, `package.json` hat nur
+      `react`/`react-dom` – die App ist aktuell eine reine Webseite, "Phase 2"
+      (natives Projekt) aus dieser Datei ist noch nicht begonnen. Ein großer Teil
+      klassischer Store-Audit-Punkte (Signing, Info.plist, Entitlements, StoreKit,
+      ATT) ist deshalb NICHT anwendbar, bis das native Projekt existiert – bewusst
+      nicht vorgetäuscht.
+      Web-Ebene-Audit ergab u.a.: kein einziger Netzwerk-Call im Code (100%
+      offline-fähig durch reines `localStorage`), keine Privacy-/Support-URL
+      irgendwo im Projekt, nur 6 `aria-label`-Attribute insgesamt, kein
+      Age-Rating festgelegt. ZWEI konkrete P0-Funde behoben:
+      - `VideoRescueModal.tsx` zeigte Spielern wörtlich "Platzhalter-Anzeige – hier
+        läuft später ein echtes Video." – Text neutralisiert ("Danke fürs Anschauen
+        – gleich geht's weiter."), OHNE die zugrunde liegende Technik zu ändern (es
+        gibt weiterhin keine echte Ad-SDK-Anbindung, nur der sichtbare Text lügt
+        nicht mehr über den Zustand – Kommentar im Code macht das explizit klar,
+        MUSS vor echter Einreichung durch eine echte Rewarded-Video-Integration
+        ersetzt werden).
+      - `Shop.tsx`: die 10 Echtgeld-Äxte (`source: 'iap'`) zeigten beim Antippen
+        offen "kommt mit dem App-Store-Release" – für die Einreichung komplett aus
+        der Äxte-Liste gefiltert (`AXE_SKINS.filter(skin => skin.source !== 'iap')`,
+        reiner Anzeige-Filter, keine Datenänderung, einfach rückgängig zu machen
+        sobald StoreKit angebunden ist).
+      Per echtem Spielstand verifiziert: Werkstatt zeigt jetzt nur noch die 12
+      Coin-Äxte, `tsc -b` sauber, keine Konsolenfehler. **Vollständiger Audit-Bericht
+      mit Blocker-Liste, App-Store-Connect-Checkliste und Review-Notes-Entwurf ging
+      als Chat-Antwort an Klaus, nicht hier dupliziert** – bei Bedarf dort nachlesen.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

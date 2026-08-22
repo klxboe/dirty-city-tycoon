@@ -15,12 +15,20 @@ const FAKE_AD_SECONDS = 3;
 /**
  * Simuliert eine Rewarded-Video-Anzeige für die einmalige Game-Over-Rettung (siehe
  * `rescueRun()` in useAxeGame.ts). Es gibt in diesem Projekt (noch) KEINE echte
- * Ad-SDK-Anbindung (kein AdMob o.ä. verdrahtet, siehe STATUS.md) – dieser Screen ist
- * bewusst ein einfacher, klar als Platzhalter erkennbarer Zähler statt eines echten
- * Videos, damit die Spiel-Logik (einmalige Rettung, Fortsetzen im selben Level) schon
- * jetzt vollständig funktioniert. Sobald eine echte Rewarded-Video-Anzeige angebunden
- * wird, muss nur DIESE Komponente ersetzt werden – `onFinished` bleibt der Vertrag
- * dafür ("Belohnung gutschreiben"), der Rest der App ändert sich nicht.
+ * Ad-SDK-Anbindung (kein AdMob o.ä. verdrahtet – das braucht erst das native
+ * Capacitor-Projekt, siehe "Phase 2" in CLAUDE.md) – dieser Screen ist intern ein
+ * einfacher Zähler statt eines echten Videos, damit die Spiel-Logik (einmalige
+ * Rettung, Fortsetzen im selben Level) schon jetzt vollständig funktioniert.
+ *
+ * WICHTIG fürs App-Store-Review (Audit 2026-08-22): der angezeigte TEXT darf NICHT
+ * verraten, dass hier kein echtes Video läuft ("Platzhalter-Anzeige..." stand vorher
+ * hier und wäre für Apple ein klares "unfertige Testversion"-Signal gewesen) – deshalb
+ * neutrale Formulierungen unten. Das ändert NICHTS an der zugrunde liegenden Technik:
+ * es ist weiterhin kein echtes Ad-SDK angebunden, nur der sichtbare Text lügt nicht
+ * mehr über den Zustand. Vor der tatsächlichen Einreichung MUSS diese Komponente durch
+ * eine echte Rewarded-Video-Integration ersetzt werden – eine App, die eine "Werbung"
+ * zeigt, die keine ist, bleibt ein Risiko, auch mit neutralem Text. `onFinished` bleibt
+ * der Vertrag dafür ("Belohnung gutschreiben"), der Rest der App ändert sich nicht.
  */
 export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps) {
   const [secondsLeft, setSecondsLeft] = useState(FAKE_AD_SECONDS);
@@ -45,9 +53,7 @@ export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps
         </div>
         <div className="modal-card__title">{done ? 'Belohnung erhalten!' : 'Werbevideo läuft …'}</div>
         <div className="modal-card__body">
-          {done
-            ? 'Du machst genau da weiter, wo du aufgehört hast.'
-            : 'Platzhalter-Anzeige – hier läuft später ein echtes Video.'}
+          {done ? 'Du machst genau da weiter, wo du aufgehört hast.' : 'Danke fürs Anschauen – gleich geht’s weiter.'}
         </div>
         {done ? (
           <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>

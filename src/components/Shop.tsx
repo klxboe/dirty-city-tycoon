@@ -79,7 +79,13 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
 
   const items =
     tab === 'axe'
-      ? AXE_SKINS
+      ? // Echtgeld-Äxte (source: 'iap') für die App-Store-Einreichung ausgeblendet
+        // (Audit 2026-08-22): es gibt noch KEINE echte StoreKit-Anbindung (braucht das
+        // native Projekt), ein Kauf-Button, der offen "kommt mit dem App-Store-Release"
+        // zeigt, wäre eine nicht-funktionale Kauf-UI und ein sicherer Ablehnungsgrund.
+        // Reiner Anzeige-Filter, KEINE Datenänderung – sobald StoreKit angebunden ist,
+        // reicht das Entfernen dieses `.filter(...)`, um sie wieder sichtbar zu machen.
+        AXE_SKINS.filter((skin) => skin.source !== 'iap')
       : tab === 'board'
         ? BOARD_SKINS
         : tab === 'legendary'
