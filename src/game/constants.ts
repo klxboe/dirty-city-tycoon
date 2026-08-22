@@ -464,9 +464,16 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * Phasen-Eskalation UND das erzwungene `reverse`-Muster (unvorhersehbarer als
    * `pulse`) bekommt – ein Fruchtboss ist dafür von Anfang bis Ende gleichmäßig
    * etwas zackiger, ohne eigene Eskalation.
+   *
+   * Noch eine kleine Stufe leiser (Klaus: "besser, aber immer noch bisschen zu
+   * schwer" – nach dem Hindernis-Deckel oben war Tempo der letzte verbliebene
+   * Hebel): 30 -> 22°/Sek. Sockel. Siehe auch `worldBossPhaseSpeedMultiplier()`
+   * weiter unten – die Phasen-Spitze wurde im selben Zug von ×1,3 auf ×1,2
+   * abgeschwächt, damit sich die Eskalation zum Ende hin nicht mehr so extrem
+   * anfühlt wie mit dem alten (höheren) Sockel.
    */
   const axeCount = axeCountFor(levelIndex);
-  const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
+  const speedBonus = worldBoss ? 22 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
@@ -526,11 +533,15 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
  * gekommen (mehr als 90° Board-Drehung während einer einzelnen 140ms-Flugzeit) – das
  * hätte sich nicht mehr nach "schwer, aber lernbar" angefühlt, sondern nach reinem
  * Zufall. Deshalb bewusst konservativer: ×1 / ×1,15 / ×1,3 statt ×1 / ×1,35 / ×1,7.
+ *
+ * Nochmal leicht abgeschwächt auf ×1 / ×1,15 / ×1,2 (Klaus: "besser, aber immer noch
+ * bisschen zu schwer", im selben Zug wie die Senkung des Tempo-Sockels oben) – die
+ * Spitze in Phase 3 war zusammen mit dem alten Sockel spürbar zu hart.
  */
 export function worldBossPhaseSpeedMultiplier(progress: number): number {
   if (progress < 0.4) return 1;
   if (progress < 0.75) return 1.15;
-  return 1.3;
+  return 1.2;
 }
 
 /**
@@ -541,7 +552,7 @@ export function worldBossPhaseSpeedMultiplier(progress: number): number {
  * Basis-Muster; das gilt nur für Phase 1 (Muster kennenlernen). Phase 2 wechselt hart
  * auf `'pulse'` – ein Spieler, der sich gerade an Richtungswechsel gewöhnt hat, muss
  * plötzlich auf schwankendes Tempo umschalten, nicht nur schneller vom Gleichen. Phase 3
- * geht zurück zu `'reverse'`, jetzt aber mit dem ×1.3-Tempo-Bonus von oben kombiniert –
+ * geht zurück zu `'reverse'`, jetzt aber mit dem ×1.2-Tempo-Bonus von oben kombiniert –
  * die unvorhersehbarste Kombination kommt bewusst zuletzt, wenn der Spieler ohnehin
  * schon am wenigsten Puffer hat. Nur für Weltbosse relevant (siehe `useAxeGame.ts`,
  * angewendet anstelle von `level.spinPattern`) – normale Level und Fruchtbosse behalten

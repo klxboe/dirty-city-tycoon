@@ -2550,6 +2550,16 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       vorige zwei Einträge), nicht mehr in einem vollgestellten Brett. Per echtem
       Spielstand verifiziert: Level 21 (Sandkolossos) zeigt jetzt 4 Hindernisse statt
       vorher 9, `tsc -b` sauber, keine Konsolenfehler.
+- [x] **Weltboss-Tempo nochmal leiser (2026-08-22).** Klaus nach dem Hindernis-Deckel:
+      "besser, aber immer noch bisschen zu schwer". Da Hindernisse gerade erst
+      gedeckelt wurden, war Tempo der letzte verbliebene Hebel. `generateLevel()`:
+      Weltboss-`speedBonus` von 30 auf 22°/Sek. gesenkt. `worldBossPhaseSpeedMultiplier()`:
+      Phase-3-Spitze von ×1,3 auf ×1,2 abgeschwächt (Phase 1/2 unverändert bei ×1/×1,15).
+      Rechnerisch (Level 21, Sandkolossos): Höchsttempo während des Kampfes sinkt von
+      ~224°/Sek. auf ~195°/Sek. Nur diese zwei Zahlen geändert, Dreh-Muster-Erzwingung,
+      Hindernis-Deckel (4) und Fruchtboss-Werte unangetastet. `tsc -b` sauber – reine
+      Zahlenänderung ohne DOM-Auswirkung, deshalb nicht zusätzlich live im Browser
+      nachgeprüft (wie schon beim vorigen Tempo-Balancing-Schritt).
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
