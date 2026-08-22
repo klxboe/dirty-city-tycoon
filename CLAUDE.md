@@ -2583,6 +2583,13 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         korrekt (alte zehn als "Premium"/Echtgeld-Karten, neue zehn als normale
         Münz-Karten mit Preis), alle 20 Axt-Bilder laden mit 200 OK, `tsc -b` sauber,
         keine Konsolenfehler.
+- [x] **Echtgeld-Äxte ans Ende der Liste (2026-08-22).** Klaus bestätigte per
+      Screenshot, dass die violett markierten ("lilanen") Karten die Echtgeld-Käufe
+      sind, und wollte sie "ganz nach unten". `AXE_SKINS` in shop.ts: die zwei
+      Blöcke vertauscht – die 10 Münz-Äxte (Kiefernhieb…Dämonenbeil) stehen jetzt
+      VOR den 10 Echtgeld-Äxten (Dampfschmiede…Lichtschwinge), reine
+      Reihenfolgen-Änderung, keine Preise/Quellen angefasst. Per echtem Spielstand
+      verifiziert (Werkstatt-Reiter "Äxte"), `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

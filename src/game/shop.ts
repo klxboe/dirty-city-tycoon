@@ -82,28 +82,9 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 700, source: 'shop' },
   { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 1300, source: 'shop' },
 
-  // --- Die zehn teureren/"coolsten" Äxte aus dem Zwölfer-Set – auf Klaus' Wunsch
-  // (nach kurzer Verwirrung: "DU SOLLTEST SIE NICHT LÖSCHEN, nur die geilen um Geld
-  // machen, die neuen sollen mit Coins erhältlich sein") sind DAS hier die
-  // Echtgeld-Äxte (`source: 'iap'`), nicht das zehnte Set unten. Es gibt in diesem
-  // Projekt noch KEINE echte Zahlungs-Anbindung (kein App-Store/Play-Billing-SDK,
-  // das kommt erst mit Phase 2/Capacitor) – der Kauf-Button in Shop.tsx zeigt
-  // deshalb aktuell nur einen klaren Platzhalter-Hinweis statt echt zu kassieren.
-  // `priceCents` grob proportional zu den alten Münz-Preisen gestaffelt. ---
-  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 0, source: 'iap', priceCents: 199 },
-  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 0, source: 'iap', priceCents: 249 },
-  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 0, source: 'iap', priceCents: 299 },
-  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 0, source: 'iap', priceCents: 349 },
-  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 0, source: 'iap', priceCents: 399 },
-  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 0, source: 'iap', priceCents: 449 },
-  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 0, source: 'iap', priceCents: 499 },
-  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 0, source: 'iap', priceCents: 599 },
-  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 0, source: 'iap', priceCents: 699 },
-  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 0, source: 'iap', priceCents: 799 },
-
   // --- Zweites Zehner-Set (Gemini-Fotos, siehe axeShapes.ts/AXE_IMAGES): ganz normale
   // Münz-Äxte, wie jede andere Axt im Shop. Preise übernehmen 1:1 die alten
-  // Münz-Preise des ersten Sets oben (gleiche Reihenfolge: günstig -> teuer). ---
+  // Münz-Preise des ersten (Echtgeld-)Sets unten (gleiche Reihenfolge: günstig -> teuer). ---
   { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 1900, source: 'shop' },
   { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 2500, source: 'shop' },
   { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 3000, source: 'shop' },
@@ -114,6 +95,26 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 6200, source: 'shop' },
   { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 7200, source: 'shop' },
   { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 8300, source: 'shop' },
+
+  // --- Die zehn teureren/"coolsten" Äxte aus dem Zwölfer-Set – das sind die
+  // Echtgeld-Äxte (`source: 'iap'`, violett markierte Karten im Shop). Auf Klaus'
+  // Wunsch ganz ans ENDE der Liste gestellt ("die lilanen ... geb die ganz nach
+  // unten"), damit die normalen Münz-Äxte zuerst kommen und die Echtgeld-Käufe klar
+  // als eigener Abschnitt danach folgen. Es gibt in diesem Projekt noch KEINE echte
+  // Zahlungs-Anbindung (kein App-Store/Play-Billing-SDK, das kommt erst mit Phase 2/
+  // Capacitor) – der Kauf-Button in Shop.tsx zeigt deshalb aktuell nur einen klaren
+  // Platzhalter-Hinweis statt echt zu kassieren. `priceCents` grob proportional zu
+  // den alten Münz-Preisen gestaffelt. ---
+  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 0, source: 'iap', priceCents: 199 },
+  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 0, source: 'iap', priceCents: 249 },
+  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 0, source: 'iap', priceCents: 299 },
+  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 0, source: 'iap', priceCents: 349 },
+  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 0, source: 'iap', priceCents: 399 },
+  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 0, source: 'iap', priceCents: 449 },
+  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 0, source: 'iap', priceCents: 499 },
+  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 0, source: 'iap', priceCents: 599 },
+  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 0, source: 'iap', priceCents: 699 },
+  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 0, source: 'iap', priceCents: 799 },
 ];
 
 // ---------------------------------------------------------------------------
