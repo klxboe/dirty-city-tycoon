@@ -2524,6 +2524,18 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Konsolenfehler (ein alter Tab zeigte zwischenzeitlich Vite-HMR-Restfehler aus
         dem Editier-Verlauf – nach frischem Tab/Reload bestätigt weg, kein echter
         Laufzeitfehler).
+- [x] **Tempo-Feinjustierung: Weltbosse noch einfacher, Fruchtbosse etwas schwerer
+      (2026-08-22).** Nach dem ersten echten Ausprobieren ohne Zacken/Extra-Äxte
+      (siehe voriger Eintrag) war der Weltboss-Kampf Klaus zufolge immer noch zu
+      hart. `generateLevel()` in constants.ts: `speedBonus` für Weltbosse von 45 auf
+      30°/Sek. gesenkt, für Fruchtbosse im Gegenzug von 28 auf 38°/Sek. angehoben.
+      Bewusst so, dass der Fruchtboss-Sockel jetzt sogar ÜBER dem Weltboss-Sockel
+      liegt – kein Fehler: nur der Weltboss bekommt zusätzlich die Phasen-Eskalation
+      (bis ×1,3, siehe `worldBossPhaseSpeedMultiplier`) UND das erzwungene
+      `reverse`-Muster, ein Fruchtboss bleibt dafür durchgehend gleichmäßig etwas
+      zackiger ohne eigene Eskalation. Tempo-Bonus-Mechanik selbst, Dreh-Muster-
+      Erzwingung und die Weltboss-Phasen-Eskalation blieben unangetastet – nur die
+      beiden Basiswerte wurden verschoben. `tsc -b` sauber.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

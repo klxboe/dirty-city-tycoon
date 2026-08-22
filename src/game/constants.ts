@@ -451,9 +451,22 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    * Bei Weltbossen kommt zusätzlich die Phasen-Eskalation aus `worldBossPhaseSpeedMultiplier()`/
    * `worldBossPhaseSpinPattern()` weiter unten dazu (WÄHREND des Kampfes, nicht am
    * Levelstart) – die blieb unangetastet, genau die fand Klaus gut so.
+   *
+   * Nochmal nachgeschärft (Klaus, nach dem ersten echten Ausprobieren ohne Zacken/
+   * Extra-Äxte: "Weltbosse noch einfacher, Fruchtbosse etwas schwerer"): der
+   * Tempo-Sockel des Weltbosses (45°/Sek.) senkt sich auf 30°/Sek. – bleibt aber
+   * unter der Phasen-Eskalation weiterhin bis auf das ×1,3-fache steigend (siehe
+   * oben), ein Weltboss-Kampf wird also immer noch spürbar schwerer WÄHREND des
+   * Kampfes, startet jetzt aber deutlich entspannter. Der Fruchtboss-Sockel steigt
+   * im Gegenzug von 28 auf 38°/Sek. – dadurch liegt er jetzt sogar ÜBER dem
+   * Weltboss-Basiswert, was auf den ersten Blick seltsam wirkt, aber Absicht ist:
+   * ein Weltboss bleibt trotzdem insgesamt die größere Prüfung, weil NUR er die
+   * Phasen-Eskalation UND das erzwungene `reverse`-Muster (unvorhersehbarer als
+   * `pulse`) bekommt – ein Fruchtboss ist dafür von Anfang bis Ende gleichmäßig
+   * etwas zackiger, ohne eigene Eskalation.
    */
   const axeCount = axeCountFor(levelIndex);
-  const speedBonus = worldBoss ? 45 : boss ? 28 : 0;
+  const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
     Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
   );
