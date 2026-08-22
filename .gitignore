@@ -24,10 +24,16 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
-# Capacitor / native Plattformen (kommen erst in Phase 2 dazu,
-# werden dann bewusst einzeln entschieden ob sie ins Repo gehören)
+# Capacitor / natives iOS-Projekt (Phase 2, seit 2026-08-22 aufgesetzt):
+# ios/ selbst (das Xcode-Projekt) gehört bewusst INS Repo, aber alles darunter,
+# was `npm run build` + `npx cap sync ios` bei jedem Aufruf neu erzeugt bzw. was
+# nur lokale Build-Artefakte/Abhängigkeiten sind, nicht.
 ios/App/Pods/
 ios/App/build/
+ios/App/App/public/
+ios/DerivedData/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
 android/app/build/
 android/.gradle/
 

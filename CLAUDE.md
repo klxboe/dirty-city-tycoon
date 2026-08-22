@@ -2668,6 +2668,41 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Coin-Äxte, `tsc -b` sauber, keine Konsolenfehler. **Vollständiger Audit-Bericht
       mit Blocker-Liste, App-Store-Connect-Checkliste und Review-Notes-Entwurf ging
       als Chat-Antwort an Klaus, nicht hier dupliziert** – bei Bedarf dort nachlesen.
+- [x] **"Phase 2" begonnen: natives iOS-Projekt via Capacitor (2026-08-22).** Klaus:
+      "mach du das alles für mich". `@capacitor/core`, `@capacitor/cli`,
+      `@capacitor/ios` installiert, `capacitor.config.ts` angelegt (`appId:
+      'com.klxboe.axethrow'` – NUR ein sinnvoller Platzhalter aus dem GitHub-
+      Nutzernamen, muss vor der echten App-Store-Connect-Registrierung final
+      bestätigt werden, danach nicht mehr änderbar), `npm run build` + `npx cap add
+      ios` ausgeführt – erzeugt ein echtes Xcode-Projekt (`ios/App/App.xcodeproj`,
+      moderne SPM-Paketverwaltung statt CocoaPods, kein `.xcworkspace` nötig – lief
+      deshalb überraschend vollständig auf Windows durch, ohne Mac).
+      Zwei Platzhalter-Assets von Capacitor sofort ersetzt (wären beim Review sofort
+      als "generische Vorlage" aufgefallen):
+      - App-Icon: das generische Capacitor-Logo durch das echte Spiel-Icon ersetzt –
+        `public/icon.svg` per `sharp` (temporär installiert, nicht in package.json)
+        auf 1024×1024 gerendert, Alpha-Kanal komplett entfernt/geflattet (Apple
+        verlangt für App Icons zwingend VOLL UNDURCHSICHTIG, kein Alpha).
+      - Splash-Screen: das generische blaue Capacitor-"X"-Logo auf Weiß durch einen
+        markentreuen Screen ersetzt (dunkler Hintergrund `#101318`, Axt-Icon
+        zentriert), für alle drei Skalierungsstufen (1x/2x/3x, identisches Bild).
+      `Info.plist` korrigiert: `UISupportedInterfaceOrientations` erlaubte fälschlich
+      auch Querformat (Capacitor-Standard) – das Spiel ist reines Portrait-Design
+      (siehe `manifest.webmanifest`, `orientation: "portrait"`), auf iPhone jetzt nur
+      noch Portrait erlaubt (iPad behält zusätzlich Portrait-Upside-Down, kein
+      Querformat). `UIRequiredDeviceCapabilities` von veraltetem `armv7` (32-Bit) auf
+      `arm64` korrigiert.
+      `.gitignore`: `ios/App/App/public/` (bei jedem `cap sync` neu erzeugter
+      Web-Build innerhalb des nativen Projekts), `DerivedData`, `xcuserdata`
+      ergänzt – das native Xcode-PROJEKT selbst (`ios/App/App.xcodeproj`, Swift-
+      Dateien, Info.plist, Assets) gehört bewusst ins Repo, reine Build-Artefakte
+      nicht (deckt sich mit dem von Capacitor selbst erzeugten `ios/.gitignore`).
+      **Wichtige Grenze, unverändert seit Projektbeginn dokumentiert:** der PC ist
+      Windows – `npx cap add ios` und alle Asset-Anpassungen liefen erfolgreich
+      OHNE Mac, aber das eigentliche ÖFFNEN/BAUEN/SIGNIEREN/EINREICHEN in Xcode
+      braucht zwingend einen Mac (oder einen Cloud-Mac-Dienst) – das lässt sich
+      technisch nicht umgehen. `tsc -b` sauber, Web-Build (`npm run build`)
+      erfolgreich, `npx cap sync ios` sauber durchgelaufen.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
