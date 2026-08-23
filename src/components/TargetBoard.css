@@ -19,8 +19,8 @@
  */
 .target-board {
   position: relative;
-  width: 260px;
-  height: 260px;
+  width: 208px;
+  height: 208px;
   border-radius: 50%;
   background: var(--board-rim);
   /* Die beiden inset-Schatten geben dem Rand ein leichtes Relief (heller Kamm oben
@@ -48,7 +48,7 @@
 
 .target-board__face {
   position: absolute;
-  inset: 11px;
+  inset: 9px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, var(--board-face-inner) 12%, var(--board-face-outer) 92%);
   box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.12);
@@ -58,7 +58,7 @@
    transform gedreht. Der Mittelbereich bleibt frei, damit der Kern sauber sitzt. */
 .target-board__wedges {
   position: absolute;
-  inset: 11px;
+  inset: 9px;
   border-radius: 50%;
   overflow: hidden;
 }
@@ -113,7 +113,7 @@
    statt sie zu übertünchen. */
 .target-board__sheen {
   position: absolute;
-  inset: 11px;
+  inset: 9px;
   border-radius: 50%;
   background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.4), transparent 48%);
   mix-blend-mode: soft-light;
@@ -128,7 +128,7 @@
  */
 .target-board__shimmer {
   position: absolute;
-  inset: 11px;
+  inset: 9px;
   border-radius: 50%;
   overflow: hidden;
   pointer-events: none;
@@ -167,11 +167,11 @@
   70%,
   100% {
     opacity: 0;
-    transform: rotate(var(--sparkle-angle)) translateY(-36px) scale(0.4);
+    transform: rotate(var(--sparkle-angle)) translateY(-29px) scale(0.4);
   }
   15% {
     opacity: 1;
-    transform: rotate(var(--sparkle-angle)) translateY(-36px) scale(1);
+    transform: rotate(var(--sparkle-angle)) translateY(-29px) scale(1);
   }
 }
 
@@ -185,14 +185,14 @@
 }
 
 .target-board__ring--outer {
-  width: 208px;
-  height: 208px;
+  width: 166px;
+  height: 166px;
   border: 3px solid var(--board-ring-light);
 }
 
 .target-board__ring--mid {
-  width: 134px;
-  height: 134px;
+  width: 107px;
+  height: 107px;
   border: 3px solid var(--board-ring-accent);
 }
 
@@ -201,8 +201,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 58px;
-  height: 58px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   background: var(--board-core);
@@ -215,7 +215,7 @@
    kleines Zielkreuz-Muster statt eines einzelnen Punkts. */
 .target-board__bullseye-ring {
   position: absolute;
-  inset: 9px;
+  inset: 7px;
   border-radius: 50%;
   border: 1.5px solid rgba(255, 255, 255, 0.4);
 }

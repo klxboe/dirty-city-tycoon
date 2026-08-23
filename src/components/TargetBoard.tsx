@@ -115,7 +115,26 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
       return baseSpeed * (1.05 + 0.5 * Math.sin(phase));
     }
     case 'reverse': {
-      const period = periodFor(baseSpeed, REVERSE_PERIOD_SEC, REVERSE_PERIOD_AT_MAX_SEC);
+      /**
+       * GEFUNDENER BUG (Klaus: "bei ein paar Leveln kann man bestimmte Teile vom
+       * Brett gar nicht treffen, weil es sich dann wieder zurückdreht"): die Scheibe
+       * dreht mit KONSTANTER Geschwindigkeit für `period` Sekunden in eine Richtung,
+       * dann für `period` Sekunden zurück – sie überstreicht pro Halbzyklus also nur
+       * `baseSpeed * period` Grad. Solange dieser Wert UNTER 360° liegt (z.B. Level 1:
+       * 70°/Sek. × 2.9s ≈ 203°), pendelt die Scheibe für immer nur in einem Teil-
+       * Fenster des Kreises hin und her – jeder Winkel AUSSERHALB dieses Fensters wird
+       * nie wieder erreicht, ein Apfel/eine Lücke dort ist dauerhaft unerreichbar.
+       * Fix: die Periode nie kürzer als `360 / baseSpeed` zulassen – jeder Halbzyklus
+       * überstreicht dadurch garantiert den ganzen Kreis, bevor die Richtung wechselt.
+       * Bei hohem Tempo (nah an MAX_SPEED_DEG_PER_SEC) ändert das nichts, weil
+       * `REVERSE_PERIOD_AT_MAX_SEC` dort ohnehin schon genug Grad überstreicht – nur
+       * bei niedrigem/mittlerem Tempo wird die Periode jetzt länger als ursprünglich
+       * geplant, das ist der nötige Preis für "keine dauerhaft toten Zonen".
+       */
+      const period = Math.max(
+        periodFor(baseSpeed, REVERSE_PERIOD_SEC, REVERSE_PERIOD_AT_MAX_SEC),
+        360 / Math.abs(baseSpeed),
+      );
       const halfCycles = Math.floor(elapsed / period);
       return halfCycles % 2 === 0 ? baseSpeed : -baseSpeed;
     }
@@ -124,9 +143,17 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
   }
 }
 
-export const BOARD_SIZE = 260;
-/** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands (130), damit sie im Holz sitzen. */
-export const BOARD_RADIUS = 120;
+/**
+ * Brett + zugehörige Radien um 20% verkleinert (Klaus: "mach alles etwas kleiner,
+ * vor allem das Holz, damit es sich grundsätzlich schnellere Runden dreht, weil der
+ * Radius kleiner ist" – bei gleicher Winkelgeschwindigkeit legt ein kleinerer Kreis
+ * pro Umdrehung weniger Bildschirm-Strecke zurück, eine Drehung liest sich dadurch
+ * schneller/knackiger). War 260/120, jetzt 208/96 – alle davon abgeleiteten Werte
+ * (Äpfel-/Axt-Radien, `.target-board`-CSS-Größen) proportional mitskaliert.
+ */
+export const BOARD_SIZE = 208;
+/** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands (104), damit sie im Holz sitzen. */
+export const BOARD_RADIUS = 96;
 /**
  * Steck-Radius als Anteil des Scheiben-Radius (120 von 130).
  *
@@ -149,9 +176,9 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
  */
 const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
-const APPLE_RADIUS = 152;
-const APPLE_STEM_LENGTH = 20;
-const APPLE_STEM_RADIUS = 128 + APPLE_STEM_LENGTH / 2;
+const APPLE_RADIUS = 122;
+const APPLE_STEM_LENGTH = 16;
+const APPLE_STEM_RADIUS = 102 + APPLE_STEM_LENGTH / 2;
 
 /**
  * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das

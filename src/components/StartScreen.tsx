@@ -4,7 +4,7 @@ import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
-import { worldForLevel } from '../game/worlds';
+import { isWorldBossLevel, worldForLevel } from '../game/worlds';
 import './StartScreen.css';
 
 interface StartScreenProps {
@@ -74,6 +74,15 @@ export function StartScreen({
   // Welche Welt als Nächstes drankommt – rein informativ, damit der Startbildschirm
   // schon vorher zeigt, wo man landet, statt das erst nach dem Start-Tap zu erfahren.
   const world = worldForLevel(Math.max(0, continueLevel - 1));
+  /**
+   * Steht der Spielstand GENAU am Weltboss-Tor (siehe isWorldBossLevel), darf der
+   * Haupt-Button nicht direkt in den Bosskampf springen (Klaus: "man soll nur gegen
+   * ihn spielen können, wenn man zuerst auf Weltkarte geht") – und schon gar nicht
+   * "Weiter – Level 21" anzeigen, ein Weltboss hat laut HUD/LevelCompleteModal
+   * bewusst KEINE Levelnummer. Der Button führt in diesem Fall stattdessen zur
+   * Weltkarte, wo der Bosskampf über den passenden Welt-Knoten gestartet wird.
+   */
+  const isBossGate = isWorldBossLevel(Math.max(0, continueLevel - 1));
 
   return (
     <div className="start">
@@ -158,8 +167,8 @@ export function StartScreen({
       )}
 
       <div className="start__buttons">
-        <button className="start__button start__button--main" onClick={onPlay}>
-          {continueLevel > 1 ? `Weiter – Level ${continueLevel}` : 'Los geht’s'}
+        <button className="start__button start__button--main" onClick={isBossGate ? onOpenWorldMap : onPlay}>
+          {isBossGate ? 'Weiter zur Weltkarte' : continueLevel > 1 ? `Weiter – Level ${continueLevel}` : 'Los geht’s'}
         </button>
         <button className="start__button start__button--ghost" onClick={onOpenWorldMap}>
           Weltkarte

@@ -128,7 +128,7 @@ const MIN_APPLE_AXE_SEPARATION_DEG = COLLISION_ANGLE_TOLERANCE_DEG + APPLE_HIT_T
  * tief vergraben. Zum Nachjustieren ("etwas mehr/weniger drin") reicht es, NUR diese
  * eine Zahl zu ändern.
  */
-export const AXE_EMBED_DEPTH_PX = 6;
+export const AXE_EMBED_DEPTH_PX = 5;
 
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten

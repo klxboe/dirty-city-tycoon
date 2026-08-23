@@ -474,10 +474,19 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
 
                   <div className={`world-node__label world-node__label--${labelSide}`}>
                     <span className="world-node__name">{node.name}</span>
-                    <span className="world-node__sub">
-                      {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex + 1} (durch XP)`}
-                    </span>
-                    {node.bossName && <span className="world-node__boss-name">⚔ {node.bossName}</span>}
+                    {/* Bei einem freigeschalteten Weltboss-Tor steht hier NUR der Bossname
+                        statt des Levelbereichs (Klaus: "da soll gar kein Level zu sehen
+                        sein, sondern nur 'Wüsten-Boss' oder sowas") – ein Weltboss hat
+                        bewusst keine sichtbare Levelnummer, siehe HUD/StartScreen. Der
+                        Freischalt-Hinweis für noch gesperrte Welten ("Ab Level X") bleibt
+                        unverändert, der ist reine Fortschritts-Info, kein "aktuelles Level". */}
+                    {node.unlocked && node.bossName ? (
+                      <span className="world-node__boss-name">⚔ {node.bossName}</span>
+                    ) : (
+                      <span className="world-node__sub">
+                        {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex + 1} (durch XP)`}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

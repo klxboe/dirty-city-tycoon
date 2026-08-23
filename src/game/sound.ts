@@ -126,31 +126,22 @@ export function playHitSound(): void {
 }
 
 /**
- * Game Over (Axt trifft die eigene steckende Axt): tiefer, fallender Dissonanz-Stoß statt
- * des früheren hellen "Klack" (Klaus: "schlechter Sound wenn nicht [geschafft]" – das
- * alte Geräusch klang eher nach einem harmlosen Abpraller als nach einem echten
- * Fehlschlag). Zwei eng benachbarte, gegeneinander verstimmte Sägezahntöne (Dissonanz)
- * gleiten beide nach unten weg – klingt eindeutig negativ, ohne unangenehm laut zu sein.
+ * Game Over (Axt trifft die eigene steckende Axt): tiefer Holz-Krach + Splittern.
+ * War erst ein heller "Klack" (zu harmlos), dann ein gleitender Dissonanz-Stoß (Klaus:
+ * "Sound beim Verkacken war vorher besser" – die Dissonanz-Version kam nicht gut an).
+ * Klaus' eigener Vorschlag: "so ein Holz-zerbrechen-Sound" – exakt der alte
+ * `playBreakSound()`-Klang (tiefer Krach + Splittern), nur jetzt hier statt beim
+ * normalen Levelabschluss (der hat inzwischen `playLevelCompleteSound()`, einen
+ * eigenen, fröhlicheren Jingle) – ein zerbrechendes Brett passt inhaltlich sogar besser
+ * zu "man hat gerade verloren" als zu "Level geschafft".
  */
 export function playGameOverSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  const duration = 0.42;
-  [220, 233].forEach((freq) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.42, now + duration);
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + duration);
-  });
-  playNoiseBurst(ctx, now, 0.1, 320, 0.18);
+  playNoiseBurst(ctx, now, 0.22, 500, 0.32);
+  playNoiseBurst(ctx, now + 0.06, 0.18, 280, 0.26);
+  playTone(ctx, 90, now, 0.28, 'sawtooth', 0.18);
 }
 
 /**
