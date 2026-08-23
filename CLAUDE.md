@@ -2894,6 +2894,49 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       CSS-Klasse ohne Rotations-Bezug) bleibt unangetastet. `tsc -b` sauber, mehrere
       schnelle Klicks hintereinander im Browser ohne Konsolenfehler getestet – das
       tatsächliche Flüssigkeitsgefühl braucht wie immer Bestätigung auf dem Gerät.
+- [x] **Zweite Feedback-Runde nach echtem Testen auf dem Gerät (2026-08-23).** Sechs
+      weitere Punkte, alle umgesetzt, `tsc -b` sauber:
+      - **Wurf radikal vereinfacht:** Klaus nach dem ersten TestFlight-Build: "fliegt
+        ur langsam und irgendwie drüber kurz, bevor sie steckt – EXTREM CLEAN, GANZ
+        EINFACH". Das Squash-and-Stretch-Überschwingen (`axe-fly-transform`,
+        scaleX 1.1 bei 12%) komplett entfernt – vermutlich genau DAS las sich als
+        "kurz drüber". `.axe-flying` hat jetzt nur noch EINE Animation (reine,
+        lineare Position, keine Form-/Größenänderung mehr während des Flugs).
+        `FLIGHT_DURATION_MS` 140→100ms.
+      - **Münz-/XP-Wirtschaft ein zweites Mal deutlich gekürzt** (Klaus: "viel viel
+        weniger XP und viel weniger Münzen", nachdem die erste Halbierung offenbar
+        nicht reichte): `COINS_PER_APPLE` 3→1, `XP_PER_LEVEL` 6→2,
+        `levelCompletionBonus`/`blockCompletionBonus`/`BOSS_REPEAT_BONUS` nochmal
+        deutlich gesenkt (Level 100 z.B. 109→55→17 Münzen Basis-Bonus).
+      - **Münzen/Diamanten seltener + echte Präzision nötig:** `appleCountFor` um je
+        eine Münze pro Stufe gesenkt (2/3/4 → 1/2/3), `goldenAppleIndexFor`-Frequenz
+        von ~1/7 auf ~1/15 Leveln gesenkt. `APPLE_HIT_TOLERANCE_DEG` 30°→14° (Klaus:
+        "Hitbox der Münzen muss kleiner werden, man muss sie wirklich treffen").
+      - **Münzen spawnen nie mehr unter einer Hindernis-Axt:** neue
+        `resolveAppleAngles()`/`MIN_APPLE_AXE_SEPARATION_DEG` (=
+        `COLLISION_ANGLE_TOLERANCE_DEG` + `APPLE_HIT_TOLERANCE_DEG` + Puffer) in
+        `constants.ts` – schiebt jede Münze deterministisch von jeder Hindernis-Axt
+        weg. Grund: eine Münze zu nah an einer Hindernis-Axt hätte einen Treffer
+        zwangsläufig auch als Axt-Kollision (Game Over) gezählt, war also ohne
+        Risiko gar nicht sicher erreichbar.
+      - **Hindernis-Äxte zeigen immer die Start-Axt:** `TargetBoard.tsx` rendert
+        vorplatzierte Hindernisse jetzt mit `DEFAULT_AXE_SKIN` statt dem
+        ausgerüsteten Skin – unterschieden über die negative `id`, die
+        `createLevelState()` (useAxeGame.ts) Hindernissen schon vorher gab (nur
+        geworfene Äxte, `id >= 0`, zeigen den eigenen Skin).
+      - **Boss-Retry nur noch beim Weltboss:** `restartRun()`s Ausnahme ("Nochmal
+        spielen" setzt am selben Boss-Level fort statt bei Level 1") galt bisher für
+        Fruchtboss UND Weltboss. Klaus: "wenn man den [Frucht-]Boss verkackt, darf
+        man nicht nochmal probieren, man wird wieder zu Level 1 zurückgeworfen" –
+        gilt jetzt nur noch für den Weltboss, ein Fruchtboss verhält sich wieder wie
+        jedes andere Level.
+      - **Level-Auto-Sprung auf sofort:** `LevelCompleteModal.tsx`s
+        `AUTO_ADVANCE_MS` 1000→0 (Klaus: "vergiss die eine Sekunde Wartezeit, soll
+        einfach direkt zum nächsten Level springen").
+      Wie immer ließ sich das tatsächliche Spielgefühl nicht per
+      Browser-Automatisierung nachspielen (rAF-Freeze) – nur Compile/DOM/Konsole
+      geprüft (inkl. 20 schneller Klicks hintereinander ohne Fehler), Bestätigung
+      durch echtes Spielen auf dem Gerät steht noch aus.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
