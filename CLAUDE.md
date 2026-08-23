@@ -2788,6 +2788,22 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       kontrolliert mit "nicht verfügbar" (siehe `purchaseSkin()`), bis die echten
       Store-Produkte existieren – kein Crash, kein irreführender Button-Text. Per
       echtem Spielstand verifiziert, `tsc -b` sauber, keine Konsolenfehler.
+- [x] **App-Name final: "Axe Throw Master" (2026-08-23).** Nachdem eine echte
+      App-Store-Suche (iTunes-Lookup-API) für "Axe Throw" und mehrere Varianten
+      keine exakten Treffer zeigte, hat Klaus "Axe Throw Master" gewählt (auch
+      schon so in AdMob als App-Name angelegt). Überall als vollen Namen
+      eingetragen: `index.html` (`<title>`), `manifest.webmanifest` (`name`),
+      `capacitor.config.ts` (`appName`), `ios/App/App/Info.plist`
+      (`CFBundleDisplayName`). `short_name` im Manifest UND
+      `apple-mobile-web-app-title` bewusst bei "Axe Throw" belassen (Platz unter
+      dem Home-Bildschirm-Icon ist begrenzt, "Axe Throw Master" würde dort
+      unschön umbrechen/abschneiden) – dasselbe Muster wie bei vielen Apps
+      (kürzerer Home-Bildschirm-Name, voller Name in Titel/Store). Das stilisierte
+      In-Game-Logo (`Axe` + farblich abgesetztes `Throw` in StartScreen.tsx) bewusst
+      NICHT angetastet – reine Optik, kein Store-Metadatenfeld. Bundle-ID
+      (`com.klxboe.axethrow`) bleibt weiterhin ein noch zu bestätigender Platzhalter,
+      war hier nicht Teil der Anfrage. `npm run build` + `npx cap sync ios` liefen
+      sauber durch.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

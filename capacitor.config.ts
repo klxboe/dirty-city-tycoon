@@ -15,7 +15,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const config: CapacitorConfig = {
   appId: 'com.klxboe.axethrow',
-  appName: 'Axe Throw',
+  appName: 'Axe Throw Master',
   webDir: 'dist',
 };
 
