@@ -1,9 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="glow" cx="50%" cy="46%" r="52%">
-      <stop offset="0%" stop-color="#ff9f1c" stop-opacity=".55"/>
+    <radialGradient id="glow" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#ff9f1c" stop-opacity=".5"/>
       <stop offset="100%" stop-color="#ff9f1c" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="face" cx="38%" cy="32%" r="75%">
+      <stop offset="0%" stop-color="#ffe9c2"/>
+      <stop offset="55%" stop-color="#f6b25c"/>
+      <stop offset="100%" stop-color="#c97d2e"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="20%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#d99a4e"/>
+      <stop offset="55%" stop-color="#8a5420"/>
+      <stop offset="100%" stop-color="#4a2c10"/>
+    </linearGradient>
     <linearGradient id="blade" x1="0%" y1="0%" x2="100%" y2="60%">
       <stop offset="0%" stop-color="#ffffff"/>
       <stop offset="55%" stop-color="#dbe4ec"/>
@@ -16,24 +26,45 @@
   </defs>
 
   <rect width="512" height="512" fill="#101318"/>
-  <circle cx="256" cy="236" r="250" fill="url(#glow)"/>
+  <circle cx="256" cy="256" r="280" fill="url(#glow)"/>
 
-  <!-- Stiel -->
-  <rect x="238" y="228" width="36" height="228" rx="16" fill="url(#haft)" stroke="#141820" stroke-width="9"/>
-  <g fill="#4a2c14">
-    <rect x="238" y="286" width="36" height="13" rx="5"/>
-    <rect x="238" y="318" width="36" height="13" rx="5"/>
-    <rect x="238" y="350" width="36" height="13" rx="5"/>
+  <!-- Zielscheibe: Rand + Gesicht, fuellt den Rahmen deutlich mehr als vorher -->
+  <circle cx="256" cy="256" r="216" fill="url(#rim)"/>
+  <circle cx="256" cy="256" r="188" fill="url(#face)"/>
+
+  <!-- Speichen, dezent -->
+  <g stroke="#c9862f" stroke-width="4" opacity="0.35">
+    <line x1="256" y1="76" x2="256" y2="436"/>
+    <line x1="76" y1="256" x2="436" y2="256"/>
+    <line x1="124" y1="124" x2="388" y2="388"/>
+    <line x1="388" y1="124" x2="124" y2="388"/>
+  </g>
+  <circle cx="256" cy="256" r="188" fill="none" stroke="#7a4a1c" stroke-width="10" opacity="0.5"/>
+  <circle cx="256" cy="256" r="60" fill="none" stroke="#7a4a1c" stroke-width="6" opacity="0.4"/>
+
+  <!-- Hintere, kleinere Axt oben rechts -->
+  <g transform="translate(356 130) rotate(18) scale(0.6)">
+    <rect x="-18" y="-8" width="36" height="150" rx="14" fill="url(#haft)" stroke="#141820" stroke-width="9"/>
+    <path d="M6 -100 C76 -96 136 -62 148 -12 C136 38 76 72 6 76 Z" fill="url(#blade)" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M-6 -78 L-96 -56 L-96 32 L-6 54 Z" fill="#b8c2cc" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
   </g>
 
-  <!-- Axtkopf: Blatt rechts, Hammer-Sporn links -->
-  <path d="M262 108
-           C332 112 392 146 404 196
-           C392 246 332 280 262 284
-           Z"
-        fill="url(#blade)" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M250 130 L160 152 L160 240 L250 262 Z"
-        fill="#b8c2cc" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M300 140 C352 152 378 172 386 196 C378 220 352 240 300 252"
-        fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+  <!-- Vordere, grosse Axt: das Hauptmotiv, schraeg von unten links eingeschlagen -->
+  <g transform="translate(206 300) rotate(-14)">
+    <rect x="-20" y="-14" width="40" height="230" rx="16" fill="url(#haft)" stroke="#141820" stroke-width="9"/>
+    <g fill="#4a2c14">
+      <rect x="-20" y="44" width="40" height="13" rx="5"/>
+      <rect x="-20" y="76" width="40" height="13" rx="5"/>
+      <rect x="-20" y="108" width="40" height="13" rx="5"/>
+    </g>
+    <path d="M4 -128 C74 -124 134 -90 146 -40 C134 10 74 44 4 48 Z" fill="url(#blade)" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M-8 -106 L-98 -84 L-98 4 L-8 26 Z" fill="#b8c2cc" stroke="#141820" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M42 -118 C94 -106 120 -86 128 -62 C120 -38 94 -18 42 -6" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+  </g>
+
+  <!-- Splitter am Einschlag der vorderen Axt -->
+  <g transform="translate(206 300)" stroke="#5c3512" stroke-width="5" stroke-linecap="round" opacity="0.7">
+    <line x1="-6" y1="-118" x2="-34" y2="-138"/>
+    <line x1="8" y1="-120" x2="20" y2="-146"/>
+  </g>
 </svg>
