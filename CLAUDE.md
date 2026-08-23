@@ -2937,6 +2937,27 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Browser-Automatisierung nachspielen (rAF-Freeze) – nur Compile/DOM/Konsole
       geprüft (inkl. 20 schneller Klicks hintereinander ohne Fehler), Bestätigung
       durch echtes Spielen auf dem Gerät steht noch aus.
+- [x] **Wurf komplett von "Juice"-Effekten befreit (2026-08-23).** Klaus schickte eine
+      vollständige Spezifikation ("SCHNELL + DIREKT + EXTREM FLÜSSIG + PRÄZISE",
+      "KEIN Schnickschnack") mit expliziter Verbotsliste: kein Camera/Screen Shake,
+      kein Zielscheiben-Wackeln, keine übertriebenen Partikel, keine zusätzlichen
+      Fluganimationen, kein Slowdown/Micro-Stop vor dem Treffer. Alles davon war
+      tatsächlich im Code (aus früheren "wie ein Pistolenschuss"-Anfragen):
+      - `shakeStage()`/`.stage--shake` (Screen-Shake bei Treffer UND Kollision)
+      - `recoilStage()`/`.stage--recoil` (Rückstoß-Ruck beim Abschuss)
+      - `muzzleId`/`.muzzle-flash` (Mündungsblitz beim Abschuss)
+      - `burstId`/`.hit-effect` (Holzspäne + Schockwelle bei jedem Treffer)
+      - `clashId`/`.hit-effect--clash` (Metall-Funken bei Kollision/Game Over)
+      - `TargetBoard.punch()`/`.target-mount--hit` (Zusammenzucken der Board-Hülle)
+      Alle sechs komplett entfernt (App.tsx, App.css, TargetBoard.tsx/.css,
+      `PARTICLE_ANGLES` mit-entsorgt) – übrig bleiben ausschließlich Sound
+      (`playThrowSound`/`playHitSound`/etc.) und kurzes haptisches Feedback
+      (`vibrate()`), keine visuellen Zusatzeffekte mehr. Die Axt-Flugbewegung selbst
+      (linear, keine Rotation, kein Squash-and-Stretch – siehe vorige Einträge) ist
+      jetzt die einzige Reaktion auf einen Wurf. `tsc -b` sauber, mehrere schnelle
+      Klicks im Browser ohne Konsolenfehler getestet. Wie immer nur bis zur Grenze
+      der Browser-Automatisierung geprüft (rAF-Freeze) – das eigentliche "fühlt sich
+      jetzt SCHNELL/DIREKT/FLÜSSIG an" braucht Bestätigung auf dem echten Gerät.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
