@@ -2804,6 +2804,74 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       (`com.klxboe.axethrow`) bleibt weiterhin ein noch zu bestätigender Platzhalter,
       war hier nicht Teil der Anfrage. `npm run build` + `npx cap sync ios` liefen
       sauber durch.
+- [x] **Codemagic + TestFlight erstmals erfolgreich eingerichtet (2026-08-23).** Erste
+      echte App-Store-Connect-Einreichungs-Infrastruktur für Axe Throw (getrennt von
+      Habituos Setup, siehe eigener Abschnitt oben zu AdMob/RevenueCat/Codemagic):
+      - App-Datenschutz-Fragebogen veröffentlicht, Alterseinstufung ausgefüllt (13+,
+        u.a. wegen "Waffen: Häufig" – eine geworfene Axt ist ehrlich betrachtet eine
+        Waffe, auch im Cartoon-Stil).
+      - Codemagic-App `dirty-city-tycoon` angelegt, EIGENE Variablengruppe `axethrow`
+        (nicht die geteilte `personal account`-Gruppe von Habituo – Gruppen sind pro
+        App, keine Team-weite Sache, wie sich beim ersten fehlgeschlagenen Build
+        herausstellte). Eigener neuer App-Store-Connect-API-Key ("Codemagic
+        Axethrow", Admin-Rolle) + frisch generierter `CERTIFICATE_PRIVATE_KEY`
+        (RSA 2048, lokal per `openssl genrsa` erzeugt) statt Habituos Secrets
+        wiederzuverwenden.
+      - `Info.plist`: `UIRequiresFullScreen` ergänzt – Apple lehnte den ersten Upload
+        ab ("Invalid bundle... orientations were provided... but you need to include
+        all of the... orientations to support iPad multitasking"), weil nur
+        Portrait/PortraitUpsideDown für iPad deklariert war. Da das Spiel bewusst
+        reines Portrait-Design ist (kein Split-View/Slide-Over nötig), ist das
+        Deaktivieren von iPad-Multitasking der richtige Fix statt alle 4
+        Ausrichtungen zu erzwingen.
+      - Erster Build danach komplett durchgelaufen (Signing, Archiv, Upload,
+        TestFlight-Verarbeitung), interne Testgruppe mit Klaus als Tester
+        eingerichtet.
+- [x] **Erste Runde Feedback nach echtem Spielen auf dem Gerät (2026-08-23).** Sechs
+      Punkte, alle umgesetzt, `tsc -b` sauber:
+      - **Münzen statt Äpfel** (`Apple.tsx`): die normalen Sammel-Objekte sehen jetzt
+        aus wie die HUD-Münze (`Coin.tsx`, geprägte Axt), die seltene Variante wie der
+        HUD-Diamant (`Gem.tsx`) statt einer goldenen Frucht – vorher gab "goldener
+        Apfel" Diamanten, ein Bruch zwischen Optik und Belohnung, der jetzt behoben
+        ist. Interne Bezeichner (`Apple`, `appleAngles`, `applesCollectedThisRun`)
+        bewusst NICHT umbenannt – reine Optik-Änderung, kein Mechanik-Umbau.
+      - **Axt fliegt gerade statt zu trudeln** (`App.css`, `axe-fly-transform`):
+        Rotation komplett auf 0° gesetzt (vorher 190°, davor 360°). Klaus: "dreht sich
+        die Axt statt wie ein Messer einfach nach oben zu schießen, wirkt unflüssig
+        und billig". Rein kosmetisch (CSS-Transform der fliegenden Axt) – die
+        Ausrichtung einer STECKENDEN Axt kommt komplett unabhängig aus
+        `axe.boardLocalAngleDeg`, Kollisionserkennung ist ohnehin winkelbasiert.
+      - **Münz-/XP-Wirtschaft grob halbiert** (`constants.ts`): `COINS_PER_APPLE`
+        5→3, `levelCompletionBonus` (10+Level)→(6+Level×0.5), `blockCompletionBonus`
+        100→50 pro Block, `REWARD_MULTIPLIER` 1.4→1.0, `XP_PER_LEVEL` 10→6 (Welt-
+        Freischalt-Schwellen skalieren aus derselben Konstante mit, also keine
+        Auswirkung auf das Freischalt-Tempo, nur auf die angezeigte Zahl). Grund:
+        `blockCompletionBonus` × `REWARD_MULTIPLIER` × Serie-Multiplikator explodierte
+        in langen Highscore-Läufen.
+      - **Sounds überarbeitet** (`sound.ts`): neuer `playLevelCompleteSound()`
+        (dumpfer Schlag + helle Dur-Fanfare) ersetzt den bisherigen neutralen
+        Holzbruch-Sound bei normalem Levelabschluss; `playGameOverSound()` (vorher
+        `playMissSound`) klingt jetzt eindeutig negativ (zwei gegeneinander
+        verstimmte, nach unten gleitende Sägezahntöne) statt wie ein harmloses
+        "Klack"; `playCoinSound()` (vorher `playAppleSound`) bekommt ein
+        metallisches Klimpern obendrauf. Boss-Sieg (`playBossSound`) bleibt
+        unangetastet und dadurch weiterhin hörbar "größer" als ein normales Level.
+      - **Level-Auto-Sprung beschleunigt** (`LevelCompleteModal.tsx`):
+        `AUTO_ADVANCE_MS` 3500→1000, den manuellen "Weiter"-Button samt
+        Schrumpfbalken komplett entfernt (war nach der Auto-Advance-Umstellung nur
+        noch redundant). "Werkstatt öffnen" bleibt als einziger Button – ein Klick
+        unmountet das Modal (`App.tsx`, `!overlayOpen && ...`), was den Timeout
+        sauber abbricht, kein versehentlicher Sprung während man im Shop ist.
+      - **Highscore als Blickfang** (`StartScreen.tsx`/`.css`): eigene große Karte
+        ("🏆 Highscore / Level N") direkt unter dem Logo, vor Welt-Badge und
+        Währungsreihe, statt einer kleinen Zeile zwischen Münzen/XP/Diamanten.
+      - **Noch offen aus derselben Feedback-Runde:** App-Icon soll überarbeitet
+        werden, aber unklar WAS genau daran stört (aktuelles Icon: flache Axt auf
+        dunklem Grund mit orangem Glow, `public/icon.svg`) – wartet auf Rückmeldung,
+        bevor ein neues Design entworfen wird. Das tatsächliche Spielgefühl (Sound,
+        Wurf-Flüssigkeit) ließ sich wie immer nicht per Browser-Automatisierung
+        nachspielen (rAF-Freeze) – nur Compile/DOM/Konsole geprüft, Bestätigung durch
+        echtes Spielen auf dem Gerät steht noch aus.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
