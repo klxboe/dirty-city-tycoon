@@ -3008,6 +3008,43 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         echten Gerät zeigt (Rendering/Compositing), nicht am Code selbst.
       `tsc -b` sauber, alle Änderungen per Browser-Test (inkl. direkt gesetztem
       Weltboss-Levelstand) verifiziert, keine Konsolenfehler.
+- [x] **Fünfte Feedback-Runde (2026-08-23): echter "fliegt zuerst in die Mitte"-Bug
+      gefunden, Hitbox + Einstecktiefe nachjustiert.** Klaus schickte eine Fotoserie
+      eines echten Wurfs auf dem Handy (Einzelbilder statt Video, "die ein Video
+      ergeben") mit drei Punkten: Hitbox der Münzen etwas größer (aber nicht viel),
+      Axt soll ein Stück mehr im Holz stecken, und "wie du an den Fotos siehst,
+      fliegt sie zuerst in die Mitte und dann erst ans Brett".
+      - **Echter Positions-Bug gefunden** (nicht nur ein Gefühl): `.axe-flying`
+        (App.tsx/App.css) positioniert die fliegende Axt über ihre UNTERKANTE
+        (`bottom: ...`, kein vertikales Zentrieren), während eine bereits steckende
+        Axt (`TargetBoard.tsx`) über `translate(-50%, -50%)` ihre MITTE auf den
+        Ziel-Radius legt. Das Axt-Icon ist 42×63px groß (`Axe.tsx`, `size ×
+        size*1.5`) – ohne Ausgleich landet die fliegende Axt mit ihrer Mitte um die
+        halbe Icon-Höhe (~31px) zu weit Richtung Scheibenmitte, bevor sie beim
+        Einschlag sichtbar nach außen auf die korrekte Steck-Position "zurückschnappt".
+        Genau das zeigten die Fotos. Fix: neue Konstante `FLIGHT_AXE_HALF_HEIGHT_PX`
+        (App.tsx, aus einer neuen gemeinsamen `FLIGHT_AXE_SIZE`-Konstante abgeleitet,
+        die jetzt an BEIDEN `<Axe .../>`-Stellen im Flug-/Bereitschafts-Code verwendet
+        wird statt zweimal derselben Zahl `42`) wird von `flightEndBottom` abgezogen,
+        damit die MITTE des fliegenden Icons exakt dort landet, wo die steckende Axt
+        ihre Mitte hat. Bemerkenswert: diese Diskrepanz bestand vermutlich schon seit
+        Beginn der Flug-Positionierung (das `bottom`-basierte Anker-Schema ist alt),
+        wurde aber nie entdeckt, weil alle bisherigen Geometrie-Fixes (Steck-Radius,
+        Einstecktiefe) nur über DOM-Zahlen-Vergleiche verifiziert wurden, nicht über
+        eine echte visuelle Prüfung des Icon-Ankerpunkts – die automatisierte
+        Browser-Umgebung kann Animationen nicht rendern (rAF-Freeze), Klaus' echte
+        Fotos vom Gerät waren hier der einzige Weg, das zu finden.
+      - **`APPLE_HIT_TOLERANCE_DEG`** 14°→17° (Klaus: "etwas größere Hitbox, aber
+        nicht viel" – eine kleine gezielte Lockerung, keine Rückkehr zur alten
+        Großzügigkeit von 30°).
+      - **`AXE_EMBED_DEPTH_PX`** 5→8 (Klaus: "Axt soll ein Stück mehr drinnen
+        stecken").
+      Verifiziert: `tsc -b` sauber. Das eigentliche visuelle Ergebnis (schnappt die
+      Axt jetzt nicht mehr sichtbar von der Mitte nach außen?) ließ sich wie bei
+      allen bisherigen Flug-/Timing-Änderungen nicht per Browser-Automatisierung
+      nachspielen (rAF-Freeze) – die Positions-Rechnung selbst ist aber jetzt
+      nachweislich konsistent mit der steckenden Axt (beide zentrieren auf denselben
+      Radius). Bitte am echten Gerät gegenprüfen, am besten wieder per Fotoserie.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

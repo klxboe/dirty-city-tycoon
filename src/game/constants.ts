@@ -98,8 +98,12 @@ export const COLLISION_ANGLE_TOLERANCE_DEG = 8;
  * enger als die alte Kollisions-Hitbox der Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`,
  * 10°) es aber trotzdem klar übersteigt – ein Treffer braucht jetzt echte Präzision,
  * ist aber nicht auf den Pixel genau wie eine Axt-Kollision.
+ *
+ * Auf 17° angehoben (Klaus nach echtem Testen auf dem Gerät, Fotoserie eines knapp
+ * verfehlten Wurfs: "etwas größere Hitbox, aber nicht viel") – eine kleine, gezielte
+ * Lockerung statt einer Rückkehr zur alten Großzügigkeit (30°).
  */
-export const APPLE_HIT_TOLERANCE_DEG = 14;
+export const APPLE_HIT_TOLERANCE_DEG = 17;
 
 /**
  * Mindestabstand (Grad) zwischen einer Münze und JEDER Hindernis-Axt (Klaus: "Münzen
@@ -134,8 +138,11 @@ const MIN_APPLE_AXE_SEPARATION_DEG = COLLISION_ANGLE_TOLERANCE_DEG + APPLE_HIT_T
  * zum sichtbaren Scheibenrand) – "nur so weit, dass die Axt sauber Kontakt hat", nicht
  * tief vergraben. Zum Nachjustieren ("etwas mehr/weniger drin") reicht es, NUR diese
  * eine Zahl zu ändern.
+ *
+ * Von 5 auf 8 angehoben (Klaus nach echtem Testen: "Axt soll ein Stück mehr drinnen
+ * stecken").
  */
-export const AXE_EMBED_DEPTH_PX = 5;
+export const AXE_EMBED_DEPTH_PX = 8;
 
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten

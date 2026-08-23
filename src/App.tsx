@@ -59,6 +59,16 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
   return (geom?.radius ?? BOARD_SIZE / 2) * AXE_STICK_RATIO;
 }
 
+/**
+ * Größe des Axt-Icons im Flug UND in Wurfbereitschaft (`<Axe size={FLIGHT_AXE_SIZE} .../>`
+ * unten, zwei Stellen) – EINE gemeinsame Konstante statt zweimal derselben Zahl, damit sie
+ * nie auseinanderlaufen kann. `Axe.tsx` rendert immer im Verhältnis `size × size*1.5`
+ * (siehe dort), daraus ergibt sich die halbe Icon-Höhe für den Flugziel-Ausgleich
+ * (siehe `flightEndBottom` unten).
+ */
+const FLIGHT_AXE_SIZE = 42;
+const FLIGHT_AXE_HALF_HEIGHT_PX = (FLIGHT_AXE_SIZE * 1.5) / 2;
+
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
   { left: '12%', delay: '0s', duration: '9s' },
@@ -300,7 +310,19 @@ function App() {
   // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
   // daher die Differenz. AXE_EMBED_DEPTH_PX kommt DAZU, damit die Axt ins Holz fährt
   // (siehe Kommentar dort – MUSS mit der Steck-Position in TargetBoard.tsx übereinstimmen).
-  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_EMBED_DEPTH_PX;
+  //
+  // GEFUNDENER BUG (Klaus per Fotoserie eines echten Wurfs: "Axt fliegt zuerst in die
+  // Mitte und dann erst ans Brett"): `.axe-flying` positioniert bisher die UNTERKANTE
+  // des Icon-Wrappers per `bottom` (kein vertikales Zentrieren), während eine STECKENDE
+  // Axt (TargetBoard.tsx) über `translate(-50%, -50%)` ihre MITTE auf den Ziel-Radius
+  // legt. Das Axt-Icon ist `FLIGHT_AXE_SIZE` breit und `FLIGHT_AXE_SIZE * 1.5` hoch (siehe
+  // Axe.tsx) – ohne Korrektur landet die fliegende Axt mit ihrer MITTE um die halbe
+  // Icon-Höhe zu weit INNEN (näher an der Scheibenmitte) als eine steckende Axt, bevor
+  // sie beim Einschlag sichtbar nach außen auf die korrekte Steck-Position "zurückschnappt".
+  // Fix: Zielposition um die halbe Icon-Höhe nach außen (Richtung Bühnenrand, also
+  // WENIGER `bottom`) verschieben, damit die MITTE des fliegenden Icons exakt dort landet,
+  // wo die steckende Axt ihre Mitte hat.
+  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_EMBED_DEPTH_PX - FLIGHT_AXE_HALF_HEIGHT_PX;
   /**
    * Reichweite des Flugs in Pixeln, als NEGATIVE `translate`-Strecke (Werfen behoben,
    * Klaus: "ruckelt extrem beim Werfen und Aufkommen"). Vorher animierte
@@ -479,7 +501,7 @@ function App() {
               if (e.animationName === 'axe-fly-position') game.resolveThrow();
             }}
           >
-            <Axe size={42} skin={game.save.equippedAxeSkin} />
+            <Axe size={FLIGHT_AXE_SIZE} skin={game.save.equippedAxeSkin} />
           </div>
         )}
 
@@ -487,7 +509,7 @@ function App() {
           {/* Die "bereitliegende" Axt zeigt, von wo geworfen wird. */}
           {game.phase !== 'flying' && game.axesThrown < game.axeCount && (
             <div className="stage__ready-axe">
-              <Axe size={42} skin={game.save.equippedAxeSkin} />
+              <Axe size={FLIGHT_AXE_SIZE} skin={game.save.equippedAxeSkin} />
             </div>
           )}
           <div className="stage__hint">{hint}</div>
