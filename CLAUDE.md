@@ -2865,13 +2865,22 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       - **Highscore als Blickfang** (`StartScreen.tsx`/`.css`): eigene große Karte
         ("🏆 Highscore / Level N") direkt unter dem Logo, vor Welt-Badge und
         Währungsreihe, statt einer kleinen Zeile zwischen Münzen/XP/Diamanten.
-      - **Noch offen aus derselben Feedback-Runde:** App-Icon soll überarbeitet
-        werden, aber unklar WAS genau daran stört (aktuelles Icon: flache Axt auf
-        dunklem Grund mit orangem Glow, `public/icon.svg`) – wartet auf Rückmeldung,
-        bevor ein neues Design entworfen wird. Das tatsächliche Spielgefühl (Sound,
-        Wurf-Flüssigkeit) ließ sich wie immer nicht per Browser-Automatisierung
-        nachspielen (rAF-Freeze) – nur Compile/DOM/Konsole geprüft, Bestätigung durch
-        echtes Spielen auf dem Gerät steht noch aus.
+      - **App-Icon neu gestaltet** (`public/icon.svg`): Klaus' Rückmeldung auf
+        Nachfrage war "zu langweilig/generisch" bei der alten einzelnen Axt vor viel
+        leerem dunklem Hintergrund. Neues Motiv zeigt stattdessen das eigentliche
+        Spielobjekt – eine Zielscheibe (Holzfarben aus dem Standard-Board-Skin,
+        `BOARD_SKINS[0]`, für Konsistenz mit dem echten Spiel) mit zwei Äxten
+        unterschiedlich schräg eingeschlagen – füllt den Rahmen deutlich mehr statt
+        viel leeren Grund zu lassen. Per `sharp` (temporär installiert, nicht in
+        package.json, wie beim allerersten Icon-Bau) sowohl bei 1024px als auch bei
+        120px (Homescreen-Größe) als PNG gerendert und per Bild-Inspektion geprüft,
+        bevor übernommen wurde – bei beiden Größen klar lesbar. Alle Konsumenten neu
+        generiert: `public/icon-{192,512,maskable-512,180}.png` und
+        `ios/.../AppIcon-512@2x.png`, danach `npx cap sync ios`.
+      - Das tatsächliche Spielgefühl (Sound, Wurf-Flüssigkeit) ließ sich wie immer
+        nicht per Browser-Automatisierung nachspielen (rAF-Freeze) – nur
+        Compile/DOM/Konsole geprüft, Bestätigung durch echtes Spielen auf dem Gerät
+        steht noch aus.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
