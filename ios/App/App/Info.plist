@@ -22,6 +22,16 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!--
+	  Export-Compliance-Frage bei jedem TestFlight-Upload umgehen: die App nutzt
+	  ausschließlich Standard-HTTPS/TLS (über AdMob/RevenueCat-SDKs, siehe ads.ts/
+	  purchases.ts), keine eigene/zusätzliche Verschlüsselung – exakt der Fall, den
+	  Apple mit "Keinen der oben genannten Algorithmen" im Dokumentations-Dialog
+	  meint. Mit diesem Schlüssel weiß App Store Connect das schon beim Upload und
+	  fragt nicht mehr manuell nach.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
