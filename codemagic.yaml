@@ -9,7 +9,6 @@ workflows:
 
     environment:
       groups:
-        - personal account
         - axethrow
       vars:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
