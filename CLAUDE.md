@@ -2958,6 +2958,56 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Klicks im Browser ohne Konsolenfehler getestet. Wie immer nur bis zur Grenze
       der Browser-Automatisierung geprüft (rAF-Freeze) – das eigentliche "fühlt sich
       jetzt SCHNELL/DIREKT/FLÜSSIG an" braucht Bestätigung auf dem echten Gerät.
+- [x] **Vierte Feedback-Runde (2026-08-23): Richtungswechsel-Bug, kleineres Brett,
+      Sound-Revert, Weltboss-Level-Nummer weg.**
+      - **Echter Logik-Bug in `currentSpeed()`/'reverse' gefunden und behoben**
+        (`TargetBoard.tsx`): die Scheibe überstreicht pro Halbzyklus nur
+        `baseSpeed × period` Grad, bevor sie umkehrt. Lag das unter 360° (z.B.
+        Level 1: 70°/Sek. × 2,9s ≈ 203°), pendelte die Scheibe für IMMER nur in
+        einem Teil-Fenster hin und her – Winkel außerhalb waren dauerhaft
+        unerreichbar. Klaus: "bei ein paar Leveln kann man bestimmte Teile vom
+        Brett gar nicht treffen, weil es sich dann wieder zurückdreht". Fix: die
+        Periode nie kürzer als `360 / baseSpeed` zulassen, jeder Halbzyklus
+        überstreicht dadurch garantiert den ganzen Kreis, bevor die Richtung
+        wechselt. Betrifft nur niedrige/mittlere Tempo-Stufen; am Tempo-Deckel war
+        die alte Periode schon lang genug.
+      - **Brett + Radien um 20% verkleinert** (Klaus: "mach alles etwas kleiner,
+        vor allem das Holz, damit es sich grundsätzlich schnellere Runden dreht,
+        weil der Radius kleiner ist"): `BOARD_SIZE` 260→208, `BOARD_RADIUS`
+        120→96, `APPLE_RADIUS` 152→122, `APPLE_STEM_LENGTH` 20→16,
+        `AXE_EMBED_DEPTH_PX` 6→5, dazu alle CSS-Ring-/Kern-/Inset-Maße in
+        `TargetBoard.css` proportional mitskaliert.
+      - **Game-Over-Sound zurück zu Holz-Krach+Splittern**: die
+        Dissonanz-Ton-Version aus der letzten Runde kam schlechter an ("Sound beim
+        Verkacken war vorher besser"), Klaus' eigener Vorschlag war "so ein
+        Holz-zerbrechen-Sound" – jetzt praktisch der alte `playBreakSound()`-Klang,
+        nur unter dem neuen Namen `playGameOverSound()`.
+      - **Weltboss zeigt nirgends mehr eine Levelnummer außerhalb des Kampfes
+        selbst**: der Haupt-Button auf dem Startbildschirm zeigt am Weltboss-Tor
+        jetzt "Weiter zur Weltkarte" statt "Weiter – Level 21" und führt zur
+        Weltkarte statt direkt in den Kampf (Klaus: "man soll nur gegen ihn
+        spielen können, wenn man zuerst auf Weltkarte geht"); die Weltkarte zeigt
+        an einem freigeschalteten Weltboss-Tor nur noch den Bossnamen (z.B. "⚔
+        Sandkolossos") statt des Levelbereichs. Per Browser-Test mit direkt
+        gesetztem `currentLevel: 20` bestätigt (beide Stellen zeigen korrekt nur
+        noch den Bossnamen, keine Zahl).
+      - **Zwei Verdachtsmomente geprüft, aber KEIN Bug gefunden:** Axt-Hitbox
+        (`COLLISION_ANGLE_TOLERANCE_DEG`) ist schon für jede Axt identisch/uniform
+        angewendet (`collidesWithStuckAxe` prüft alle `stuckAxes` mit demselben
+        Wert). Die fünf Weltboss-Bild-Dateien (`board-boss-*.png`) sind per Hash
+        verifiziert tatsächlich fünf unterschiedliche Bilder, korrekt über
+        `WORLD_BOSSES[level.worldBossId]` verdrahtet – falls sie sich trotzdem
+        gleich anfühlen, braucht es mehr Details (Screenshot/Video), um die
+        Ursache zu finden.
+      - **Weiterhin ungeklärt trotz zweiter Untersuchung:** der gemeldete
+        "Axt fliegt drüber, bevor sie steckt"-Effekt. Die dokumentierte
+        Geometrie-Berechnung (`stickRadiusPx()`/`AXE_EMBED_DEPTH_PX` in App.tsx,
+        `STUCK_AXE_RADIUS` in TargetBoard.tsx) ist konsistent und deckt sich mit
+        einem bereits früher behobenen, fast identischen Bug – keine neue
+        Diskrepanz im Code gefunden. Könnte ein Effekt sein, der sich nur auf dem
+        echten Gerät zeigt (Rendering/Compositing), nicht am Code selbst.
+      `tsc -b` sauber, alle Änderungen per Browser-Test (inkl. direkt gesetztem
+      Weltboss-Levelstand) verifiziert, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
