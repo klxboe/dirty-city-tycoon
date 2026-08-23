@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
-import { AXE_EMBED_DEPTH_PX, BASE_SPEED_DEG_PER_SEC, HIT_STOP_MS, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
+import { AXE_EMBED_DEPTH_PX, BASE_SPEED_DEG_PER_SEC, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
 import { boardStyleVars } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
@@ -172,8 +172,6 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
 ) {
   const boardElRef = useRef<HTMLDivElement>(null);
   const mountElRef = useRef<HTMLDivElement>(null);
-  /** Bis zu diesem Zeitpunkt steht die Drehung still (Hit-Stop beim Treffer). */
-  const freezeUntilRef = useRef(0);
   const angleRef = useRef(0);
   const speedRef = useRef(speedDegPerSec);
   const patternRef = useRef(spinPattern);
@@ -254,7 +252,6 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
       };
     },
     punch: () => {
-      freezeUntilRef.current = performance.now() + HIT_STOP_MS;
       // Das Zusammenzucken läuft auf der HÜLLE, nicht auf der Scheibe selbst: die trägt
       // schon die Inline-Rotation aus dem rAF-Loop, eine CSS-Animation auf derselben
       // Eigenschaft würde die Drehung kurz überschreiben und sichtbar zurückspringen
@@ -282,10 +279,15 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
       const deltaSeconds = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      // Hit-Stop: Zeit läuft weiter (lastTime ist schon gesetzt), nur gedreht wird
-      // nicht. Dadurch springt die Scheibe danach nicht nach, sondern macht einfach
-      // dort weiter, wo sie stand.
-      if (!pausedRef.current && now >= freezeUntilRef.current) {
+      // Die Scheibe hält NIE an, auch nicht kurz bei einem Treffer (früher gab es
+      // hier einen 55ms-Hit-Stop) – Klaus: "soll mindestens so flüssig wie Knife Hit
+      // sein", und genau das ist der Kern von Knife Hits Flüssigkeit: die Scheibe/das
+      // Holz dreht sich dort ausnahmslos durchgehend, ein Mini-Freeze bei jedem
+      // Treffer (bei schnellem Spielen mehrmals pro Sekunde) erzeugte ein spürbares
+      // Ruckeln, das es im Vorbild nicht gibt. Das separate Zusammenzucken der HÜLLE
+      // (`.target-mount--hit` oben in `punch()`) bleibt – das ist eine rein optische
+      // Reaktion ohne Einfluss auf die tatsächliche Rotation, kein Widerspruch dazu.
+      if (!pausedRef.current) {
         elapsedRef.current += deltaSeconds;
         const speed = currentSpeed(speedRef.current, patternRef.current, elapsedRef.current);
         angleRef.current = normalizeAngle(angleRef.current + speed * deltaSeconds);

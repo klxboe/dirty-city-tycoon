@@ -47,13 +47,15 @@ import type { LevelConfig, SpinPattern } from './types';
  */
 export const FLIGHT_DURATION_MS = 140;
 
-/**
- * Wie lange die Scheibe beim Treffer stehen bleibt (ms). Ein sehr kurzer Stopp im
- * Moment des Einschlags – der klassische "Hit-Stop" aus Actionspielen. Er lässt den
- * Treffer schwer und getroffen wirken, ohne dass man ihn bewusst wahrnimmt.
- * Bewusst winzig: alles ab ~90ms fühlt sich nach Ruckeln statt nach Wucht an.
+/*
+ * Es gab hier einen HIT_STOP_MS-Wert (kurzer Rotations-Freeze der Scheibe bei jedem
+ * Treffer, "Hit-Stop" aus Actionspielen) – wieder entfernt (Klaus: "soll mindestens so
+ * flüssig wie Knife Hit sein"). Genau das ist Knife Hits Kern-Eigenschaft: die
+ * Scheibe/das Holz hält NIE an, auch nicht kurz. Ein Mini-Freeze bei jedem Treffer war
+ * bei schnellem Spielen (mehrmals pro Sekunde) ein spürbares Ruckeln. Siehe
+ * TargetBoard.tsx, `punch()`/Render-Loop – das rein optische Zusammenzucken der
+ * Board-Hülle bleibt, nur der Rotations-Stopp ist weg.
  */
-export const HIT_STOP_MS = 55;
 
 /**
  * Wie lange nach dem letzten Wurf gewartet wird, bevor das Ergebnis-Fenster kommt (ms).
