@@ -92,8 +92,11 @@ export const GAME_OVER_DELAY_MS = 650;
  * Wieder auf 10° angehoben (Klaus, direkt nach echtem Testen: "Hitbox von den Äxten
  * etwas höher") – die vorherige Senkung auf 8° war zu knapp, zurück auf den alten,
  * lange bewährten Wert.
+ *
+ * Weiter auf 13° angehoben (Klaus: deutlicher spürbare Lockerung, keine Zweifel mehr
+ * am Effekt).
  */
-export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
+export const COLLISION_ANGLE_TOLERANCE_DEG = 13;
 
 /**
  * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,
@@ -110,8 +113,11 @@ export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
  * Direkt danach wieder auf 13° gesenkt (Klaus: "Hitbox von den Münzen etwas kleiner") –
  * der vorherige Anhub auf 17° ging in die falsche Richtung, jetzt sogar etwas enger als
  * der ursprüngliche Wert (14°).
+ *
+ * Weiter auf 10° gesenkt (Klaus: deutlicher spürbare Verengung, keine Zweifel mehr
+ * am Effekt).
  */
-export const APPLE_HIT_TOLERANCE_DEG = 13;
+export const APPLE_HIT_TOLERANCE_DEG = 10;
 
 /**
  * Mindestabstand (Grad) zwischen einer Münze und JEDER Hindernis-Axt (Klaus: "Münzen
@@ -149,8 +155,11 @@ const MIN_APPLE_AXE_SEPARATION_DEG = COLLISION_ANGLE_TOLERANCE_DEG + APPLE_HIT_T
  *
  * Von 5 auf 8 angehoben (Klaus nach echtem Testen: "Axt soll ein Stück mehr drinnen
  * stecken").
+ *
+ * Weiter auf 14 angehoben (Klaus: deutlicher spürbarer Unterschied, keine Zweifel mehr
+ * am Effekt).
  */
-export const AXE_EMBED_DEPTH_PX = 8;
+export const AXE_EMBED_DEPTH_PX = 14;
 
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten
