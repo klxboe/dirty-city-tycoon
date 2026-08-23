@@ -10,10 +10,16 @@ import type { LevelReward } from '../game/types';
 import './LevelCompleteModal.css';
 
 /**
- * Nach dieser Zeit geht's von selbst zum nächsten Level – kein Pflicht-Tap mehr auf
- * "Weiter" nötig. Der Button bleibt trotzdem da, für alle, die es eilig haben.
+ * Nach dieser Zeit geht's von selbst zum nächsten Level. Von 3500ms auf 1000ms gesenkt
+ * und den "Weiter"-Button komplett entfernt (Klaus: "dieses 'weiter zu Level 2' weg,
+ * soll nach ca. 1 Sek. automatisch zum nächsten Level springen") – der Button/Balken
+ * war nach der Umstellung auf Auto-Advance nur noch redundante Wartezeit-Anzeige für
+ * etwas, das ohnehin von selbst passiert. "Werkstatt öffnen" bleibt als einziger Button,
+ * weil das eine echte Entscheidung ist: ein Klick unmountet dieses Modal (siehe App.tsx,
+ * `!overlayOpen && ...`), was den Timeout unten sauber abbricht – kein versehentlicher
+ * Levelsprung während man im Shop ist.
  */
-const AUTO_ADVANCE_MS = 3500;
+const AUTO_ADVANCE_MS = 1000;
 
 interface LevelCompleteModalProps {
   level: number;
@@ -178,10 +184,6 @@ export function LevelCompleteModal({
         {/* Einmalige Glückwunsch-Zeile bei Level 100 – danach geht's im Endlos-Modus
             einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}
         {isCampaignComplete && <div className="modal-card__badge">Alle 100 Level gemeistert! 🎉</div>}
-        <button className="modal-card__button modal-card__button--auto" onClick={onNext}>
-          {isCampaignComplete ? 'Weiter im Endlos-Modus' : worldBoss ? 'Weiter geht’s' : `Weiter zu Level ${level + 1}`}
-          <span className="modal-card__auto-bar" style={{ animationDuration: `${AUTO_ADVANCE_MS}ms` }} />
-        </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
           Werkstatt öffnen
         </button>

@@ -617,34 +617,47 @@ export const SAVE_KEY = 'axe-throw-save-v2';
  * alles, was im laufenden Versuch gesammelt wurde. Das macht vorsichtiges Spielen
  * wertvoll und ist der Grund, überhaupt zu zielen statt zu spammen.
  */
-export const COINS_PER_APPLE = 5;
+/**
+ * Münz-/XP-Wirtschaft deutlich zurückgeschraubt (Klaus: "man bekommt viel zu viele
+ * Münzen und XP"). Betrifft alle vier Stellschrauben unten UND `REWARD_MULTIPLIER`
+ * weiter unten gleichzeitig, weil sie sich gegenseitig verstärken (besonders
+ * `blockCompletionBonus` × `REWARD_MULTIPLIER` × Serie-Multiplikator explodierte in
+ * langen Highscore-Läufen). Faustregel: überall ungefähr halbiert statt eine einzelne
+ * Zahl zu tunen, damit das Verhältnis der Boni zueinander erhalten bleibt.
+ */
+export const COINS_PER_APPLE = 3;
 /**
  * XP für ein geschafftes Level – fest, unabhängig von Levelnummer/Serie/Perfekt-Bonus
  * (bewusst simpel gehalten, im Gegensatz zu den Münzen). XP ist eine EIGENE, DAUERHAFTE
  * Ressource (übersteht ein Game Over, anders als der Lauf-Fortschritt selbst) und
  * schaltet Welten frei – siehe `worldForLevel`/`WORLDS` in `worlds.ts` für die
  * Level-Bereiche, aus denen sich die Schwellenwerte ableiten (`startLevelIndex *
- * XP_PER_LEVEL`), und `WorldMap.tsx` für die Freischalt-Prüfung selbst.
+ * XP_PER_LEVEL`), und `WorldMap.tsx` für die Freischalt-Prüfung selbst. Reduziert von
+ * 10 auf 6 – da die Welt-Schwellenwerte aus DERSELBEN Konstante abgeleitet werden,
+ * ändert sich am Freischalt-TEMPO nichts, nur die angezeigte Zahl wirkt nicht mehr
+ * aufgebläht.
  */
-export const XP_PER_LEVEL = 10;
+export const XP_PER_LEVEL = 6;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 
 /**
  * Münz-Bonus fürs Abschließen eines Levels, steigt mit der Levelnummer.
- * Level 1 = 10, Level 50 = 59, Level 100 = 109 – zusammen mit den Äpfeln kommt man
- * so in einem guten Lauf zügig an den ersten Skin (150 Münzen).
+ * Level 1 = 6, Level 50 = 30, Level 100 = 55 (vorher 10/59/109) – zusammen mit den
+ * Äpfeln kommt man in einem guten Lauf immer noch zügig an den ersten Skin (150 Münzen),
+ * aber lange Läufe häufen nicht mehr unverhältnismäßig viel an.
  */
 export function levelCompletionBonus(levelIndex: number): number {
-  return 10 + levelIndex;
+  return Math.round(6 + levelIndex * 0.5);
 }
 
 /** Zusatz, wenn ALLE Äpfel eines Levels eingesammelt wurden – belohnt genaues Zielen. */
-export const PERFECT_APPLE_BONUS = 25;
+export const PERFECT_APPLE_BONUS = 15;
 
-/** Zusatz für den Abschluss eines 10er-Blocks, wächst mit der Blocknummer. */
+/** Zusatz für den Abschluss eines 10er-Blocks, wächst mit der Blocknummer. Halbiert
+ * (vorher 100 pro Block) – das war der Haupttreiber der Münzinflation in langen Läufen. */
 export function blockCompletionBonus(levelIndex: number): number {
-  return 100 * (Math.floor(levelIndex / LEVELS_PER_BLOCK) + 1);
+  return 50 * (Math.floor(levelIndex / LEVELS_PER_BLOCK) + 1);
 }
 
 /**
@@ -682,6 +695,11 @@ export const DAILY_REWARDS: { coins: number; gems: number }[] = [
  * NICHT an `generateLevel()` selbst – die Level-Formel bleibt eine einzige, für alle
  * geltende Kurve. Schneller drehen UND mehr Münzen hängen bewusst zusammen – das Risiko
  * soll sich auch lohnen.
+ *
+ * REWARD_MULTIPLIER von 1.4 auf 1.0 gesenkt (Münz-Wirtschaft-Korrektur, siehe
+ * `levelCompletionBonus`/`blockCompletionBonus` oben) – der pauschale 40%-Aufschlag auf
+ * JEDE Belohnung war der zweite große Treiber der Münzinflation, zusätzlich zum
+ * Serie-Multiplikator (der Skill/Vorsicht belohnt, bleibt deshalb unangetastet).
  */
 export const BOARD_SPEED_MULTIPLIER = 1.25;
-export const REWARD_MULTIPLIER = 1.4;
+export const REWARD_MULTIPLIER = 1.0;

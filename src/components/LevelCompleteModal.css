@@ -154,29 +154,6 @@
   overflow: hidden;
 }
 
-/* Schrumpfender Streifen am unteren Rand des Haupt-Buttons: zeigt, dass es von
-   selbst weitergeht, ohne dass ein Tap Pflicht wäre – wer es eilig hat, tippt
-   einfach trotzdem auf den Button. */
-.modal-card__auto-bar {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 100%;
-  background: rgba(8, 33, 15, 0.4);
-  transform-origin: left;
-  animation: modal-auto-bar-shrink linear forwards;
-}
-
-@keyframes modal-auto-bar-shrink {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
-}
-
 .modal-card__button:active {
   transform: translateY(2px);
   box-shadow: 0 2px 0 var(--color-primary-dark);
@@ -319,10 +296,4 @@
 .reward-breakdown__row--bonus,
 .reward-breakdown__row--bonus strong {
   color: var(--color-money);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal-card__auto-bar {
-    display: none;
-  }
 }

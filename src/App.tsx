@@ -21,11 +21,11 @@ import { EASTER_EGG_SKINS } from './game/shop';
 import { initAds } from './game/ads';
 import { initPurchases } from './game/purchases';
 import {
-  playAppleSound,
+  playCoinSound,
   playBossSound,
-  playBreakSound,
+  playLevelCompleteSound,
+  playGameOverSound,
   playHitSound,
-  playMissSound,
   playThrowSound,
   unlockAudio,
   vibrate,
@@ -249,11 +249,11 @@ function App() {
     if (game.lastOutcome && game.lastOutcome !== prevOutcomeRef.current) {
       if (game.phase === 'levelComplete' && game.lastOutcome === 'stuck') {
         if (game.bossFruit) playBossSound();
-        else playBreakSound();
+        else playLevelCompleteSound();
       } else if (game.lastOutcome === 'stuck') {
         playHitSound();
       } else {
-        playMissSound();
+        playGameOverSound();
         vibrate([40, 60, 90]); // Game Over darf sich anders anfühlen als ein Treffer
         /*
          * Trifft man die eigene Axt, steigt `hits` NICHT (die Axt prallt ab statt zu
@@ -273,7 +273,7 @@ function App() {
   // Eingesammelter Apfel: Ton. Das Fallen zeigt TargetBoard selbst an.
   useEffect(() => {
     if (game.applesCollectedThisRun > prevApplesRef.current) {
-      playAppleSound();
+      playCoinSound();
       vibrate(12);
     }
     prevApplesRef.current = game.applesCollectedThisRun;

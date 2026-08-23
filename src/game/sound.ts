@@ -125,31 +125,67 @@ export function playHitSound(): void {
   playTone(ctx, 140, now, 0.12, 'triangle', 0.18);
 }
 
-/** Axt prallt ab (Kollision): kurzes, helles "Klack". */
-export function playMissSound(): void {
+/**
+ * Game Over (Axt trifft die eigene steckende Axt): tiefer, fallender Dissonanz-Stoß statt
+ * des früheren hellen "Klack" (Klaus: "schlechter Sound wenn nicht [geschafft]" – das
+ * alte Geräusch klang eher nach einem harmlosen Abpraller als nach einem echten
+ * Fehlschlag). Zwei eng benachbarte, gegeneinander verstimmte Sägezahntöne (Dissonanz)
+ * gleiten beide nach unten weg – klingt eindeutig negativ, ohne unangenehm laut zu sein.
+ */
+export function playGameOverSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  playTone(ctx, 700, now, 0.07, 'square', 0.1);
-  playTone(ctx, 480, now + 0.06, 0.09, 'square', 0.09);
+  const duration = 0.42;
+  [220, 233].forEach((freq) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.42, now + duration);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  });
+  playNoiseBurst(ctx, now, 0.1, 320, 0.18);
 }
 
-/** Apfel eingesammelt: fröhlicher, kurzer Dreiklang aufwärts. */
-export function playAppleSound(): void {
+/**
+ * Münze eingesammelt: heller aufwärts-Dreiklang PLUS ein kurzes metallisches "Klimpern"
+ * obendrauf, damit es nach Geld statt nach einer generischen Erfolgs-Melodie klingt
+ * (passend zum Münzen-statt-Äpfel-Reskin, siehe Apple.tsx).
+ */
+export function playCoinSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
   playTone(ctx, 523.25, now, 0.1, 'sine', 0.16);
   playTone(ctx, 659.25, now + 0.07, 0.12, 'sine', 0.16);
   playTone(ctx, 783.99, now + 0.14, 0.16, 'sine', 0.16);
+  // Metallisches Klimpern: mehrere sehr kurze, hohe Töne dicht hintereinander.
+  [1568, 1976, 2349].forEach((freq, i) => {
+    playTone(ctx, freq, now + 0.14 + i * 0.03, 0.08, 'triangle', 0.06);
+  });
 }
 
-/** Letzte Axt trifft, Holz bricht: tiefer Krach + Splittern. */
-export function playBreakSound(): void {
+/**
+ * Level geschafft (kein Boss): triumphaler, kurzer "Erfolg!"-Jingle statt des früheren
+ * neutralen Holzbruch-Krachs (Klaus: "geiler Sound wenn man das Brett abgeschlossen
+ * hat"). Kombiniert einen dumpfen Schlag (das Brett fällt) mit einer hellen, fröhlichen
+ * Dur-Akkord-Fanfare direkt danach – fühlt sich nach Belohnung an, nicht nach Zerstörung.
+ * Bewusst kürzer/kleiner als `playBossSound`, damit ein echter Bosssieg weiterhin
+ * besonderer klingt als ein normales Level.
+ */
+export function playLevelCompleteSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  playNoiseBurst(ctx, now, 0.22, 500, 0.32);
-  playNoiseBurst(ctx, now + 0.06, 0.18, 280, 0.26);
-  playTone(ctx, 90, now, 0.28, 'sawtooth', 0.18);
+  playNoiseBurst(ctx, now, 0.14, 450, 0.22);
+  playTone(ctx, 100, now, 0.16, 'sawtooth', 0.12);
+  [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+    playTone(ctx, freq, now + 0.1 + i * 0.06, 0.32, 'triangle', 0.17);
+  });
 }

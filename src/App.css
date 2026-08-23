@@ -246,35 +246,26 @@
  * in Flugrichtung (schneller, "geschossener" Eindruck) und rastet für die Landung
  * wieder auf die normale Form ein.
  *
- * Die Drehung wurde bewusst von 360° auf 190° gekürzt: eine volle Umdrehung liest
- * sich wie eine geworfene Tomahawk-Axt, die durch die Luft trudelt – "wie ne Pistole
- * direkt geschossen" (Feedback) meint aber eine kontrollierte, gerade Flugbahn ohne
- * umständliches Taumeln. Die Axt dreht sich noch (bleibt als Axt erkennbar, kein
- * reiner Strich), aber weniger als eine ganze Umdrehung – das wirkt gezielter.
- *
- * **12%-Zwischenwert von 70° auf 25° gesenkt** (Klaus: "Axt ist am Anfang kurz
- * falsch/umgedreht ausgerichtet, soll sofort korrekt nach oben fliegen" – ausdrücklich
- * NUR die Rotation ändern, Flugzeit/-bahn/Kollision/Impact unangetastet lassen). Bei
- * `FLIGHT_DURATION_MS` von aktuell 140ms liegen die ersten 12% bei nur noch ~17ms –
- * die Axt sprang in dieser kurzen Zeit von 0° auf 70° (mehr als 4x so schnell wie die
- * restliche Drehung bis 190° über die verbleibenden 88%), was sich wie ein kurzer
- * falscher/verdrehter Ausschlag genau beim Abschuss angefühlt hat, bevor die
- * eigentliche, gleichmäßigere Drehung übernimmt. 25° liegt nah an einer linear
- * durchgezogenen Kurve (12% von 190° wären ~23°) – die Axt dreht sich dadurch von
- * Anfang an gleichmäßig statt mit einem sichtbaren Ausschlag. `scale()` (Squash-and-
- * Stretch), die 100%-Enddrehung (190°) und ALLE anderen Werte/Timings bleiben exakt
- * unverändert – reine Rotations-Korrektur, keine neue Animation, kein Effekt auf
- * Fluggeschwindigkeit/-bahn/Kollision/Impact.
+ * **Rotation komplett entfernt (Klaus: "dreht sich die Axt statt wie ein Messer
+ * einfach nach oben zu schießen, wirkt das ganze Spiel unflüssig und billig").**
+ * Vorher 360°→190°→(hier weiter reduziert), aber jede sichtbare Drehung während des
+ * Flugs liest sich als "trudelnde Axt" statt als kontrollierter, gerader Schuss – die
+ * einzige Lösung war, sie ganz wegzulassen: die Axt fliegt jetzt exakt wie ein Messer
+ * bei Knife Hit, kerzengerade ohne jede Rotation. `scale()` (Squash-and-Stretch) bleibt
+ * unverändert für das "geschossene" Gefühl beim Abschuss. Betrifft NUR diese
+ * CSS-Animation der fliegenden Axt – die spätere Ausrichtung einer steckenden Axt
+ * kommt komplett unabhängig davon aus `axe.boardLocalAngleDeg` (siehe TargetBoard.tsx),
+ * die Kollisionserkennung ist ohnehin rein winkelbasiert und unberührt.
  */
 @keyframes axe-fly-transform {
   0% {
     transform: scale(0.68, 1.42) rotate(0deg);
   }
   12% {
-    transform: scale(1.1, 0.92) rotate(25deg);
+    transform: scale(1.1, 0.92) rotate(0deg);
   }
   100% {
-    transform: scale(1, 1) rotate(190deg);
+    transform: scale(1, 1) rotate(0deg);
   }
 }
 

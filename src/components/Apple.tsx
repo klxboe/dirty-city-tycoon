@@ -2,28 +2,29 @@ import { useId } from 'react';
 
 interface AppleProps {
   size?: number;
-  /** Seltene Variante: golden statt rot, bringt Diamanten statt Münzen. */
+  /** Seltene Variante: Diamant statt Münze, bringt Diamanten statt Münzen. */
   golden?: boolean;
-  /** Heldenstadt-exklusiv: eine kleine Helden-Sammelfigur statt eines Apfels. */
+  /** Heldenstadt-exklusiv: eine kleine Helden-Sammelfigur statt einer Münze. */
   figurine?: boolean;
 }
 
 /**
- * Ein Apfel, der am Rand der Zielscheibe hängt und abgeworfen werden kann.
- * Flach und kontraststark gezeichnet (kräftiges Rot, dunkle Kontur, ein Glanzpunkt),
- * damit er vor dem dunklen Hintergrund auch klein sofort erkennbar ist.
+ * Die Sammel-Objekte am Rand der Zielscheibe (Name/Props aus historischen Gründen noch
+ * "Apple" – der intern gültige Mechanismus/die Bezeichner im restlichen Code blieben
+ * unangetastet, siehe `appleAngles`/`applesCollectedThisRun`; nur die Optik wurde
+ * getauscht). Klaus: "Münzen statt Äpfel" – Früchte lasen sich nicht sofort als
+ * Belohnung, eine Münze schon, zumal sie ja auch tatsächlich Münzen bringen.
  *
- * Golden ist bewusst dieselbe Form, nur andere Farben plus ein kleiner Funke – der
- * Wiedererkennungswert als "Apfel" muss erhalten bleiben, nur golden statt rot soll
- * ins Auge springen (~1 von 7 Leveln hat genau einen).
- *
- * `figurine` ersetzt die Frucht komplett durch eine kleine Chibi-Heldenfigur (rot/blau,
- * passend zum "Netzschwinger"-Skin-Thema) – macht in der Heldenstadt-Welt keinen Sinn,
- * eine Frucht abzuwerfen, wenn dort stattdessen Sammelfiguren zu finden sind.
+ * Normal = dieselbe Münze wie das HUD-Icon (`Coin.tsx`, geprägte Axt), damit sofort
+ * klar ist: das hier UND die Zahl oben rechts sind dieselbe Währung. Golden = statt
+ * einer goldenen Münze ein Diamant in der exakten `Gem.tsx`-Optik, weil diese Variante
+ * ja auch tatsächlich Diamanten statt Münzen bringt – vorher war "goldener Apfel gibt
+ * Diamanten" ein Bruch, jetzt passt Aussehen und Belohnung zusammen. Beide hängen an
+ * einer kleinen Öse statt Stiel+Blatt (kein Fruchtstamm mehr nötig).
  */
 export function Apple({ size = 30, golden = false, figurine = false }: AppleProps) {
   const uid = useId();
-  const fruitId = `apple-fruit-${uid}`;
+  const faceId = `pickup-face-${uid}`;
 
   if (figurine) {
     return (
@@ -51,68 +52,52 @@ export function Apple({ size = 30, golden = false, figurine = false }: AppleProp
     );
   }
 
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
-      <defs>
-        <radialGradient id={fruitId} cx="0.35" cy="0.3" r="0.85">
-          {golden ? (
-            <>
-              <stop offset="0%" stopColor="#fff6c8" />
-              <stop offset="55%" stopColor="#ffce3d" />
-              <stop offset="100%" stopColor="#c98a00" />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor="#ff8a92" />
-              <stop offset="55%" stopColor="#e63946" />
-              <stop offset="100%" stopColor="#a01824" />
-            </>
-          )}
-        </radialGradient>
-      </defs>
-      {/* Frucht: zwei verschmolzene Rundungen mit Kerbe oben */}
-      <path
-        d="M16 10.5
-           C12.5 7.8 6 8.8 5 15
-           C4 21.2 8.6 28 12.8 28
-           C14.2 28 15.2 27.4 16 27
-           C16.8 27.4 17.8 28 19.2 28
-           C23.4 28 28 21.2 27 15
-           C26 8.8 19.5 7.8 16 10.5 Z"
-        fill={`url(#${fruitId})`}
-        stroke={golden ? '#8a5c00' : '#7a1119'}
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      {/* Glanzlicht */}
-      <path
-        d="M10.5 14.5 C9.4 16.2 9.3 18.6 10.2 20.4"
-        stroke={golden ? '#fff3c0' : '#ff9b9b'}
-        strokeWidth="2.4"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.75"
-      />
-      {/* Kleiner Tau-/Glanzpunkt oben – gibt der Rundung mehr Volumen. */}
-      <circle cx="11.5" cy="13" r="1.5" fill="#fff" opacity={golden ? 0.55 : 0.4} />
-      {/* Stiel */}
-      <path d="M16 10 C15.6 7 15.9 5.4 16.8 4" stroke="#5c3a1a" strokeWidth="2" fill="none" strokeLinecap="round" />
-      {/* Blatt */}
-      <path
-        d="M17 6.4 C19 4.2 22.2 3.8 24 4.8 C22.6 7.4 19.6 8.2 17 6.4 Z"
-        fill="#4caf50"
-        stroke="#256b2b"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-      {/* Funke: markiert golden zusätzlich, auch wenn die Farbe klein mal untergeht. */}
-      {golden && (
+  if (golden) {
+    // Diamant statt goldener Münze – exakt dieselbe Form/Farbe wie das HUD-Gem-Icon
+    // (Gem.tsx), nur in eine hängende Öse statt eines Stiels gefasst.
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
+        <path d="M16 4 C16 2 18 2 18 4" stroke="#0e5951" strokeWidth="2" fill="none" strokeLinecap="round" />
+        <defs>
+          <linearGradient id={faceId} x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0%" stopColor="#d4fff9" />
+            <stop offset="50%" stopColor="#2ec4b6" />
+            <stop offset="100%" stopColor="#177f76" />
+          </linearGradient>
+        </defs>
+        <path d="M8 9 H24 L29 16 L16 29 L3 16 Z" fill={`url(#${faceId})`} stroke="#0e5951" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M8 9 L11.5 16 L3 16 Z" fill="#8ff0e5" opacity="0.85" />
+        <path d="M24 9 L20.5 16 L29 16 Z" fill="#177f76" opacity="0.65" />
+        <path d="M11.5 16 L16 29 L20.5 16 Z" fill="#5be0d2" opacity="0.55" />
+        <path d="M8 9 H24 L20.5 16 H11.5 Z" fill="#e8fffc" opacity="0.5" />
+        {/* Funke: markiert die seltene Variante zusätzlich, auch wenn die Form allein untergeht. */}
         <path
-          d="M25 6 L26 8.4 L28.4 9.4 L26 10.4 L25 12.8 L24 10.4 L21.6 9.4 L24 8.4 Z"
-          fill="#fff3c0"
+          d="M26 4 L27 6.4 L29.4 7.4 L27 8.4 L26 10.8 L25 8.4 L22.6 7.4 L25 6.4 Z"
+          fill="#d4fff9"
           opacity="0.95"
         />
-      )}
+      </svg>
+    );
+  }
+
+  // Normale Münze – dieselbe Optik wie das HUD-Icon (Coin.tsx, geprägte Axt), an
+  // einer kleinen Öse statt eines Fruchtstiels hängend.
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" overflow="visible">
+      <path d="M16 4 C16 2 18 2 18 4" stroke="#6b4a12" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <defs>
+        <radialGradient id={faceId} cx="0.36" cy="0.32" r="0.85">
+          <stop offset="0%" stopColor="#fff3b8" />
+          <stop offset="55%" stopColor="#ffce3d" />
+          <stop offset="100%" stopColor="#d99a00" />
+        </radialGradient>
+      </defs>
+      <circle cx="16" cy="18" r="12" fill="#b8860b" />
+      <circle cx="16" cy="17.2" r="11.4" fill={`url(#${faceId})`} />
+      <circle cx="16" cy="17.2" r="8.6" fill="none" stroke="#a8760a" strokeWidth="1" opacity="0.65" />
+      {/* Kleine Axt als Prägung, wie beim HUD-Icon */}
+      <path d="M15.2 11.4 L15.2 23" stroke="#8a6508" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M15 11.2 C18 10.7 20.6 12.6 20.7 15.2 C20.8 17.3 18.4 18.7 15.6 18.2 Z" fill="#8a6508" />
     </svg>
   );
 }

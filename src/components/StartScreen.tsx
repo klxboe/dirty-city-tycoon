@@ -91,15 +91,20 @@ export function StartScreen({
           Axe<span className="start__title-accent">Throw</span>
         </h1>
 
+        {/* Highscore als eigener Blickfang statt einer kleinen Zeile zwischen Münzen/XP
+            (Klaus: "Highscore soll gefühlt der Mittelpunkt sein") – große Zahl mit
+            Pokal-Label, direkt unter dem Logo, bevor überhaupt die Welt/Währungen kommen. */}
+        <div className="start__highscore">
+          <span className="start__highscore-label">🏆 Highscore</span>
+          <span className="start__highscore-value">Level {bestLevel}</span>
+        </div>
+
         <div className="start__world-badge" style={{ ['--world-accent' as string]: world.colors.accent }}>
           <span className="start__world-dot" />
           Aktuelle Welt: <strong>{world.name}</strong>
         </div>
 
         <div className="start__stats">
-          <span>
-            Highscore: <strong>Level {bestLevel}</strong>
-          </span>
           <span className="start__coins">
             <Coin size={16} /> {coins}
           </span>
