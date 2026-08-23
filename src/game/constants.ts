@@ -80,9 +80,16 @@ export const GAME_OVER_DELAY_MS = 650;
 
 /**
  * Ab welchem Winkel-Abstand zwei Äxte als "Kollision" gelten (Grad) – die "Hitbox" der Axt
- * in der Scheibe. Kleiner = leichter, weil weniger Stellen als "schon belegt" zählen.
+ * in der Scheibe, für JEDE Axt exakt gleich (`collidesWithStuckAxe()` in engine.ts prüft
+ * alle `stuckAxes` mit demselben Wert). Kleiner = leichter, weil weniger Stellen als
+ * "schon belegt" zählen. Von 10° auf 8° gesenkt (Klaus: "etwas kleiner die Hitbox von
+ * der Axt"). NICHT weiter runter: bei `BASE_SPEED_DEG_PER_SEC` (70°/Sek.) dreht sich die
+ * Scheibe während der `FLIGHT_DURATION_MS` (100ms) nur um ~7° – eine Toleranz UNTER 7°
+ * würde zwei sehr schnell hintereinander geworfene Äxte in Level 1 fast nie mehr
+ * kollidieren lassen (auch dann nicht, wenn sie eigentlich sollten), 8° lässt hier noch
+ * eine minimale Sicherheitsmarge.
  */
-export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
+export const COLLISION_ANGLE_TOLERANCE_DEG = 8;
 
 /**
  * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,
