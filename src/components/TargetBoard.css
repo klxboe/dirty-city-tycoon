@@ -6,32 +6,6 @@
 }
 
 /*
- * Treffer-Reaktion: die Scheibe zuckt kurz zusammen und federt zurück. Läuft auf der
- * HÜLLE, weil die Scheibe selbst schon die Inline-Rotation aus dem rAF-Loop trägt –
- * eine transform-Animation dort würde die Drehung überschreiben.
- */
-.target-mount--hit {
-  animation: target-mount-punch 0.26s cubic-bezier(0.2, 0.8, 0.3, 1);
-}
-
-@keyframes target-mount-punch {
-  0% {
-    transform: scale(1);
-  }
-  /* kurz eindrücken, als würde das Holz den Schlag schlucken */
-  28% {
-    transform: scale(0.965);
-  }
-  /* leicht überschwingen, dann einpendeln – das gibt dem Treffer Gewicht */
-  62% {
-    transform: scale(1.018);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/*
  * Die Scheiben-FARBEN stehen nicht mehr hier, sondern als Daten in game/shop.ts.
  * TargetBoard (und die Mini-Vorschau im Shop) setzen sie als CSS-Variablen inline.
  * So braucht ein neues Design nur einen Eintrag in shop.ts statt zusaetzlich einen

@@ -250,245 +250,12 @@
 }
 
 /*
- * ---- Mündungsblitz ----
- * Sitzt GENAU dort, wo die Axt startet (dieselben Koordinaten wie .axe-flying),
- * feuert aber unabhängig davon per eigenem Key (`muzzleId` in App.tsx), damit er bei
- * jedem Wurf zuverlässig neu abspielt. Kühlweiß statt warm-orange wie der Trefferburst
- * – Abschuss und Einschlag sollen sich unterschiedlich anfühlen.
+ * Mündungsblitz, Rückstoß-Ruck, Screen-Shake, Holzspäne-/Schockwellen-Burst und der
+ * Metall-Funken-Clash-Effekt sind komplett entfernt (Klaus, radikale
+ * Wurf-Vereinfachung: "KEIN Schnickschnack" – explizit u.a. kein Camera/Screen Shake,
+ * keine übertriebenen Partikel, keine zusätzlichen Fluganimationen). Die Bewegung
+ * selbst (siehe `axe-fly-position` oben) soll für sich stehen, ohne Effekte obendrauf.
  */
-.muzzle-flash {
-  position: absolute;
-  z-index: 1;
-  left: calc(50% + var(--flight-x, 0px));
-  bottom: 8%;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.muzzle-flash::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 46px;
-  height: 46px;
-  margin: -23px 0 0 -23px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(200, 224, 255, 0.5) 45%, transparent 72%);
-  animation: muzzle-flash-pop 0.16s ease-out forwards;
-}
-
-.muzzle-flash::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  border: 2px solid rgba(210, 230, 255, 0.85);
-  animation: muzzle-ring-expand 0.22s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-
-@keyframes muzzle-flash-pop {
-  0% {
-    opacity: 0.95;
-    transform: scale(0.3);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.15);
-  }
-}
-
-@keyframes muzzle-ring-expand {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.5);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(3.2);
-  }
-}
-
-/* Winziger, schneller Rückstoß-Ruck beim Abschuss – deutlich dezenter/kürzer als
-   der Treffer-Shake, damit sich Abschuss und Einschlag unterschiedlich anfühlen. */
-.stage--recoil {
-  animation: stage-recoil 0.14s ease-out;
-}
-
-@keyframes stage-recoil {
-  0% {
-    transform: translateY(0);
-  }
-  30% {
-    transform: translateY(3px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-
-/* ---- Juice: Screen-Shake bei Treffer. Spürbar, aber kurz genug, um nicht zu nerven. ---- */
-.stage--shake {
-  animation: stage-shake 0.26s cubic-bezier(0.36, 0.07, 0.19, 0.97);
-}
-
-@keyframes stage-shake {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-  20% {
-    transform: translate(-4px, 2px) scale(1.006);
-  }
-  45% {
-    transform: translate(3px, -2px) scale(1.004);
-  }
-  70% {
-    transform: translate(-2px, 1px) scale(1.002);
-  }
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-}
-
-/*
- * Juice: Holzspäne + Schockwelle beim Treffer.
- *
- * Sitzt am ECHTEN Einschlagpunkt (dieselben Werte wie der Axt-Flug), nicht mehr fest
- * unten in der Mitte. Vorher platzte der Burst immer an derselben Stelle, egal wo die
- * Axt eingeschlagen hat – bei einem Wurf an den Scheibenrand lagen Späne und Treffer
- * sichtbar auseinander.
- */
-.hit-effect {
-  position: absolute;
-  left: calc(50% + var(--flight-x, 0px));
-  bottom: var(--flight-end-bottom, 6px);
-  width: 0;
-  height: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/*
- * Ausbreitender Ring am Einschlag – gibt dem Treffer Wucht. `border-width` blieb
- * bewusst FEST (2px, Mittelwert der alten 4px->1px-Animation) statt animiert: eine
- * animierte `border-width` ist eine Layout-Eigenschaft und zwang den Browser bei
- * JEDEM Frame zu einem Reflow (Performance-Fix, "ruckelt extrem beim Aufkommen") –
- * der optische Effekt "Ring wird beim Wachsen dünner" bleibt trotzdem erhalten, weil
- * derselbe feste Rand bei größer werdendem `scale()` relativ automatisch dünner wirkt.
- */
-.hit-effect__shockwave {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 236, 190, 0.9);
-  animation: shockwave-expand 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-
-@keyframes shockwave-expand {
-  0% {
-    transform: scale(0.4);
-    opacity: 0.95;
-  }
-  100% {
-    transform: scale(5.5);
-    opacity: 0;
-  }
-}
-
-.hit-effect__chip {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 6px;
-  height: 10px;
-  border-radius: 1px;
-  transform-origin: center;
-  animation: chip-burst 0.6s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
-}
-
-.hit-effect__chip--0 {
-  background: #dcae74;
-}
-.hit-effect__chip--1 {
-  background: #b9863f;
-}
-.hit-effect__chip--2 {
-  background: #f4ede0;
-}
-
-/*
- * Spaene fliegen erst weg, dann faellt der Rest nach unten. Die zweite Haelfte
- * schiebt ueber `translate(x, y)` nach unten und bricht die Sternform auf –
- * ohne das wirkt der Burst wie eine gleichmaessige Explosion aus einem Baukasten.
- */
-@keyframes chip-burst {
-  0% {
-    transform: rotate(var(--angle)) translateY(0) rotate(0deg) scale(1.35);
-    opacity: 1;
-  }
-  45% {
-    transform: rotate(var(--angle)) translateY(-58px) rotate(180deg) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: rotate(var(--angle)) translateY(-76px) translate(6px, 54px) rotate(430deg)
-      scale(0.5);
-    opacity: 0;
-  }
-}
-
-/*
- * ---- Clash-Effekt: eigene Axt getroffen (Game Over) ----
- * Nutzt dasselbe Positionierungsschema wie .hit-effect (--flight-x/--flight-end-bottom),
- * aber in kalten Metallfarben statt warmen Holzspänen – Sieg und Niederlage sollen sich
- * nicht gleich anfühlen. Vorher gab es hier GAR KEINEN Effekt: `hits` steigt bei einer
- * Kollision nicht (die Axt steckt ja nicht), der normale Treffer-Effekt feuerte also nie,
- * und der tödliche Einschlag wirkte lahm – die Axt verschwand einfach.
- */
-.hit-effect--clash {
-  z-index: 3;
-}
-
-.hit-effect__shockwave--clash {
-  border-color: rgba(255, 90, 90, 0.9);
-}
-
-.hit-effect__spark {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 3px;
-  height: 22px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #fff6e0, #ffb37a 55%, rgba(255, 90, 90, 0));
-  transform-origin: center;
-  animation: spark-burst 0.4s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
-}
-
-@keyframes spark-burst {
-  0% {
-    transform: rotate(var(--angle)) translateY(0) scaleY(0.4);
-    opacity: 1;
-  }
-  35% {
-    transform: rotate(var(--angle)) translateY(-46px) scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: rotate(var(--angle)) translateY(-70px) scaleY(0.6);
-    opacity: 0;
-  }
-}
 
 /*
  * ---- Ausgang-Banner ----
@@ -702,22 +469,13 @@
 }
 
 /*
- * Rücksicht auf "Bewegung reduzieren" (Systemeinstellung). Der Screen-Shake und die
- * schnellen Partikel sind genau die Art Effekt, die bei Bewegungsempfindlichkeit
- * unangenehm wird – Spielmechanik-relevante Animationen (Axt-Flug, Scheibendrehung)
+ * Rücksicht auf "Bewegung reduzieren" (Systemeinstellung). Screen-Shake und
+ * Partikel-Effekte gibt es inzwischen ohnehin nicht mehr (siehe Wurf-Vereinfachung
+ * weiter oben) – übrig bleiben rein dekorative Idle-Animationen der Bühne, die hier
+ * abgeschaltet werden. Spielmechanik-relevante Animationen (Axt-Flug, Scheibendrehung)
  * bleiben bewusst erhalten, ohne sie wäre das Spiel nicht spielbar.
  */
 @media (prefers-reduced-motion: reduce) {
-  .stage--shake,
-  .stage--recoil {
-    animation: none;
-  }
-
-  .muzzle-flash::before,
-  .muzzle-flash::after {
-    animation-duration: 0.08s;
-  }
-
   .stage::before,
   .stage__dust,
   .stage__boss-tag {
@@ -726,12 +484,6 @@
 
   .stage__dust {
     display: none;
-  }
-
-  .hit-effect__chip,
-  .hit-effect__shockwave,
-  .hit-effect__spark {
-    animation-duration: 0.2s;
   }
 
   .stage__ready-axe {

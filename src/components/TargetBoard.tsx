@@ -20,13 +20,6 @@ export interface TargetBoardHandle {
    * ihre Position deshalb von der Bildschirmhöhe abhängt.
    */
   getGeometry: () => { centerX: number; centerY: number; radius: number } | null;
-  /**
-   * "Hit-Stop": hält die Drehung für einen Sekundenbruchteil an und lässt die Scheibe
-   * kurz zusammenzucken. Läuft bewusst über den Handle statt über eine Prop, damit der
-   * Treffer keinen React-Re-Render der ganzen App auslöst – dieselbe Überlegung wie
-   * bei der Rotation selbst (siehe Kommentar oben).
-   */
-  punch: () => void;
 }
 
 interface TargetBoardProps {
@@ -251,18 +244,6 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
         radius: rect.width / 2,
       };
     },
-    punch: () => {
-      // Das Zusammenzucken läuft auf der HÜLLE, nicht auf der Scheibe selbst: die trägt
-      // schon die Inline-Rotation aus dem rAF-Loop, eine CSS-Animation auf derselben
-      // Eigenschaft würde die Drehung kurz überschreiben und sichtbar zurückspringen
-      // lassen (derselbe Grund wie beim Riss-Effekt, siehe TargetBoard.css).
-      const huelle = mountElRef.current;
-      if (huelle) {
-        huelle.classList.remove('target-mount--hit');
-        void huelle.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
-        huelle.classList.add('target-mount--hit');
-      }
-    },
   }));
 
   useEffect(() => {
@@ -280,13 +261,10 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
       lastTime = now;
 
       // Die Scheibe hält NIE an, auch nicht kurz bei einem Treffer (früher gab es
-      // hier einen 55ms-Hit-Stop) – Klaus: "soll mindestens so flüssig wie Knife Hit
-      // sein", und genau das ist der Kern von Knife Hits Flüssigkeit: die Scheibe/das
-      // Holz dreht sich dort ausnahmslos durchgehend, ein Mini-Freeze bei jedem
-      // Treffer (bei schnellem Spielen mehrmals pro Sekunde) erzeugte ein spürbares
-      // Ruckeln, das es im Vorbild nicht gibt. Das separate Zusammenzucken der HÜLLE
-      // (`.target-mount--hit` oben in `punch()`) bleibt – das ist eine rein optische
-      // Reaktion ohne Einfluss auf die tatsächliche Rotation, kein Widerspruch dazu.
+      // hier einen 55ms-Hit-Stop, und die Hülle zuckte per `punch()` zusätzlich
+      // sichtbar zusammen) – Klaus wollte den Wurf danach noch weiter radikal
+      // vereinfachen ("kein Schnickschnack", u.a. kein Zielscheiben-Wackeln mehr),
+      // `punch()`/`.target-mount--hit` sind deshalb komplett entfernt (siehe App.tsx).
       if (!pausedRef.current) {
         elapsedRef.current += deltaSeconds;
         const speed = currentSpeed(speedRef.current, patternRef.current, elapsedRef.current);

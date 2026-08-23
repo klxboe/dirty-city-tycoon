@@ -33,8 +33,6 @@ import {
 import type { ThrowOutcome } from './game/types';
 import './App.css';
 
-const PARTICLE_ANGLES = [-70, -40, -15, 10, 35, 60, 90, -95, -120, 130];
-
 /**
  * Lage der Scheibe innerhalb der Bühne, in Pixeln. Grundlage für die Flugbahn –
  * siehe ausführliche Begründung unten bei der Berechnung.
@@ -94,9 +92,6 @@ function App() {
   const prevApplesRef = useRef(game.applesCollectedThisRun);
   const prevCoinsRef = useRef(game.save.coins);
   const prevGemsRef = useRef(game.save.gems);
-  const [burstId, setBurstId] = useState(0);
-  const [clashId, setClashId] = useState(0);
-  const [muzzleId, setMuzzleId] = useState(0);
   const prevFlightStartRef = useRef<number | null>(null);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [gemsFlash, setGemsFlash] = useState(false);
@@ -201,48 +196,29 @@ function App() {
     return () => beobachter.disconnect();
   }, [screen, game.levelIndex]);
 
-  // Screen-Shake auf der Bühne – gemeinsam für Treffer UND Kollision genutzt.
-  const shakeStage = useCallback(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    el.classList.remove('stage--shake');
-    void el.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
-    el.classList.add('stage--shake');
-  }, []);
-
-  // Winziger, schneller Rückstoß-Ruck im Moment des ABSCHUSSES (nicht des Treffers) –
-  // eigene, deutlich dezentere Animation als shakeStage. Zusammen mit dem Mündungsblitz
-  // soll sich das Werfen selbst wie ein direkter Schuss anfühlen, nicht nur der Einschlag.
-  const recoilStage = useCallback(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    el.classList.remove('stage--recoil');
-    void el.offsetWidth;
-    el.classList.add('stage--recoil');
-  }, []);
-
-  // Mündungsblitz + Rückstoß GENAU im Moment, in dem eine neue Axt losfliegt –
-  // erkannt an einem neuen `startedAt`-Zeitstempel (jeder Wurf bekommt einen eigenen).
+  /*
+   * Kein Screen-Shake, kein Rückstoß-Ruck, kein Mündungsblitz, keine Partikel/
+   * Schockwellen, kein Zusammenzucken der Scheibe mehr (Klaus, radikale
+   * Wurf-Vereinfachung: "KEIN Schnickschnack" – explizit u.a. kein Camera/Screen
+   * Shake, kein Zielscheiben-Wackeln, keine übertriebenen Partikel, keine
+   * zusätzlichen Fluganimationen). Übrig bleiben ausschließlich Sound + kurzes
+   * haptisches Feedback – die Bewegung selbst soll "satisfying" sein, nicht
+   * zusätzliche Effekte obendrauf.
+   */
   useEffect(() => {
     const started = game.flyingAxe?.startedAt ?? null;
     if (started !== null && started !== prevFlightStartRef.current) {
-      setMuzzleId((id) => id + 1);
-      recoilStage();
       playThrowSound();
     }
     prevFlightStartRef.current = started;
-  }, [game.flyingAxe, recoilStage]);
+  }, [game.flyingAxe]);
 
-  // Juice: Screen-Shake + Holzspäne-Partikel + Schockwelle + kurzer Rums bei jedem Treffer.
   useEffect(() => {
     if (game.hits > prevHitsRef.current) {
-      shakeStage();
-      setBurstId((id) => id + 1);
-      boardHandleRef.current?.punch(); // Hit-Stop + Zusammenzucken der Scheibe
       vibrate(18);
     }
     prevHitsRef.current = game.hits;
-  }, [game.hits, shakeStage]);
+  }, [game.hits]);
 
   // Soundeffekte je nach Ausgang des Wurfs.
   useEffect(() => {
@@ -255,20 +231,10 @@ function App() {
       } else {
         playGameOverSound();
         vibrate([40, 60, 90]); // Game Over darf sich anders anfühlen als ein Treffer
-        /*
-         * Trifft man die eigene Axt, steigt `hits` NICHT (die Axt prallt ab statt zu
-         * stecken) – der Treffer-Effekt oben feuerte deshalb bisher gar nicht, und die
-         * tödliche Kollision wirkte lahm: die Axt verschwand einfach. Ein eigener,
-         * metallischer "Clash"-Effekt (Funken statt Holzspäne) plus Hit-Stop und Shake
-         * geben genau diesem Moment das Gewicht, das er als Wendepunkt braucht.
-         */
-        shakeStage();
-        setClashId((id) => id + 1);
-        boardHandleRef.current?.punch();
       }
     }
     prevOutcomeRef.current = game.lastOutcome;
-  }, [game.lastOutcome, game.phase, game.bossFruit, shakeStage]);
+  }, [game.lastOutcome, game.phase, game.bossFruit]);
 
   // Eingesammelter Apfel: Ton. Das Fallen zeigt TargetBoard selbst an.
   useEffect(() => {
@@ -488,60 +454,6 @@ function App() {
           />
 
         </div>
-
-        {/* Späne und Schockwelle liegen auf Bühnen-Ebene, damit sie dieselben
-            Koordinaten wie der Axt-Flug nutzen können und genau am Treffpunkt sitzen. */}
-        {burstId > 0 && (
-          <div
-            key={`burst-${burstId}`}
-            className="hit-effect"
-            style={{
-              ['--flight-x' as string]: `${flightX}px`,
-              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
-            }}
-          >
-            <span className="hit-effect__shockwave" />
-            {PARTICLE_ANGLES.map((angle, i) => (
-              <span
-                key={i}
-                className={`hit-effect__chip hit-effect__chip--${i % 3}`}
-                style={{ ['--angle' as string]: `${angle}deg` }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Kollision mit der eigenen Axt: Funken statt Holzspäne, damit sich Sieg und
-            Niederlage nicht gleich anfühlen. */}
-        {clashId > 0 && (
-          <div
-            key={`clash-${clashId}`}
-            className="hit-effect hit-effect--clash"
-            style={{
-              ['--flight-x' as string]: `${flightX}px`,
-              ['--flight-end-bottom' as string]: `${flightEndBottom}px`,
-            }}
-          >
-            <span className="hit-effect__shockwave hit-effect__shockwave--clash" />
-            {PARTICLE_ANGLES.map((angle, i) => (
-              <span
-                key={i}
-                className="hit-effect__spark"
-                style={{ ['--angle' as string]: `${angle}deg` }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Mündungsblitz am Absprungpunkt – feuert im selben Frame wie der Wurf, damit
-            sich das Abtippen selbst wie ein Schuss anfühlt, nicht nur der Einschlag. */}
-        {muzzleId > 0 && (
-          <div
-            key={`muzzle-${muzzleId}`}
-            className="muzzle-flash"
-            style={{ ['--flight-x' as string]: `${flightX}px` }}
-          />
-        )}
 
         {game.phase === 'flying' && game.flyingAxe && (
           <div
