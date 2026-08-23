@@ -558,10 +558,10 @@ function App() {
              * resolveThrow() in useAxeGame.ts – GENAU der Grund für den gemeldeten
              * Mikro-Stopp: ein JS-Timer neben der CSS-Animation kann nachhinken, die Axt
              * stand dann fertig am Ziel und wartete auf einen zweiten, unabhängigen
-             * Zeitgeber). `.axe-flying` trägt ZWEI gleichzeitige Animationen (Position +
-             * Transform, siehe App.css), `animationend` feuert deshalb zweimal – hier auf
-             * genau EINEN der beiden Namen gefiltert, damit `resolveThrow` nicht doppelt
-             * läuft (wäre wegen des reinen Updaters zwar harmlos, aber unnötig).
+             * Zeitgeber). `.axe-flying` trägt nur noch EINE Animation (reine Position,
+             * das frühere zweite Transform/Squash-and-Stretch wurde entfernt, siehe
+             * App.css) – der Namens-Check ist dadurch nicht mehr strikt nötig, bleibt
+             * aber als günstige Absicherung stehen, falls je eine zweite dazukommt.
              */
             onAnimationEnd={(e) => {
               if (e.animationName === 'axe-fly-position') game.resolveThrow();

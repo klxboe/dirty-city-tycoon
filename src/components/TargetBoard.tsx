@@ -3,7 +3,7 @@ import { Axe } from './Axe';
 import { Apple } from './Apple';
 import { normalizeAngle } from '../game/engine';
 import { AXE_EMBED_DEPTH_PX, BASE_SPEED_DEG_PER_SEC, MAX_SPEED_DEG_PER_SEC } from '../game/constants';
-import { boardStyleVars } from '../game/shop';
+import { boardStyleVars, DEFAULT_AXE_SKIN } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
 import type { Apple as AppleData, SpinPattern, StuckAxe } from '../game/types';
 import './TargetBoard.css';
@@ -419,7 +419,12 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             }}
           >
             <div className="target-board__axe-flip target-board__axe-flip--landed">
-              <Axe size={40} skin={axeSkin} />
+              {/* Vorplatzierte Hindernis-Äxte (negative id, siehe useAxeGame.ts
+                  createLevelState) zeigen IMMER die Standard-Axt jedes neuen Spielers,
+                  unabhängig vom ausgerüsteten Skin (Klaus: "die Axt die im Holz steckt
+                  vom Level aus soll immer die Anfangsaxt sein") – nur selbst geworfene
+                  Äxte (id >= 0) zeigen den eigenen Skin. */}
+              <Axe size={40} skin={axe.id < 0 ? DEFAULT_AXE_SKIN : axeSkin} />
             </div>
           </div>
         ))}

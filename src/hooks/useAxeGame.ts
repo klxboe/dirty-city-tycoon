@@ -297,22 +297,23 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
 
   /**
    * Nach einem Game Over: normalerweise Neustart bei Level 1 (Highscore-Prinzip).
-   * AUSNAHME (Klaus: "wenn man beim Bosskampf verkackt und nochmal spielen klickt,
-   * kommt man wieder zum normalen und bleibt nicht beim Bosskampf" – gemeint war
-   * kein Bug, sondern der Wunsch, ausgerechnet bei Bossen NICHT komplett auf Level 1
-   * zurückgeworfen zu werden): starb man an einem Boss-Level (Fruchtboss ODER
-   * Weltboss), setzt "Nochmal spielen" GENAU DORT wieder auf, statt bei Level 1 –
-   * derselbe Mechanismus wie die einmalige Video-Rettung (`rescueRun` unten), nur
-   * beliebig oft und ohne die dortige "nur einmal pro Lauf"-Beschränkung. Münzen/XP/
-   * Skins bleiben in beiden Fällen erhalten. `runSeed` ist an dieser Stelle schon
-   * erhöht (siehe Game-Over-Effekt oben) – hier NICHT nochmal anfassen, sonst springt
-   * die Rotation bei jedem Tod um 2 statt 1.
+   * AUSNAHME NUR NOCH FÜR DEN WELTBOSS (Klaus, ursprünglich: "wenn man beim
+   * Bosskampf verkackt und nochmal spielen klickt, kommt man wieder zum normalen und
+   * bleibt nicht beim Bosskampf" – galt anfangs für Fruchtboss UND Weltboss). Klaus
+   * später eingeschränkt: "wenn man den [Frucht-]Boss verkackt, darf man nicht
+   * nochmal probieren, man wird wieder zu Level 1 zurückgeworfen" – ein Fruchtboss
+   * (alle 5 Level) ist damit wieder ein normaler Level ohne Extra-Versuch, nur ein
+   * Weltboss (Welt-Eingang, deutlich größere Prüfung) behält den Wiederholungs-
+   * Mechanismus, damit man nicht bei jedem Fehlversuch den ganzen Lauf bis dahin
+   * nochmal spielen muss. Münzen/XP/Skins bleiben in beiden Fällen erhalten.
+   * `runSeed` ist an dieser Stelle schon erhöht (siehe Game-Over-Effekt oben) – hier
+   * NICHT nochmal anfassen, sonst springt die Rotation bei jedem Tod um 2 statt 1.
    */
   const restartRun = useCallback(() => {
     setState((prev) => {
       const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
-      const diedOnBoss = Boolean(level.bossFruitId) || Boolean(level.worldBossId);
-      const target = diedOnBoss ? prev.levelIndex : 0;
+      const diedOnWorldBoss = Boolean(level.worldBossId);
+      const target = diedOnWorldBoss ? prev.levelIndex : 0;
       pendingThrowRef.current = false;
       const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
       saveSave(nextSave);

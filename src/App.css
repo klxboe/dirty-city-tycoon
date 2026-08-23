@@ -219,9 +219,17 @@
    * lässt sich gefahrlos herauslösen, weil zwei Verschiebungen kommutieren, in
    * welcher Reihenfolge man sie auch komponiert.
    */
-  animation-name: axe-fly-position, axe-fly-transform;
-  animation-timing-function: linear, cubic-bezier(0.05, 0.9, 0.1, 1);
-  animation-fill-mode: forwards, forwards;
+  /*
+   * Nur noch EINE Animation (reine Position) statt zwei (Position + Transform mit
+   * Squash-and-Stretch). Klaus nach echtem Testen: "fliegt ur langsam und irgendwie
+   * drüber kurz, bevor sie steckt – EXTREM CLEAN, GANZ EINFACH". Das kurze
+   * Überschwingen der Skalierung (scaleX 1.1 bei 12%) las sich vermutlich genau als
+   * dieses "kurz drüber" – jetzt komplett weg, die Axt bleibt während des gesamten
+   * Flugs bei ihrer normalen Form und bewegt sich nur geradlinig, wie bei Knife Hit.
+   */
+  animation-name: axe-fly-position;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
   pointer-events: none;
 }
 
@@ -238,34 +246,6 @@
   }
   100% {
     translate: -50% var(--flight-travel-px);
-  }
-}
-
-/*
- * Squash-and-Stretch beim Abschuss: die Axt streckt sich im Moment des Werfens kurz
- * in Flugrichtung (schneller, "geschossener" Eindruck) und rastet für die Landung
- * wieder auf die normale Form ein.
- *
- * **Rotation komplett entfernt (Klaus: "dreht sich die Axt statt wie ein Messer
- * einfach nach oben zu schießen, wirkt das ganze Spiel unflüssig und billig").**
- * Vorher 360°→190°→(hier weiter reduziert), aber jede sichtbare Drehung während des
- * Flugs liest sich als "trudelnde Axt" statt als kontrollierter, gerader Schuss – die
- * einzige Lösung war, sie ganz wegzulassen: die Axt fliegt jetzt exakt wie ein Messer
- * bei Knife Hit, kerzengerade ohne jede Rotation. `scale()` (Squash-and-Stretch) bleibt
- * unverändert für das "geschossene" Gefühl beim Abschuss. Betrifft NUR diese
- * CSS-Animation der fliegenden Axt – die spätere Ausrichtung einer steckenden Axt
- * kommt komplett unabhängig davon aus `axe.boardLocalAngleDeg` (siehe TargetBoard.tsx),
- * die Kollisionserkennung ist ohnehin rein winkelbasiert und unberührt.
- */
-@keyframes axe-fly-transform {
-  0% {
-    transform: scale(0.68, 1.42) rotate(0deg);
-  }
-  12% {
-    transform: scale(1.1, 0.92) rotate(0deg);
-  }
-  100% {
-    transform: scale(1, 1) rotate(0deg);
   }
 }
 

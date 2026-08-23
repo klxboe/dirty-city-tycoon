@@ -10,16 +10,15 @@ import type { LevelReward } from '../game/types';
 import './LevelCompleteModal.css';
 
 /**
- * Nach dieser Zeit geht's von selbst zum nächsten Level. Von 3500ms auf 1000ms gesenkt
- * und den "Weiter"-Button komplett entfernt (Klaus: "dieses 'weiter zu Level 2' weg,
- * soll nach ca. 1 Sek. automatisch zum nächsten Level springen") – der Button/Balken
- * war nach der Umstellung auf Auto-Advance nur noch redundante Wartezeit-Anzeige für
- * etwas, das ohnehin von selbst passiert. "Werkstatt öffnen" bleibt als einziger Button,
- * weil das eine echte Entscheidung ist: ein Klick unmountet dieses Modal (siehe App.tsx,
+ * Nach dieser Zeit geht's von selbst zum nächsten Level. War 3500ms, dann 1000ms,
+ * jetzt 0 (Klaus: "vergiss die eine Sekunde Wartezeit, soll einfach direkt zum
+ * nächsten Level springen") – kein Warten mehr, kein "Weiter"-Button (siehe vorige
+ * Kürzungsrunde). "Werkstatt öffnen" bleibt als einziger Button, weil das eine echte
+ * Entscheidung ist: ein Klick unmountet dieses Modal (siehe App.tsx,
  * `!overlayOpen && ...`), was den Timeout unten sauber abbricht – kein versehentlicher
  * Levelsprung während man im Shop ist.
  */
-const AUTO_ADVANCE_MS = 1000;
+const AUTO_ADVANCE_MS = 0;
 
 interface LevelCompleteModalProps {
   level: number;

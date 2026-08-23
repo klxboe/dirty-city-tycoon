@@ -45,7 +45,14 @@ import type { LevelConfig, SpinPattern } from './types';
  * (Tippt man WÄHREND eine Axt fliegt, geht der Tap nicht verloren, sondern wird
  * gepuffert und feuert automatisch beim Landen – siehe useAxeGame.ts.)
  */
-export const FLIGHT_DURATION_MS = 140;
+/**
+ * Weiter gesenkt von 140 auf 100ms (Klaus, nach echtem Testen: "fliegt ur langsam,
+ * muss EXTREM CLEAN sein"). Siehe zusätzlich `axe-fly-transform` in App.css – das
+ * Squash-and-Stretch-"Überschwingen" (scaleX 1.1) dort wurde im selben Zug komplett
+ * entfernt, weil genau dieser kurze Ausschlag sich wie ein "die Axt fliegt kurz
+ * drüber, bevor sie steckt" angefühlt haben könnte.
+ */
+export const FLIGHT_DURATION_MS = 100;
 
 /*
  * Es gab hier einen HIT_STOP_MS-Wert (kurzer Rotations-Freeze der Scheibe bei jedem
@@ -78,15 +85,23 @@ export const GAME_OVER_DELAY_MS = 650;
 export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 
 /**
- * Wie nah eine Axt an einem Apfel landen muss, damit er abfällt (Grad). Großzügiger
- * als die Kollisions-Hitbox. Stand lange bei 24° – nie wirklich durchgespielt
- * verifiziert, im offenen TODO als Verdacht vermerkt ("erwischt man oft nur 1 von 2").
- * Auf 30° angehoben: bei 2 Äpfeln (180° auseinander) bleibt zwischen den beiden
- * Fangfenstern noch reichlich Lücke (2×30° = 60° von 360°, keine Überlappung), bei
- * 4 Äpfeln (90° auseinander, ab Level 51) berühren sich die Fenster gerade eben nicht
- * (2×30° = 60° < 90°) – großzügiger, ohne dass sich Äpfel gegenseitig "stehlen" können.
+ * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,
+ * dann 30° (großzügig) – Klaus nach echtem Testen: "die Hitbox von den Münzen muss
+ * kleiner werden, man muss sie jetzt wirklich treffen". Auf 14° gesenkt, deutlich
+ * enger als die alte Kollisions-Hitbox der Äxte (`COLLISION_ANGLE_TOLERANCE_DEG`,
+ * 10°) es aber trotzdem klar übersteigt – ein Treffer braucht jetzt echte Präzision,
+ * ist aber nicht auf den Pixel genau wie eine Axt-Kollision.
  */
-export const APPLE_HIT_TOLERANCE_DEG = 30;
+export const APPLE_HIT_TOLERANCE_DEG = 14;
+
+/**
+ * Mindestabstand (Grad) zwischen einer Münze und JEDER Hindernis-Axt (Klaus: "Münzen
+ * dürfen niemals unter einer Axt spawnen"). `COLLISION_ANGLE_TOLERANCE_DEG` (10°) +
+ * `APPLE_HIT_TOLERANCE_DEG` (14°) + etwas Puffer: darunter würde das Treffen der Münze
+ * zwangsläufig auch als Axt-Kollision zählen (Game Over statt Münze) – die Münze wäre
+ * ohne Risiko gar nicht sicher erreichbar. Siehe `resolveAppleAngles()` unten.
+ */
+const MIN_APPLE_AXE_SEPARATION_DEG = COLLISION_ANGLE_TOLERANCE_DEG + APPLE_HIT_TOLERANCE_DEG + 2;
 
 /**
  * Wie tief die Axtspitze optisch ins Holz einsticht (px), gemessen vom Steck-Radius
@@ -208,6 +223,36 @@ function spreadAngles(count: number, startDeg: number): number[] {
   return Array.from({ length: count }, (_, i) => normalizeDeg(startDeg + (360 / count) * i));
 }
 
+/** Kürzester Winkelabstand zwischen zwei Richtungen (0-180°). */
+function angularDistanceDeg(a: number, b: number): number {
+  const diff = Math.abs(normalizeDeg(a) - normalizeDeg(b)) % 360;
+  return diff > 180 ? 360 - diff : diff;
+}
+
+/**
+ * Schiebt jede Münze weg von JEDER Hindernis-Axt, bis `MIN_APPLE_AXE_SEPARATION_DEG`
+ * eingehalten ist (Klaus: "Münzen dürfen niemals unter einer Axt spawnen"). Bewusst
+ * deterministisch (fester Schiebe-Schritt, kein `Math.random()`) – passend zum Rest
+ * der Level-Generierung, dieselbe Levelnummer/derselbe runSeed ergibt immer dieselbe
+ * Anordnung. `guard` verhindert eine Endlosschleife im (bei bis zu 10 Hindernissen auf
+ * 360° theoretisch möglichen) Fall, dass wirklich jede Position blockiert ist.
+ */
+function resolveAppleAngles(appleAngles: number[], obstacleAngles: number[] | undefined): number[] {
+  if (!obstacleAngles || obstacleAngles.length === 0) return appleAngles;
+  return appleAngles.map((angle) => {
+    let resolved = angle;
+    let guard = 0;
+    while (
+      obstacleAngles.some((o) => angularDistanceDeg(resolved, o) < MIN_APPLE_AXE_SEPARATION_DEG) &&
+      guard < 36
+    ) {
+      resolved = normalizeDeg(resolved + MIN_APPLE_AXE_SEPARATION_DEG);
+      guard++;
+    }
+    return resolved;
+  });
+}
+
 /*
  * Schwierigkeits-Kurve. Bewusst über die LEVELNUMMER gesteuert und nicht über
  * "Stufen zu je 5 Leveln": eine frühere Version änderte in den ersten 16 Leveln
@@ -306,10 +351,15 @@ function obstacleCountFor(levelIndex: number): number {
   return Math.max(1, Math.min(OBSTACLE_COUNT_CAP, base + wobble));
 }
 
+/**
+ * Münzen pro Level. War 2/3/4 – Klaus: "Münzen/Diamanten sollen noch viel seltener
+ * sein", also um je eine gesenkt (1/2/3), zusätzlich zur separat gekürzten
+ * Münz-/Diamant-AUSBEUTE pro Treffer weiter oben (`COINS_PER_APPLE` u.a.).
+ */
 function appleCountFor(levelIndex: number): number {
-  if (levelIndex < 20) return 2;
-  if (levelIndex < 50) return 3;
-  return 4;
+  if (levelIndex < 20) return 1;
+  if (levelIndex < 50) return 2;
+  return 3;
 }
 
 /**
@@ -318,14 +368,15 @@ function appleCountFor(levelIndex: number): number {
  * berechnet statt mit `Math.random()`, damit ein Level bei jedem Versuch (auch nach
  * einem Game Over) denselben goldenen Apfel an derselben Stelle hat – passend zum Rest
  * der Level-Generierung, die komplett reine Funktionen der Levelnummer sind.
- * Trifft auf ungefähr jedes 7. Level zu (~14%).
+ * Trifft auf ungefähr jedes 15. Level zu (~7%, war jedes 7. Level/~14% – Klaus:
+ * "Diamanten sollen noch viel seltener sein").
  */
 function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
   if (appleCount <= 0) return undefined;
   // In der Heldenstadt-Welt gibt es keine goldenen Äpfel – dort übernimmt die
   // Sammelfigur (figurineIndexFor) dieselbe Rolle als seltenes Extra-Fundstück.
   if (levelIndex >= HERO_WORLD_START) return undefined;
-  const hasGolden = (levelIndex * 131 + 41) % 7 === 0;
+  const hasGolden = (levelIndex * 131 + 41) % 15 === 0;
   if (!hasGolden) return undefined;
   return (levelIndex * 3) % appleCount;
 }
@@ -523,13 +574,14 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
    */
   const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 5) : obstacleCountFor(levelIndex);
   const appleCount = appleCountFor(levelIndex);
+  const preplacedAxeAngles = obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined;
 
   return {
     axeCount,
     boardSpeedDegPerSec,
     spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : spinPatternFor(levelIndex),
-    appleAngles: spreadAngles(appleCount, appleSeed),
-    preplacedAxeAngles: obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined,
+    appleAngles: resolveAppleAngles(spreadAngles(appleCount, appleSeed), preplacedAxeAngles),
+    preplacedAxeAngles,
     bossFruitId: boss?.id,
     worldBossId: worldBoss?.id,
     goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
@@ -620,46 +672,45 @@ export const SAVE_KEY = 'axe-throw-save-v2';
  * wertvoll und ist der Grund, überhaupt zu zielen statt zu spammen.
  */
 /**
- * Münz-/XP-Wirtschaft deutlich zurückgeschraubt (Klaus: "man bekommt viel zu viele
- * Münzen und XP"). Betrifft alle vier Stellschrauben unten UND `REWARD_MULTIPLIER`
- * weiter unten gleichzeitig, weil sie sich gegenseitig verstärken (besonders
- * `blockCompletionBonus` × `REWARD_MULTIPLIER` × Serie-Multiplikator explodierte in
- * langen Highscore-Läufen). Faustregel: überall ungefähr halbiert statt eine einzelne
- * Zahl zu tunen, damit das Verhältnis der Boni zueinander erhalten bleibt.
+ * Münz-/XP-Wirtschaft ZWEIMAL zurückgeschraubt (Klaus, erste Runde: "man bekommt
+ * viel zu viele Münzen und XP" – dort auf etwa die Hälfte gesenkt. Klaus danach noch
+ * deutlicher: "viel viel weniger XP und viel weniger Münzen" – deshalb hier ein
+ * zweiter, nochmal deutlich härterer Schnitt, keine vorsichtige Nachjustierung).
+ * Betrifft alle Stellschrauben unten gemeinsam, damit das Verhältnis der Boni
+ * zueinander erhalten bleibt statt nur eine einzelne Zahl zu verschieben.
  */
-export const COINS_PER_APPLE = 3;
+export const COINS_PER_APPLE = 1;
 /**
  * XP für ein geschafftes Level – fest, unabhängig von Levelnummer/Serie/Perfekt-Bonus
  * (bewusst simpel gehalten, im Gegensatz zu den Münzen). XP ist eine EIGENE, DAUERHAFTE
  * Ressource (übersteht ein Game Over, anders als der Lauf-Fortschritt selbst) und
  * schaltet Welten frei – siehe `worldForLevel`/`WORLDS` in `worlds.ts` für die
  * Level-Bereiche, aus denen sich die Schwellenwerte ableiten (`startLevelIndex *
- * XP_PER_LEVEL`), und `WorldMap.tsx` für die Freischalt-Prüfung selbst. Reduziert von
- * 10 auf 6 – da die Welt-Schwellenwerte aus DERSELBEN Konstante abgeleitet werden,
- * ändert sich am Freischalt-TEMPO nichts, nur die angezeigte Zahl wirkt nicht mehr
- * aufgebläht.
+ * XP_PER_LEVEL`), und `WorldMap.tsx` für die Freischalt-Prüfung selbst. War 10, dann
+ * 6, jetzt 2 – die Welt-Schwellenwerte skalieren aus DERSELBEN Konstante mit, also
+ * unverändertes Freischalt-Tempo trotz der viel kleineren angezeigten Zahl.
  */
-export const XP_PER_LEVEL = 6;
+export const XP_PER_LEVEL = 2;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 
 /**
  * Münz-Bonus fürs Abschließen eines Levels, steigt mit der Levelnummer.
- * Level 1 = 6, Level 50 = 30, Level 100 = 55 (vorher 10/59/109) – zusammen mit den
- * Äpfeln kommt man in einem guten Lauf immer noch zügig an den ersten Skin (150 Münzen),
- * aber lange Läufe häufen nicht mehr unverhältnismäßig viel an.
+ * Level 1 = 2, Level 50 = 9, Level 100 = 17 (war 10/59/109, dann 6/30/55) – deutlich
+ * flachere Kurve, lange Läufe häufen jetzt spürbar weniger an.
  */
 export function levelCompletionBonus(levelIndex: number): number {
-  return Math.round(6 + levelIndex * 0.5);
+  return Math.round(2 + levelIndex * 0.15);
 }
 
 /** Zusatz, wenn ALLE Äpfel eines Levels eingesammelt wurden – belohnt genaues Zielen. */
-export const PERFECT_APPLE_BONUS = 15;
+export const PERFECT_APPLE_BONUS = 5;
 
-/** Zusatz für den Abschluss eines 10er-Blocks, wächst mit der Blocknummer. Halbiert
- * (vorher 100 pro Block) – das war der Haupttreiber der Münzinflation in langen Läufen. */
+/** Zusatz für den Abschluss eines 10er-Blocks, wächst mit der Blocknummer. War 100,
+ * dann 50, jetzt 15 pro Block – das war über beide Runden der Haupttreiber der
+ * Münzinflation in langen Läufen. */
 export function blockCompletionBonus(levelIndex: number): number {
-  return 50 * (Math.floor(levelIndex / LEVELS_PER_BLOCK) + 1);
+  return 15 * (Math.floor(levelIndex / LEVELS_PER_BLOCK) + 1);
 }
 
 /**
@@ -670,8 +721,9 @@ export function streakMultiplier(streak: number): number {
   return Math.min(2, 1 + Math.floor(streak / 5) * 0.25);
 }
 
-/** Boss-Level, dessen Axt man schon besitzt: gibt es stattdessen Münzen. */
-export const BOSS_REPEAT_BONUS = 150;
+/** Boss-Level, dessen Axt man schon besitzt: gibt es stattdessen Münzen. War 150,
+ * im selben zweiten Münz-Kürzungs-Durchgang wie oben mitreduziert. */
+export const BOSS_REPEAT_BONUS = 50;
 
 /**
  * Tägliche Belohnung: 7-Tage-Zyklus, der sich danach wiederholt (Tag 8 = wieder
