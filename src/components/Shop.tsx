@@ -100,13 +100,12 @@ export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, 
 
   const items =
     tab === 'axe'
-      ? // Echtgeld-Äxte (source: 'iap') für die App-Store-Einreichung ausgeblendet
-        // (Audit 2026-08-22): es gibt noch KEINE echte StoreKit-Anbindung (braucht das
-        // native Projekt), ein Kauf-Button, der offen "kommt mit dem App-Store-Release"
-        // zeigt, wäre eine nicht-funktionale Kauf-UI und ein sicherer Ablehnungsgrund.
-        // Reiner Anzeige-Filter, KEINE Datenänderung – sobald StoreKit angebunden ist,
-        // reicht das Entfernen dieses `.filter(...)`, um sie wieder sichtbar zu machen.
-        AXE_SKINS.filter((skin) => skin.source !== 'iap')
+      ? // Echtgeld-Äxte (source: 'iap') stehen bewusst am ENDE von AXE_SKINS (siehe
+        // shop.ts) – dadurch erscheinen sie hier automatisch unterhalb der Münz-Äxte,
+        // in derselben Liste/Spalte, ohne dass es hier einer eigenen Sortierung
+        // bedarf. Kauf-Button zeigt bei fehlenden Store-Produkten (siehe
+        // game/purchases.ts) kontrolliert "nicht verfügbar" statt zu crashen.
+        AXE_SKINS
       : tab === 'board'
         ? BOARD_SKINS
         : tab === 'legendary'

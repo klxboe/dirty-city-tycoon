@@ -2777,6 +2777,17 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       AdMob-App+Ad-Unit für Axe Throw, neues RevenueCat-Projekt+API-Key, 10
       App-Store-Connect-IAP-Produkte, Codemagic-Projekt+Secrets, volle
       SKAdNetwork-Liste aus aktueller Google-Doku.
+- [x] **Echtgeld-Äxte wieder sichtbar (2026-08-22).** Klaus war verwirrt, warum die
+      lilanen Karten weg waren (hatte den Ausblenden-Beschluss von vorhin vergessen)
+      – Klarstellung: "sie sollen Geld kosten, aber einfach ganz unten bei den
+      Äxten sein, unter den Coin-Äxten, in derselben Spalte". Da `AXE_SKINS` die
+      IAP-Äxte ohnehin schon ans Ende der Liste sortiert (siehe früherer Eintrag),
+      reichte das Entfernen des `.filter(skin => skin.source !== 'iap')`-Anzeige-
+      Filters in `Shop.tsx` – keine Sortierung nötig, sie erscheinen automatisch
+      unterhalb der Münz-Äxte in derselben Liste. Käufe scheitern weiterhin
+      kontrolliert mit "nicht verfügbar" (siehe `purchaseSkin()`), bis die echten
+      Store-Produkte existieren – kein Crash, kein irreführender Button-Text. Per
+      echtem Spielstand verifiziert, `tsc -b` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
