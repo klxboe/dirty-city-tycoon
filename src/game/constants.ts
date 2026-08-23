@@ -88,8 +88,12 @@ export const GAME_OVER_DELAY_MS = 650;
  * würde zwei sehr schnell hintereinander geworfene Äxte in Level 1 fast nie mehr
  * kollidieren lassen (auch dann nicht, wenn sie eigentlich sollten), 8° lässt hier noch
  * eine minimale Sicherheitsmarge.
+ *
+ * Wieder auf 10° angehoben (Klaus, direkt nach echtem Testen: "Hitbox von den Äxten
+ * etwas höher") – die vorherige Senkung auf 8° war zu knapp, zurück auf den alten,
+ * lange bewährten Wert.
  */
-export const COLLISION_ANGLE_TOLERANCE_DEG = 8;
+export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 
 /**
  * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,
@@ -102,8 +106,12 @@ export const COLLISION_ANGLE_TOLERANCE_DEG = 8;
  * Auf 17° angehoben (Klaus nach echtem Testen auf dem Gerät, Fotoserie eines knapp
  * verfehlten Wurfs: "etwas größere Hitbox, aber nicht viel") – eine kleine, gezielte
  * Lockerung statt einer Rückkehr zur alten Großzügigkeit (30°).
+ *
+ * Direkt danach wieder auf 13° gesenkt (Klaus: "Hitbox von den Münzen etwas kleiner") –
+ * der vorherige Anhub auf 17° ging in die falsche Richtung, jetzt sogar etwas enger als
+ * der ursprüngliche Wert (14°).
  */
-export const APPLE_HIT_TOLERANCE_DEG = 17;
+export const APPLE_HIT_TOLERANCE_DEG = 13;
 
 /**
  * Mindestabstand (Grad) zwischen einer Münze und JEDER Hindernis-Axt (Klaus: "Münzen
