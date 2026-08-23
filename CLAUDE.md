@@ -2881,6 +2881,19 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         nicht per Browser-Automatisierung nachspielen (rAF-Freeze) – nur
         Compile/DOM/Konsole geprüft, Bestätigung durch echtes Spielen auf dem Gerät
         steht noch aus.
+- [x] **Hit-Stop entfernt: "mindestens so flüssig wie Knife Hit" (2026-08-23).** Nach
+      dem echten Testen auf dem Gerät war die Axt-Rotation zwar weg, aber das Werfen
+      fühlte sich immer noch nicht so flüssig wie im Vorbild an. Ursache gefunden:
+      `TargetBoard.tsx` fror die Scheiben-Rotation bei JEDEM Treffer für 55ms ein
+      (`HIT_STOP_MS`, klassischer Action-Spiel-"Hit-Stop") – bei schnellem Spielen
+      (mehrmals pro Sekunde) ein spürbares Mikro-Ruckeln. Knife Hits Kern-Eigenschaft
+      ist aber genau, dass sich die Scheibe/das Holz NIE anhält, auch nicht kurz.
+      `freezeUntilRef`-Mechanismus + `HIT_STOP_MS`-Konstante komplett entfernt, die
+      Scheibe dreht sich jetzt bei jedem Treffer ohne jede Unterbrechung weiter. Das
+      rein optische Zusammenzucken der Board-Hülle (`.target-mount--hit`, unabhängige
+      CSS-Klasse ohne Rotations-Bezug) bleibt unangetastet. `tsc -b` sauber, mehrere
+      schnelle Klicks hintereinander im Browser ohne Konsolenfehler getestet – das
+      tatsächliche Flüssigkeitsgefühl braucht wie immer Bestätigung auf dem Gerät.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
