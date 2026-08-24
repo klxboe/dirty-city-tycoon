@@ -150,10 +150,16 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
  * pro Umdrehung weniger Bildschirm-Strecke zurück, eine Drehung liest sich dadurch
  * schneller/knackiger). War 260/120, jetzt 208/96 – alle davon abgeleiteten Werte
  * (Äpfel-/Axt-Radien, `.target-board`-CSS-Größen) proportional mitskaliert.
+ *
+ * Nochmal minimal verkleinert auf 190/88 (Klaus: "Bretter minimal kleiner", im selben
+ * Zug wie mehr Äxte pro Level in `axeCountFor()` – engeres Brett UND mehr Äxte
+ * verstärken sich gegenseitig). Skalierungsfaktor (190/208 ≈ 0,91) 1:1 auf alle
+ * übrigen Radien unten UND die `.target-board`-CSS-Größen (`TargetBoard.css`)
+ * angewendet, damit nichts auseinanderläuft.
  */
-export const BOARD_SIZE = 208;
-/** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands (104), damit sie im Holz sitzen. */
-export const BOARD_RADIUS = 96;
+export const BOARD_SIZE = 190;
+/** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands, damit sie im Holz sitzen. */
+export const BOARD_RADIUS = 88;
 /**
  * Steck-Radius als Anteil des Scheiben-Radius (120 von 130).
  *
@@ -176,9 +182,9 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
  */
 const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
-const APPLE_RADIUS = 122;
-const APPLE_STEM_LENGTH = 16;
-const APPLE_STEM_RADIUS = 102 + APPLE_STEM_LENGTH / 2;
+const APPLE_RADIUS = 111;
+const APPLE_STEM_LENGTH = 15;
+const APPLE_STEM_RADIUS = 93 + APPLE_STEM_LENGTH / 2;
 
 /**
  * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das

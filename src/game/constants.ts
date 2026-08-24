@@ -95,8 +95,14 @@ export const GAME_OVER_DELAY_MS = 650;
  *
  * Weiter auf 13° angehoben (Klaus: deutlicher spürbare Lockerung, keine Zweifel mehr
  * am Effekt).
+ *
+ * Minimal auf 12° gesenkt (Klaus: "Hitbox von allen Äxten minimal kleiner", im selben
+ * Zug wie mehr Äxte pro Level + kleinere Bretter). Gilt weiterhin für ALLE Äxte exakt
+ * gleich – geworfene UND vorplatzierte Hindernis-Äxte laufen über denselben Aufruf von
+ * `collidesWithStuckAxe()` mit demselben Wert (siehe Kommentar oben), es gab dort nie
+ * eine Unterscheidung.
  */
-export const COLLISION_ANGLE_TOLERANCE_DEG = 13;
+export const COLLISION_ANGLE_TOLERANCE_DEG = 12;
 
 /**
  * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,
@@ -314,17 +320,21 @@ function resolveAppleAngles(appleAngles: number[], obstacleAngles: number[] | un
  * Level 26-30, bevor die ursprüngliche Kurve unverändert weiterläuft – ein klar
  * spürbares Nadelöhr statt einer weiteren unauffälligen Zahl in einer langen Rampe.
  * Siehe `obstacleBaseFor` unten für dieselbe Behandlung der Hindernis-Kurve.
+ *
+ * Zehnter Härte-Durchgang (Klaus: "pro Level etwas mehr Äxte, dafür Bretter minimal
+ * kleiner") – jede Stufe um genau 1 angehoben, im selben Zug wie die Brett-
+ * Verkleinerung weiter unten (`BOARD_SIZE`/`BOARD_RADIUS` in TargetBoard.tsx).
  */
 function axeCountFor(levelIndex: number): number {
-  if (levelIndex < 5) return 6; // Level 1-5
-  if (levelIndex < 12) return 7; // Level 6-12
-  if (levelIndex < 19) return 9; // Level 13-19
-  if (levelIndex < 25) return 16; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
-  if (levelIndex < 30) return 11; // Level 26-30 (kurze Erholung nach der Wall)
-  if (levelIndex < 42) return 13; // Level 31-42
-  if (levelIndex < 55) return 15; // Level 43-55
-  if (levelIndex < 70) return 17; // Level 56-70
-  return 19; // ab Level 71
+  if (levelIndex < 5) return 7; // Level 1-5
+  if (levelIndex < 12) return 8; // Level 6-12
+  if (levelIndex < 19) return 10; // Level 13-19
+  if (levelIndex < 25) return 17; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
+  if (levelIndex < 30) return 12; // Level 26-30 (kurze Erholung nach der Wall)
+  if (levelIndex < 42) return 14; // Level 31-42
+  if (levelIndex < 55) return 16; // Level 43-55
+  if (levelIndex < 70) return 18; // Level 56-70
+  return 20; // ab Level 71
 }
 
 /**
