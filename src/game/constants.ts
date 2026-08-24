@@ -555,18 +555,44 @@ export const LEVEL_VARIANT_MAX_LEVEL_INDEX = 30;
  * gegenläufigen Tempo-Faktor aus, damit sich der GEFÜHLTE Schwierigkeitsgrad über alle
  * 5 Varianten ungefähr die Waage hält, statt einfach nur schwerer/leichter zu werden.
  */
-function levelVariantProfile(variantSeed: number): { axeDelta: number; obstacleDelta: number; speedFactor: number } {
+interface LevelVariantProfile {
+  axeDelta: number;
+  obstacleDelta: number;
+  speedFactor: number;
+  /** Erzwingt ein bestimmtes Dreh-Muster für diese Variante (überschreibt
+   *  `spinPatternFor(levelIndex)`) – `undefined` = normales, levelabhängiges Muster. */
+  spinPatternOverride?: SpinPattern;
+}
+
+/**
+ * Nachgeschärft (Klaus, direkt nach dem ersten Varianten-Ausbau: "es sind immer noch
+ * nicht 150 verschiedene Arten – verschiedene Anzahl an Messern, schneller, langsamer,
+ * Richtungswechsel, aber der Schwierigkeitsgrad der 5 soll ca. gleich sein"). ±1
+ * Achse/Hindernis war zu wenig spürbar UND das Dreh-Muster war noch gar nicht Teil der
+ * Variante. Jetzt deutlichere Sprünge (±2 Achsen/Hindernisse) UND ein erzwungenes
+ * Dreh-Muster pro Variante (Profile 1+4 = Pulsieren, 2+3 = Richtungswechsel) – jeweils
+ * mit einem GEGENLÄUFIGEN Tempo-Faktor kompensiert, damit sich der gefühlte
+ * Schwierigkeitsgrad über alle 5 Varianten ungefähr die Waage hält ("ca. gleich",
+ * nicht exakt identisch – das wäre bei so unterschiedlichen Zutaten ohnehin nicht
+ * seriös zu garantieren).
+ */
+function levelVariantProfile(variantSeed: number): LevelVariantProfile {
   switch (variantSeed % LEVEL_VARIANT_COUNT) {
     case 1:
-      return { axeDelta: 0, obstacleDelta: 1, speedFactor: 0.9 }; // ein Hindernis mehr, dafür spürbar ruhiger
+      // Volleres Brett, dafür spürbar ruhiger UND gleichmäßig (Pulsieren statt Richtungswechsel).
+      return { axeDelta: 0, obstacleDelta: 2, speedFactor: 0.86, spinPatternOverride: 'pulse' };
     case 2:
-      return { axeDelta: 0, obstacleDelta: -1, speedFactor: 1.1 }; // ein Hindernis weniger, dafür schneller
+      // Leereres Brett, dafür schneller UND unvorhersehbarer (Richtungswechsel).
+      return { axeDelta: 0, obstacleDelta: -2, speedFactor: 1.14, spinPatternOverride: 'reverse' };
     case 3:
-      return { axeDelta: 1, obstacleDelta: 0, speedFactor: 0.94 }; // eine Axt mehr (voller), etwas ruhiger
+      // Deutlich mehr Würfe nötig (voller Köcher), dafür langsamer, mit Richtungswechsel.
+      return { axeDelta: 2, obstacleDelta: 0, speedFactor: 0.88, spinPatternOverride: 'reverse' };
     case 4:
-      return { axeDelta: -1, obstacleDelta: 0, speedFactor: 1.06 }; // eine Axt weniger, dafür etwas schneller
+      // Weniger Würfe nötig, dafür schneller, mit Pulsieren.
+      return { axeDelta: -2, obstacleDelta: 0, speedFactor: 1.12, spinPatternOverride: 'pulse' };
     default:
-      return { axeDelta: 0, obstacleDelta: 0, speedFactor: 1 }; // Variante 0: die bisherige Basis-Kurve unverändert
+      // Variante 0: die bisherige Basis-Kurve unverändert (auch das normale, levelabhängige Muster).
+      return { axeDelta: 0, obstacleDelta: 0, speedFactor: 1 };
   }
 }
 
@@ -693,7 +719,7 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): Le
   return {
     axeCount,
     boardSpeedDegPerSec,
-    spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : spinPatternFor(levelIndex),
+    spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : (variantProfile.spinPatternOverride ?? spinPatternFor(levelIndex)),
     appleAngles: resolveAppleAngles(spreadAngles(appleCount, appleSeed), preplacedAxeAngles),
     preplacedAxeAngles,
     bossFruitId: boss?.id,
