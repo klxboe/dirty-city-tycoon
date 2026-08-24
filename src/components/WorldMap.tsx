@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { Axe } from './Axe';
-import { LEVEL_COUNT, XP_PER_LEVEL } from '../game/constants';
+import { LEVEL_COUNT, WORLD_UNLOCK_XP_MULTIPLIER, XP_PER_LEVEL } from '../game/constants';
 import { WORLD_BOSSES, WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
 import './WorldMap.css';
 
 /** XP-Schwelle einer Welt, aus ihrem Level-Bereich abgeleitet – kein eigenes Datenfeld
  *  in `worlds.ts` nötig (das kennt XP_PER_LEVEL bewusst nicht, um einen Zirkelimport
- *  mit constants.ts zu vermeiden). Wald (startLevelIndex 0) ist damit immer frei. */
+ *  mit constants.ts zu vermeiden). Wald (startLevelIndex 0) ist damit immer frei.
+ *  `WORLD_UNLOCK_XP_MULTIPLIER` macht die Schwelle bewusst höher als die reine
+ *  XP_PER_LEVEL-Rechnung, ohne die pro Level gutgeschriebene XP zu verändern. */
 function xpThresholdFor(startLevelIndex: number): number {
-  return startLevelIndex * XP_PER_LEVEL;
+  return startLevelIndex * XP_PER_LEVEL * WORLD_UNLOCK_XP_MULTIPLIER;
 }
 
 /** Kleines Schloss-Symbol für noch nicht erreichte Welten. */
@@ -235,7 +237,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       startLevelIndex: world.startLevelIndex,
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
-      progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL))),
+      progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL * WORLD_UNLOCK_XP_MULTIPLIER))),
       bossName: WORLD_BOSSES[world.id]?.name ?? null,
     };
   });

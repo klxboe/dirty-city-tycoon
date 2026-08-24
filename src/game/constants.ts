@@ -864,6 +864,19 @@ export const COINS_PER_APPLE = 1;
  * unverändertes Freischalt-Tempo trotz der viel kleineren angezeigten Zahl.
  */
 export const XP_PER_LEVEL = 2;
+/**
+ * Zusätzlicher Faktor NUR für die Welt-Freischalt-Schwelle (`xpThresholdFor` in
+ * WorldMap.tsx), bewusst GETRENNT von `XP_PER_LEVEL` selbst. Grund: die Schwelle
+ * wird direkt aus `startLevelIndex * XP_PER_LEVEL` abgeleitet – würde man stattdessen
+ * einfach `XP_PER_LEVEL` erhöhen, um Welten schwerer freizuschalten, stiege die
+ * XP-EINNAHME pro Level GENAUSO stark mit, die beiden Effekte würden sich exakt
+ * aufheben und am nötigen Levelaufwand nichts ändern. Klaus: "man soll viel mehr xp
+ * brauchen um in eine neue welt zu kommen" – mit ×4 braucht z.B. Wüste (startLevelIndex
+ * 20) jetzt 160 statt 40 XP, also das Vierfache an geschafften Leveln irgendwo im
+ * Spiel, bevor sie erreichbar ist. Multipliziert NUR die Schwelle, nicht die pro Level
+ * gutgeschriebene XP-Zahl selbst.
+ */
+export const WORLD_UNLOCK_XP_MULTIPLIER = 4;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 
