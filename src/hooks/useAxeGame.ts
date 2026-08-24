@@ -37,20 +37,24 @@ import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
 /**
  * Welche Level-Variante (0-4, siehe `LEVEL_VARIANT_COUNT`/`LEVEL_VARIANT_MAX_LEVEL_INDEX`
- * in constants.ts) beim Betreten von `newLevelIndex` gilt. Anders als `runSeed` (der
- * ganze Läufe rotiert) würfelt das bei JEDEM Wechsel auf ein ANDERES Level neu –
- * `Math.random()` ist hier bewusst erlaubt (einziger Ort im gesamten Level-System, der
- * NICHT rein aus der Levelnummer hergeleitet wird): der gewürfelte Wert wird sofort in
- * `SaveData.levelVariantSeed` eingefroren und danach nur noch gelesen, nie im laufenden
- * Level neu gewürfelt – Kollisionsprüfung/Belohnung sehen deshalb immer dieselbe
- * Anordnung wie beim Rendern.
+ * in constants.ts) beim Betreten eines Levels gilt. `Math.random()` ist hier bewusst
+ * erlaubt (einziger Ort im gesamten Level-System, der NICHT rein aus der Levelnummer
+ * hergeleitet wird): der gewürfelte Wert wird sofort in `SaveData.levelVariantSeed`
+ * eingefroren und danach nur noch gelesen, nie im laufenden Level neu gewürfelt.
  *
- * Bleibt `newLevelIndex` gleich `previousLevelIndex` (Boss-Retry, Video-Rettung – man
- * setzt denselben Versuch fort statt ein neues Level zu betreten), wird NICHT neu
- * gewürfelt: ein Übungsversuch soll dieselbe Anordnung zeigen wie der Fehlversuch davor.
+ * GEFUNDENER BUG (Klaus: "die Level sind immer noch dieselben"): die erste Fassung
+ * verglich `previousLevelIndex === newLevelIndex` und würfelte nur bei einer
+ * tatsächlichen ÄNDERUNG des Level-Index neu. Stirbt man aber GENAU auf Level 1 und
+ * startet neu, bleibt der Ziel-Index 0 -> 0 (unverändert) – die alte Prüfung hielt das
+ * fälschlich für "derselbe Versuch, nicht neu würfeln" (gedacht für Boss-Retry/Video-
+ * Rettung), obwohl `restartRun()` semantisch ein ECHTER Neustart ist. Jetzt entscheidet
+ * jede Aufrufstelle explizit per `shouldReroll`, statt das aus einem Index-Vergleich
+ * zu erraten: `nextLevel()`/`goToLevel()`/`restartRun()` würfeln IMMER neu (auch wenn
+ * der Ziel-Index zufällig gleich bleibt), NUR `rescueRun()` (setzt exakt denselben
+ * Versuch fort) lässt die Variante unangetastet.
  */
-function rollLevelVariantSeed(previousLevelIndex: number, newLevelIndex: number, previousVariantSeed: number): number {
-  if (newLevelIndex === previousLevelIndex) return previousVariantSeed;
+function rollLevelVariantSeed(shouldReroll: boolean, previousVariantSeed: number): number {
+  if (!shouldReroll) return previousVariantSeed;
   return Math.floor(Math.random() * LEVEL_VARIANT_COUNT);
 }
 
@@ -308,7 +312,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...prev.save,
         currentLevel: target,
         runSeed: isNewRun ? prev.save.runSeed + 1 : prev.save.runSeed,
-        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
+        levelVariantSeed: rollLevelVariantSeed(true, prev.save.levelVariantSeed),
       };
       saveSave(nextSave);
       return {
@@ -344,7 +348,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...prev.save,
         currentLevel: target,
         streak: 0,
-        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
+        levelVariantSeed: rollLevelVariantSeed(true, prev.save.levelVariantSeed),
       };
       saveSave(nextSave);
       return {
@@ -397,7 +401,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const nextSave: SaveData = {
         ...prev.save,
         currentLevel: target,
-        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
+        levelVariantSeed: rollLevelVariantSeed(true, prev.save.levelVariantSeed),
       };
       saveSave(nextSave);
       return {

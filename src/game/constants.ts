@@ -164,8 +164,19 @@ const MIN_APPLE_AXE_SEPARATION_DEG = COLLISION_ANGLE_TOLERANCE_DEG + APPLE_HIT_T
  *
  * Weiter auf 14 angehoben (Klaus: deutlicher spürbarer Unterschied, keine Zweifel mehr
  * am Effekt).
+ *
+ * Wieder auf 7 gesenkt (Klaus nach echtem Testen am Gerät: "Axt ist immer noch in der
+ * Mitte" – Screenshot zeigte eine steckende Axt, deren Klinge deutlich zu weit Richtung
+ * Scheibenmitte reichte). 14px war zusammen mit der im selben Schritt vorgenommenen
+ * Brett-Verkleinerung (`BOARD_RADIUS` 96→88) zu viel: 14px Einstecktiefe auf einem nur
+ * noch 88px-Radius sind gut 16% des Radius, deutlich mehr als die ursprünglich als
+ * Grenze gedachten ~5-8%. Zusätzlich wurde die Axt-Icon-GRÖSSE proportional zur
+ * Brett-Verkleinerung mitskaliert (siehe `FLIGHT_AXE_SIZE` in App.tsx,
+ * `STUCK_AXE_SIZE` in TargetBoard.tsx) – vorher blieb die Icon-Größe beim Brett-Resize
+ * unangetastet, wodurch das (gleich große) Icon auf dem kleineren Brett spürbar mehr
+ * Fläche einnahm als vorher.
  */
-export const AXE_EMBED_DEPTH_PX = 14;
+export const AXE_EMBED_DEPTH_PX = 7;
 
 /**
  * Aufprall-Punkt für einen Wurf GENAU IN DIE MITTE, in Weltkoordinaten

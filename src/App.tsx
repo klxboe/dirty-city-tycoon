@@ -62,9 +62,11 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
 /**
  * Größe des Axt-Icons im Flug UND in Wurfbereitschaft (`<Axe size={FLIGHT_AXE_SIZE} .../>`
  * unten, zwei Stellen) – EINE gemeinsame Konstante statt zweimal derselben Zahl, damit sie
- * nie auseinanderlaufen kann.
+ * nie auseinanderlaufen kann. Proportional zur letzten Brett-Verkleinerung mitskaliert
+ * (war 42, siehe `STUCK_AXE_SIZE` in TargetBoard.tsx für dieselbe Korrektur auf der
+ * Steck-Seite).
  */
-const FLIGHT_AXE_SIZE = 42;
+const FLIGHT_AXE_SIZE = 38;
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [

@@ -181,6 +181,15 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
  * Siehe ausführliche Herleitung im Kommentar bei `AXE_EMBED_DEPTH_PX`.
  */
 const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
+/**
+ * Größe des Icons einer steckenden Axt – proportional zur letzten Brett-Verkleinerung
+ * (208→190, Faktor ~0,91) mitskaliert (war 40, fest, unabhängig von `BOARD_SIZE`).
+ * GEFUNDENER BUG (Klaus: "Axt ist immer noch in der Mitte"): das Icon blieb beim
+ * Brett-Resize unangetastet, dadurch nahm dasselbe 40px-Icon auf dem kleineren Brett
+ * einen deutlich größeren ANTEIL der Fläche ein als vorher – die Klinge reichte dadurch
+ * spürbar weiter Richtung Mitte, unabhängig von der Einstecktiefe.
+ */
+const STUCK_AXE_SIZE = 37;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 111;
 const APPLE_STEM_LENGTH = 15;
@@ -435,7 +444,7 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
                   unabhängig vom ausgerüsteten Skin (Klaus: "die Axt die im Holz steckt
                   vom Level aus soll immer die Anfangsaxt sein") – nur selbst geworfene
                   Äxte (id >= 0) zeigen den eigenen Skin. */}
-              <Axe size={40} skin={axe.id < 0 ? DEFAULT_AXE_SKIN : axeSkin} />
+              <Axe size={STUCK_AXE_SIZE} skin={axe.id < 0 ? DEFAULT_AXE_SKIN : axeSkin} />
             </div>
           </div>
         ))}
