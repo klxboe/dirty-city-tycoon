@@ -64,11 +64,17 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
 /**
  * Größe des Axt-Icons im Flug UND in Wurfbereitschaft (`<Axe size={FLIGHT_AXE_SIZE} .../>`
  * unten, zwei Stellen) – EINE gemeinsame Konstante statt zweimal derselben Zahl, damit sie
- * nie auseinanderlaufen kann. Proportional zur letzten Brett-Verkleinerung mitskaliert
- * (war 42, siehe `STUCK_AXE_SIZE` in TargetBoard.tsx für dieselbe Korrektur auf der
- * Steck-Seite).
+ * nie auseinanderlaufen kann. MUSS mit `STUCK_AXE_SIZE` (TargetBoard.tsx) übereinstimmen,
+ * siehe dort für die ausführliche Herleitung: die eigentliche Ursache des "Axt fliegt/
+ * steckt in der Mitte"-Problems war nie der Flug, sondern dass die STECKENDE Axt mit
+ * ihrer Icon-Mitte (nicht der Klingenspitze) auf den Steck-Radius zentriert wurde – bei
+ * einem zu großen Icon reichte die Klinge dadurch weit Richtung Scheibenmitte.
  */
-const FLIGHT_AXE_SIZE = 38;
+const FLIGHT_AXE_SIZE = 28;
+/** Halbe Icon-Höhe – derselbe Ausgleich wie `STUCK_AXE_HALF_HEIGHT_PX` in
+ *  TargetBoard.tsx, damit die Klingenspitze (nicht die Icon-Mitte) exakt am
+ *  Einschlagpunkt landet. */
+const FLIGHT_AXE_HALF_HEIGHT_PX = (FLIGHT_AXE_SIZE * 1.5) / 2;
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
@@ -353,18 +359,21 @@ function App() {
   const flightX = boardGeom?.centerX ?? 0;
   const impactY = (boardGeom?.centerY ?? 0) + stickRadiusPx(boardGeom);
   /*
-   * ZWEITER, robusterer Anlauf (Klaus, nach erneutem Test: "immer noch Richtung Mitte,
-   * dann erst an den Rand"). Der erste Fix (Ausgleich um eine berechnete
-   * `FLIGHT_AXE_HALF_HEIGHT_PX`) war rechnerisch sauber hergeleitet, blieb aber eine
-   * KOMPENSATION obendrauf auf ein Unterkanten-Anker-Schema (`bottom`) – jede falsche
-   * Annahme über die tatsächlich gerenderte Icon-Höhe hätte den Fehler unbemerkt wieder
-   * hereingebracht. Jetzt komplett umgebaut, statt weiter nachzujustieren: `.axe-flying`
-   * verwendet ab sofort GENAU dieselbe Anker-Methode wie eine steckende Axt
-   * (`TargetBoard.tsx`: `top`/`left` auf die Zielkoordinate + `translate(-50%, -50%)`,
-   * legt die MITTE des Icons exakt auf den Punkt) – keine Höhen-Annahme mehr nötig,
-   * das Icon kann beliebig hoch sein, es wird immer korrekt zentriert.
+   * VIERTER Anlauf – die ECHTE Ursache gefunden (Klaus: "es ist genau gleich", nachdem
+   * drei rein FLUG-seitige Fixes (Höhen-Ausgleich, Mitte-zu-Mitte-Anker, reine Pixel-
+   * Animation) alle wirkungslos blieben). Identisches Ergebnis bei drei technisch
+   * verschiedenen Ansätzen bedeutet: der Fehler lag nie im Flug selbst. Er lag darin,
+   * dass `translate(-50%, -50%)` die ICON-MITTE auf den Ziel-Radius legt, nicht die
+   * KLINGENSPITZE – bei einem (für das inzwischen kleinere Brett) zu großen Icon reicht
+   * die halbe Icon-Höhe dadurch zusätzlich Richtung Scheibenmitte. Das betraf die
+   * STECKENDE Axt in TargetBoard.tsx genauso wie die fliegende – die Flug-Fixes zielten
+   * exakt auf diese (falsche) Steck-Position, konnten das Problem also gar nicht lösen.
+   * Fix: `AXE_EMBED_DEPTH_PX` bezeichnet jetzt die gewünschte Position der
+   * KLINGENSPITZE; `FLIGHT_AXE_HALF_HEIGHT_PX` gleicht das für die Icon-Mitte-
+   * Zentrierung aus – exakt dieselbe Korrektur wie `STUCK_AXE_RADIUS` in
+   * TargetBoard.tsx, damit beide Seiten wieder auf denselben Punkt zielen.
    */
-  const flightEndTopPx = impactY - AXE_EMBED_DEPTH_PX;
+  const flightEndTopPx = impactY - AXE_EMBED_DEPTH_PX + FLIGHT_AXE_HALF_HEIGHT_PX;
   // Startposition wie zuvor bei 92% der Bühnenhöhe von oben (= 8% von unten).
   const flightStartTopPx = (boardGeom?.height ?? 0) * 0.92;
   const flightTravelPx = flightEndTopPx - flightStartTopPx;
