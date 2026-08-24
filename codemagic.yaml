@@ -90,16 +90,22 @@ workflows:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
-        # GEFUNDENER BUG (2026-08-24): ohne explizite `beta_groups` reicht Codemagic
-        # jeden Build für eine allgemeine Beta-App-Prüfung ein (POST
-        # /v1/betaAppReviewSubmissions) - die braucht laut Apple nur EXTERNES
-        # Testing, nicht die interne Gruppe "Intern". Jeder neue Build blieb dadurch
-        # in der Warteschlange bei "Warten auf Prüfung" hängen, weil immer nur EINE
-        # Prüfung pro Version gleichzeitig laufen darf und die vorherige nie von
-        # selbst durchlief - musste jedes Mal manuell per "Aus Prüfung entfernen"
-        # freigeräumt werden. Fix: Build direkt der internen Gruppe zuweisen, das
-        # sollte laut Apples eigenen Regeln GAR KEINE Beta-App-Prüfung mehr auslösen.
-        beta_groups:
-          - Intern
+        # GEFUNDENER BUG, zweiter Anlauf (2026-08-24): `submit_to_testflight: true`
+        # OHNE `beta_groups` reichte jeden Build für eine allgemeine Beta-App-Prüfung
+        # ein (POST /v1/betaAppReviewSubmissions) - blieb dadurch jedes Mal in der
+        # Warteschlange bei "Warten auf Prüfung" hängen (nur eine Prüfung gleichzeitig
+        # pro Version, musste jedes Mal manuell per "Aus Prüfung entfernen"
+        # freigeräumt werden). Der naheliegende Fix (`beta_groups: [Intern]`) schlägt
+        # mit einem KLAREN Apple-Fehler fehl: "Cannot add internal group to a build" -
+        # interne Gruppen lassen sich über diesen API-Weg gar nicht explizit
+        # zuweisen, die bekommen laut Apple automatisch Zugriff auf verarbeitete
+        # Builds, ohne dass irgendjemand sie "zuweist".
+        #
+        # Fix: `submit_to_testflight` komplett entfernt (Codemagic lädt die .ipa
+        # trotzdem hoch, siehe "Publishing"-Schritt oben - das läuft unabhängig
+        # davon). Kein automatisches Zuweisen mehr, dafür auch kein Hängenbleiben
+        # mehr - Klaus fügt den fertig hochgeladenen Build danach EINMAL manuell in
+        # App Store Connect (TestFlight -> Builds -> Build anklicken -> Gruppe
+        # "Intern" hinzufügen) zur Testgruppe hinzu, genau der Weg, der bei
+        # Build 1787514079 schon zuverlässig funktioniert hat.
         submit_to_app_store: false
