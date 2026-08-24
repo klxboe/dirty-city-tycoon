@@ -3168,6 +3168,90 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       wieder verschoben. `obstacleCount` zusätzlich hart auf `OBSTACLE_COUNT_CAP`
       gedeckelt, falls Basis-Wert + Variante darüber hinausschießt. `tsc -b`/
       `npm run build` sauber.
+- [x] **Nachträglich hier ergänzt, zwischen den beiden vorigen Einträgen bereits
+      umgesetzt und gepusht, aber nicht sofort dokumentiert (2026-08-24):**
+      Direkt-Nachmessen der Scheibenposition vor JEDEM einzelnen Wurf (`messenRef`
+      in App.tsx – hält die aktuellste `messen()`-Funktion aus dem
+      `useLayoutEffect` in einer Ref, `handlePointerDown` ruft sie synchron auf,
+      bevor `game.throwAxe()` läuft) als letztes Sicherheitsnetz gegen den
+      "Axt fliegt zuerst Richtung Mitte"-Bug, zusätzlich zum ResizeObserver/
+      Doppel-rAF-Fix. Axt-Icon-Größe (`FLIGHT_AXE_SIZE`/`STUCK_AXE_SIZE`) auf
+      einheitlich 33 angehoben (Klaus: "mach alle äxte ein stück größer"),
+      `COLLISION_ANGLE_TOLERANCE_DEG` dabei auf 12 (symmetrisch für geworfene UND
+      vorplatzierte Hindernis-Äxte – war nie einseitig, `collidesWithStuckAxe()`
+      in `engine.ts` prüft schon immer beide Seiten gleich, siehe Kommentar dort).
+      `VIDEO_RESCUE_COINS = 350` als Münzbelohnung an den Video-Rettungs-Button
+      gehängt (`GameOverModal.tsx`/`VideoRescueModal.tsx`/`rescueRun()`). Zwei
+      Äxte (Wurzelhieb, Korallenschneide) im Preis erhöht und in der Liste nach
+      hinten verschoben, dazu ein genereller Preisanstieg über alle zwölf
+      Münz-Äxte (`AXE_SKINS` in `shop.ts`). Codemagic-Deployment-Pipeline nach
+      langer Fehlersuche endgültig stabil (siehe `codemagic.yaml`: NUR
+      `beta_groups: [InternManuell]`, kein `submit_to_testflight` mehr – Root
+      Cause war die Kombination aus beidem, die eine ungewollte Beta-App-Review
+      auslöste, plus dass die Verteilungsart einer TestFlight-Gruppe fest bei
+      ihrer Erstellung einprogrammiert wird und sich nachträglich nicht mehr
+      ändern lässt). Temporärer grüner Debug-Marker in `TargetBoard.tsx` (diente
+      nur der Live-Fehlersuche am echten Gerät) wieder vollständig entfernt.
+      Einem Freund als GitHub-Mitarbeiter beim lokalen Aufsetzen geholfen
+      (`git clone` + `npm install` + `npm run dev`, kein Sonderfall nötig, da
+      das Repo öffentlich ist und keine Secrets im Code liegen).
+- [x] **Weltbosse alle gleich schwer, viel mehr XP für neue Welten, Weltkarte
+      aufgewertet, Fruchtbosse etwas härter (2026-08-24).** Klaus in einer
+      Nachricht: "die unteren bosse nicht schwerer als der erste jetzt alle
+      gleich schwer aber anderes, und man soll viel mehr xp brauchen um in eine
+      neue welt zu kommen und mach die weltkarte cooler jetzt sieht sie etwas
+      langweilig aus und die fruchtbosse ein stück schwerer" – vier
+      unabhängige Punkte, nacheinander umgesetzt:
+      - **Weltbosse gleich schwer:** Weltbosse liegen immer auf einem
+        Welt-Start-Index (20/40/60/80/100). Achsen-/Hindernis-Deckel waren für
+        alle Weltbosse schon identisch (`Math.min(axeCountFor(levelIndex), 10)`
+        bzw. `Math.min(obstacleCountFor(levelIndex), 5)`), aber die TEMPO-Formel
+        hing weiterhin direkt an der echten `levelIndex` – ein späterer Weltboss
+        war dadurch automatisch schneller/härter als der erste, obwohl das nie
+        beabsichtigt war ("anderes" sollte sich nur auf Skin/Name/Namen beziehen,
+        nicht auf Schwierigkeit). Neue Konstante
+        `WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX = 20` (`constants.ts`) fixiert
+        den levelabhängigen Tempo-Anteil für JEDEN Weltboss auf den Wert von
+        Level 20 (Sandkolossos) – alle fünf sind dadurch beim Tempo exakt
+        gleich, unterscheiden sich aber weiterhin durch Aussehen, Namen und die
+        (pro Level unterschiedliche) Hindernis-Anordnung.
+      - **Fruchtbosse härter:** `speedBonus` für normale (Nicht-Welt-)Bosse von
+        38 auf 44°/Sek. angehoben – Achsen-/Hindernis-Werte für Fruchtbosse
+        bewusst unangetastet (waren erst kürzlich extra entschärft worden,
+        siehe "Boss-Korrektur nach Praxistest" weiter oben).
+      - **Welt-Freischaltschwelle deutlich höher:** neue, von `XP_PER_LEVEL`
+        UNABHÄNGIGE Konstante `WORLD_UNLOCK_XP_MULTIPLIER = 4` (`constants.ts`),
+        wirkt NUR auf `xpThresholdFor()` in `WorldMap.tsx`. Wichtig: ein
+        einfaches Anheben von `XP_PER_LEVEL` selbst hätte sich aufgehoben (die
+        XP-EINNAHME pro Level wäre gleich stark gestiegen wie die Schwelle,
+        am nötigen Levelaufwand hätte sich nichts geändert) – der Multiplikator
+        wirkt deshalb bewusst nur auf der Schwellen-Seite der Rechnung. Wüste
+        braucht jetzt 160 statt 40 XP (das Vierfache an irgendwo im Spiel
+        geschafften Leveln), alle anderen Welten skalieren gleich mit. Der
+        Fortschrittsring pro Welt-Knoten bekam denselben Faktor im Nenner, bleibt
+        also weiterhin konsistent zur echten Schwelle.
+      - **Weltkarte optisch aufgewertet** (`WorldMap.tsx`/`.css`): das Wasser
+        tönt sich jetzt streckenweise zur Akzentfarbe der jeweils nächsten Welt
+        (neuer `linearGradient` "ocean-zones", additiv über der bisherigen
+        einheitlichen Blaufläche), dazu funkelnde Lichtpunkte auf dem Wasser
+        (seeded wie die bestehenden Wolken). Freigeschaltete Welt-Badges haben
+        einen wandernden Glanzstreifen (`conic-gradient`-Rotation, derselbe
+        Trick wie der Glanzstreifen auf der Zielscheibe), Weltboss-Abzeichen
+        pulsieren jetzt statt nur statisch zu glühen, der freigeschaltete Pfad
+        bekam einen leichten Leucht-Schatten, und die Kopfzeile ein kleines
+        Kompass-Icon mit dezenter Ausschlag-Animation statt einer reinen
+        Textüberschrift. Alle neuen Animationen respektieren
+        `prefers-reduced-motion` (bestehender Media-Query-Block erweitert).
+      Verifiziert: `tsc -b`/`npm run build` sauber. Per Live-DOM-Check im Browser
+      bestätigt (localStorage-XP direkt auf 500 gesetzt): bei
+      `WORLD_UNLOCK_XP_MULTIPLIER=4` sind genau 2 von 5 Welten gesperrt
+      (Kosmos/Heldenstadt, Schwelle 640/800 > 500 XP) – exakt wie erwartet.
+      Weltkarte zeigt 6 Inseln, 5 Boss-Abzeichen, 14 Funkelpunkte, 6
+      Gradient-Stops, keine Konsolenfehler. Die Weltboss-Tempo-Angleichung und
+      der Fruchtboss-Bonus sind reine Zahlenänderungen ohne DOM-Auswirkung und
+      ließen sich wie bei jedem bisherigen Balancing-Schritt nicht per
+      Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
+      echtes Spielen auf dem Gerät steht wie üblich noch aus.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
