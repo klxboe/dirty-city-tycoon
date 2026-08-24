@@ -3045,6 +3045,69 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       nachspielen (rAF-Freeze) – die Positions-Rechnung selbst ist aber jetzt
       nachweislich konsistent mit der steckenden Axt (beide zentrieren auf denselben
       Radius). Bitte am echten Gerät gegenprüfen, am besten wieder per Fotoserie.
+- [x] **Deployment-Chaos gelöst: App-Datenschutz + Test-Info in App Store Connect
+      ausgefüllt, echte Root-Cause-Kette gefunden statt Code-Verdacht (2026-08-23).**
+      Klaus meldete "50 Updates, nichts ändert sich" – jeder Codemagic-Build hing am
+      allerletzten Schritt ("App Store Connect distribution") fest, erst wegen
+      fehlender Beta-App-Kontaktdaten, danach wegen fehlender Beta-App-Beschreibung.
+      Der Code selbst war in jedem Build korrekt (per `git show`/`grep` gegengecheckt),
+      nur nie tatsächlich bei TestFlight angekommen – "nichts geändert" lag am
+      Ausrollen, nicht am Fix. Nach Ausfüllen beider Formulare lief die Kette durch.
+- [x] **Axt-Flug: zweiter, robusterer Anlauf nach dem ersten Positions-Fix
+      (2026-08-23).** Der erste Fix (Höhen-Ausgleich `FLIGHT_AXE_HALF_HEIGHT_PX`
+      draufrechnen) war rechnerisch sauber hergeleitet, blieb aber eine Kompensation
+      auf dem alten Unterkanten-Anker-Schema (`bottom`) – Klaus meldete nach echtem
+      Testen weiterhin "fliegt Richtung Mitte, dann erst an den Rand". Statt weiter an
+      der Ausgleichszahl zu drehen: `.axe-flying` komplett auf `top` +
+      `translate(-50%, -50%)` umgestellt – EXAKT dieselbe Anker-Methode wie eine
+      steckende Axt in `TargetBoard.tsx`. Keine Annahme über die Icon-Höhe mehr nötig,
+      `FLIGHT_AXE_HALF_HEIGHT_PX` komplett entfernt. `tsc -b`/`npm run build` sauber –
+      das eigentliche visuelle Ergebnis braucht wie immer Bestätigung am echten Gerät.
+- [x] **Werte nochmal deutlich verstärkt, dazu Achse/Brett/Äxte-pro-Level angepasst
+      (2026-08-23).** Nach wiederholtem "keine Änderung spürbar"-Feedback: Axt-Hitbox
+      13°, Münzen-Hitbox 10°, Einstecktiefe 14px (deutlich über die vorherigen kleinen
+      Schritte hinaus, damit ein Effekt unübersehbar ist), danach auf explizite
+      Nachfrage nochmal fein nachjustiert: Axt-Hitbox 12° (minimal kleiner, gilt
+      weiterhin einheitlich für geworfene UND vorplatzierte Hindernis-Äxte – das war
+      nie unterschiedlich), `axeCountFor()`-Stufen jeweils +1, Brett 208→190px/Radius
+      96→88px mit allen abgeleiteten Radien (Äpfel, Ringe, Kern) proportional
+      mitskaliert (~0,91).
+- [x] **Level-Varianten: Level 1-30 zeigen jetzt eine von 5 zufälligen Anordnungen
+      (2026-08-23).** Klaus: "es sind immer dieselben Level" – die Level-Generierung
+      war bisher komplett deterministisch (reine Funktion aus Levelnummer + `runSeed`,
+      siehe `generateLevel()`), `runSeed` rotiert aber nur zwischen ganzen LÄUFEN, nicht
+      innerhalb eines Laufs. Neuer, bewusst NICHT-deterministischer Baustein obendrauf:
+      - **`SaveData.levelVariantSeed`** (`storage.ts`, migriert mit Default 0): welche
+        von `LEVEL_VARIANT_COUNT` (5) Varianten gerade gilt.
+      - **`rollLevelVariantSeed(previousLevelIndex, newLevelIndex, previousVariantSeed)`**
+        (`useAxeGame.ts`) – der EINZIGE Ort im ganzen Level-System, der bewusst
+        `Math.random()` benutzt: würfelt neu, sobald `newLevelIndex !== previousLevelIndex`
+        (echter Wechsel auf ein anderes Level), sonst bleibt der alte Wert
+        (Boss-Retry/Video-Rettung setzen denselben Versuch fort und sollen dieselbe
+        Anordnung zeigen wie der Fehlversuch davor). Aufgerufen in `nextLevel()`,
+        `goToLevel()`, `restartRun()` – NICHT in `rescueRun()` (Ziel-Level ist dort
+        immer identisch mit dem aktuellen, würfelt also ohnehin nie um) und NICHT beim
+        initialen Laden (Fortsetzen einer Session zeigt dieselbe Anordnung wie vor dem
+        Schließen der App).
+      - **`generateLevel()`/`levelConfigAt()`** (`constants.ts`) bekommen einen dritten
+        Parameter `variantSeed`, der NUR für `levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX`
+        (30, = Level 1-30) mit eigenen, wieder teilerfremden Faktoren (151, 181) in
+        `appleSeed`/`obstacleSeed` einfließt – exakt dasselbe Prinzip wie `runSeed`,
+        nur mit anderen Faktoren, damit sich Varianten- und Runden-Rotation nicht
+        gegenseitig aufheben. Ändert NUR die Anordnung (Winkel), NICHT die
+        Schwierigkeits-Zahlen (Achtenzahl/Hindernis-Anzahl/Tempo bleiben reine
+        Funktionen von `levelIndex`) – ein Level fühlt sich anders angeordnet, aber
+        nicht unterschiedlich schwer an.
+      - **Ab Level 31 (`levelIndex >= 30`) bleibt alles beim Alten**: `effectiveVariantSeed`
+        wird dort hart auf 0 gezwungen, die bestehenden 70 unterschiedlichen,
+        levelnummer-basierten Anordnungen (Level 31-100) reichen dort bereits als
+        Abwechslung, exakt wie von Klaus vorgegeben ("ab dann bis 100 nur 70
+        verschiedene").
+      `tsc -b`/`npm run build` sauber. Nicht per echtem Spielen verifiziert (bräuchte
+      mehrere Durchläufe DESSELBEN Levels mit sichtbar unterschiedlicher Apfel-/
+      Hindernis-Anordnung – in der Sandbox wegen des rAF-Freeze-Problems ohnehin nicht
+      beobachtbar) – bitte am Gerät bestätigen: Level 3 mehrfach neu anspielen sollte
+      unterschiedliche Anordnungen zeigen, Level 50 dagegen jedes Mal gleich bleiben.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

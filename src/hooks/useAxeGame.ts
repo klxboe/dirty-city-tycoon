@@ -18,6 +18,7 @@ import {
   GEMS_PER_GOLDEN_APPLE,
   LEVEL_COUNT,
   levelConfigAt,
+  LEVEL_VARIANT_COUNT,
   LEVELS_PER_BLOCK,
   levelCompletionBonus,
   PERFECT_APPLE_BONUS,
@@ -34,8 +35,31 @@ import { WORLD_BOSSES } from '../game/worlds';
 import { setMuted } from '../game/sound';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
-function createLevelState(levelIndex: number, runSeed: number): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun'> {
-  const level = levelConfigAt(levelIndex, runSeed);
+/**
+ * Welche Level-Variante (0-4, siehe `LEVEL_VARIANT_COUNT`/`LEVEL_VARIANT_MAX_LEVEL_INDEX`
+ * in constants.ts) beim Betreten von `newLevelIndex` gilt. Anders als `runSeed` (der
+ * ganze Läufe rotiert) würfelt das bei JEDEM Wechsel auf ein ANDERES Level neu –
+ * `Math.random()` ist hier bewusst erlaubt (einziger Ort im gesamten Level-System, der
+ * NICHT rein aus der Levelnummer hergeleitet wird): der gewürfelte Wert wird sofort in
+ * `SaveData.levelVariantSeed` eingefroren und danach nur noch gelesen, nie im laufenden
+ * Level neu gewürfelt – Kollisionsprüfung/Belohnung sehen deshalb immer dieselbe
+ * Anordnung wie beim Rendern.
+ *
+ * Bleibt `newLevelIndex` gleich `previousLevelIndex` (Boss-Retry, Video-Rettung – man
+ * setzt denselben Versuch fort statt ein neues Level zu betreten), wird NICHT neu
+ * gewürfelt: ein Übungsversuch soll dieselbe Anordnung zeigen wie der Fehlversuch davor.
+ */
+function rollLevelVariantSeed(previousLevelIndex: number, newLevelIndex: number, previousVariantSeed: number): number {
+  if (newLevelIndex === previousLevelIndex) return previousVariantSeed;
+  return Math.floor(Math.random() * LEVEL_VARIANT_COUNT);
+}
+
+function createLevelState(
+  levelIndex: number,
+  runSeed: number,
+  variantSeed: number,
+): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun'> {
+  const level = levelConfigAt(levelIndex, runSeed, variantSeed);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
     id: -1 - i,
@@ -69,7 +93,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     const save = loadSave();
     setMuted(!save.soundOn);
     return {
-      ...createLevelState(Math.max(0, save.currentLevel), save.runSeed),
+      ...createLevelState(Math.max(0, save.currentLevel), save.runSeed, save.levelVariantSeed),
       streak: save.streak,
       rescueUsedThisRun: false,
       save,
@@ -142,7 +166,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const resolveThrow = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed);
 
       // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
       // des Flugs weiter, genau darin liegt das Timing-Spiel.
@@ -284,10 +308,11 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...prev.save,
         currentLevel: target,
         runSeed: isNewRun ? prev.save.runSeed + 1 : prev.save.runSeed,
+        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
       };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
         streak: prev.streak,
         rescueUsedThisRun: isNewRun ? false : prev.rescueUsedThisRun,
         save: nextSave,
@@ -311,13 +336,23 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    */
   const restartRun = useCallback(() => {
     setState((prev) => {
-      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed);
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed);
       const diedOnWorldBoss = Boolean(level.worldBossId);
       const target = diedOnWorldBoss ? prev.levelIndex : 0;
       pendingThrowRef.current = false;
-      const nextSave: SaveData = { ...prev.save, currentLevel: target, streak: 0 };
+      const nextSave: SaveData = {
+        ...prev.save,
+        currentLevel: target,
+        streak: 0,
+        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
+      };
       saveSave(nextSave);
-      return { ...createLevelState(target, nextSave.runSeed), streak: 0, rescueUsedThisRun: false, save: nextSave };
+      return {
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
+        streak: 0,
+        rescueUsedThisRun: false,
+        save: nextSave,
+      };
     });
   }, []);
 
@@ -342,7 +377,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
         streak: prev.streak,
         rescueUsedThisRun: true,
         save: nextSave,
@@ -359,10 +394,14 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     setState((prev) => {
       const target = prev.levelIndex + 1;
       pendingThrowRef.current = false;
-      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      const nextSave: SaveData = {
+        ...prev.save,
+        currentLevel: target,
+        levelVariantSeed: rollLevelVariantSeed(prev.levelIndex, target, prev.save.levelVariantSeed),
+      };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
         streak: prev.streak,
         rescueUsedThisRun: prev.rescueUsedThisRun,
         save: nextSave,
@@ -519,7 +558,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  const level = levelConfigAt(state.levelIndex, state.save.runSeed);
+  const level = levelConfigAt(state.levelIndex, state.save.runSeed, state.save.levelVariantSeed);
   // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
   // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
   // keins, danach läuft es als Endlos-Modus weiter (siehe nextLevel oben). Der
@@ -598,7 +637,7 @@ function computeReward(
   streak: number,
   save: SaveData,
 ): LevelReward {
-  const level = levelConfigAt(levelIndex, save.runSeed);
+  const level = levelConfigAt(levelIndex, save.runSeed, save.levelVariantSeed);
   const boss = bossFruitForLevel(levelIndex, save.runSeed);
 
   const apples = (applesCollected - gemsCollected - figurinesCollected) * COINS_PER_APPLE;

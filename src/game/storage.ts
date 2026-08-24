@@ -51,6 +51,17 @@ export interface SaveData {
    * starten"), nicht bei jedem Levelwechsel – siehe useAxeGame.ts.
    */
   runSeed: number;
+  /**
+   * Welche von 5 Varianten (0-4) das aktuelle Level (nur Level 1-30, siehe
+   * `LEVEL_VARIANT_MAX_LEVEL_INDEX` in constants.ts) gerade zeigt – anders als `runSeed`
+   * (rotiert nur zwischen ganzen LÄUFEN) wird das bei JEDEM Betreten eines NEUEN
+   * Levels neu ausgewürfelt (echtes `Math.random()`, siehe `rollLevelVariantSeed()` in
+   * useAxeGame.ts), damit sich "immer dieselben Level" (Klaus' Feedback) auch innerhalb
+   * eines Laufs unterschiedlich anfühlen. Ein Retry DESSELBEN Levels (Boss-Wiederholung,
+   * Video-Rettung) würfelt bewusst NICHT neu, damit ein Übungsversuch dieselbe Anordnung
+   * zeigt wie der Fehlversuch davor.
+   */
+  levelVariantSeed: number;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -69,6 +80,7 @@ const EMPTY_SAVE: SaveData = {
   dailyStreak: 0,
   lastDailyClaim: '',
   runSeed: 0,
+  levelVariantSeed: 0,
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -105,6 +117,7 @@ export function loadSave(): SaveData {
         dailyStreak: Math.max(0, Math.floor(toFiniteNumber(parsed.dailyStreak, 0))),
         lastDailyClaim: typeof parsed.lastDailyClaim === 'string' && ISO_DATE_PATTERN.test(parsed.lastDailyClaim) ? parsed.lastDailyClaim : '',
         runSeed: Math.max(0, Math.floor(toFiniteNumber(parsed.runSeed, 0))),
+        levelVariantSeed: Math.max(0, Math.floor(toFiniteNumber(parsed.levelVariantSeed, 0))),
       };
     }
 

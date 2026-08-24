@@ -518,7 +518,22 @@ export function bossFruitForLevel(levelIndex: number, runSeed = 0): BossFruit | 
  * sieht in Runde 3 anders aus als in Runde 1, bleibt aber INNERHALB einer Runde bei
  * jedem Versuch identisch (kein `Math.random()`, wie der Rest der Level-Generierung).
  */
-function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
+/**
+ * Level-Varianten (Klaus: "es sind immer dieselben Level, mach pro Level mehrere
+ * Varianten, eine wird zufällig ausgewählt"): NUR für Level 1-30 gibt es
+ * `LEVEL_VARIANT_COUNT` (5) unterschiedliche Apfel-/Hindernis-Anordnungen pro
+ * Levelnummer – welche davon gezeigt wird, würfelt `rollLevelVariantSeed()`
+ * (useAxeGame.ts) per echtem `Math.random()` bei JEDEM Betreten eines NEUEN Levels neu
+ * aus (nicht deterministisch wie der Rest der Level-Generierung, das ist hier
+ * ausdrücklich gewollt). Ab Level 31 bleibt es bei den bestehenden, von der Levelnummer
+ * (und `runSeed`) eindeutig bestimmten 70 Anordnungen – die sind über `levelIndex`
+ * ohnehin schon alle unterschiedlich, eine zusätzliche Zufalls-Variante bräuchte es
+ * dort nicht.
+ */
+export const LEVEL_VARIANT_COUNT = 5;
+export const LEVEL_VARIANT_MAX_LEVEL_INDEX = 30;
+
+function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): LevelConfig {
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
   // siehe isWorldBossLevel()) – eine deutlich größere Prüfung als ein normaler
@@ -592,9 +607,13 @@ function generateLevel(levelIndex: number, runSeed: number): LevelConfig {
   // Level nicht in kurzen Zyklen wiederholen. `runSeed` mit EIGENEN, wieder teilerfremden
   // Faktoren (53, 97) verschoben, damit eine neue Runde eine spürbar andere Anordnung
   // bekommt statt nur alle Winkel um denselben Betrag zu drehen (das sähe bei gleicher
-  // Apfel-/Hindernis-ZAHL optisch identisch aus, nur "gedreht").
-  const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53);
-  const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97);
+  // Apfel-/Hindernis-ZAHL optisch identisch aus, nur "gedreht"). `variantSeed` schiebt
+  // NUR für Level 1-30 zusätzlich mit EIGENEN, wieder teilerfremden Faktoren (151, 181) –
+  // dieselbe Levelnummer zeigt dadurch eine von 5 Anordnungen, zufällig gewählt bei
+  // jedem Levelstart (siehe Kommentar bei `LEVEL_VARIANT_COUNT` oben).
+  const effectiveVariantSeed = levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX ? variantSeed : 0;
+  const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53 + effectiveVariantSeed * 151);
+  const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97 + effectiveVariantSeed * 181);
 
   /*
    * Weltboss-Level liegen IMMER auf einem Welt-Start-Index (20/40/60/80/100) – bei
@@ -698,8 +717,8 @@ export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;
  * wenige Zahlen (kein Array-Scan, keine Rekursion), das direkte Neuberechnen bei jedem
  * Aufruf ist spürbar günstiger als die dafür nötige Cache-Verwaltung.
  */
-export function levelConfigAt(levelIndex: number, runSeed = 0): LevelConfig {
-  return generateLevel(levelIndex, runSeed);
+export function levelConfigAt(levelIndex: number, runSeed = 0, variantSeed = 0): LevelConfig {
+  return generateLevel(levelIndex, runSeed, variantSeed);
 }
 
 /** Alter Speicherstand (nur eine Apfel-Zahl). Wird beim ersten Start in Münzen migriert. */
