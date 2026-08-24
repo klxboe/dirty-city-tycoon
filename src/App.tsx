@@ -62,12 +62,9 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
 /**
  * Größe des Axt-Icons im Flug UND in Wurfbereitschaft (`<Axe size={FLIGHT_AXE_SIZE} .../>`
  * unten, zwei Stellen) – EINE gemeinsame Konstante statt zweimal derselben Zahl, damit sie
- * nie auseinanderlaufen kann. `Axe.tsx` rendert immer im Verhältnis `size × size*1.5`
- * (siehe dort), daraus ergibt sich die halbe Icon-Höhe für den Flugziel-Ausgleich
- * (siehe `flightEndBottom` unten).
+ * nie auseinanderlaufen kann.
  */
 const FLIGHT_AXE_SIZE = 42;
-const FLIGHT_AXE_HALF_HEIGHT_PX = (FLIGHT_AXE_SIZE * 1.5) / 2;
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
@@ -307,34 +304,22 @@ function App() {
    */
   const flightX = boardGeom?.centerX ?? 0;
   const impactY = (boardGeom?.centerY ?? 0) + stickRadiusPx(boardGeom);
-  // `bottom` misst vom unteren Bühnenrand nach oben, `impactY` von oben nach unten –
-  // daher die Differenz. AXE_EMBED_DEPTH_PX kommt DAZU, damit die Axt ins Holz fährt
-  // (siehe Kommentar dort – MUSS mit der Steck-Position in TargetBoard.tsx übereinstimmen).
-  //
-  // GEFUNDENER BUG (Klaus per Fotoserie eines echten Wurfs: "Axt fliegt zuerst in die
-  // Mitte und dann erst ans Brett"): `.axe-flying` positioniert bisher die UNTERKANTE
-  // des Icon-Wrappers per `bottom` (kein vertikales Zentrieren), während eine STECKENDE
-  // Axt (TargetBoard.tsx) über `translate(-50%, -50%)` ihre MITTE auf den Ziel-Radius
-  // legt. Das Axt-Icon ist `FLIGHT_AXE_SIZE` breit und `FLIGHT_AXE_SIZE * 1.5` hoch (siehe
-  // Axe.tsx) – ohne Korrektur landet die fliegende Axt mit ihrer MITTE um die halbe
-  // Icon-Höhe zu weit INNEN (näher an der Scheibenmitte) als eine steckende Axt, bevor
-  // sie beim Einschlag sichtbar nach außen auf die korrekte Steck-Position "zurückschnappt".
-  // Fix: Zielposition um die halbe Icon-Höhe nach außen (Richtung Bühnenrand, also
-  // WENIGER `bottom`) verschieben, damit die MITTE des fliegenden Icons exakt dort landet,
-  // wo die steckende Axt ihre Mitte hat.
-  const flightEndBottom = (boardGeom?.height ?? 0) - impactY + AXE_EMBED_DEPTH_PX - FLIGHT_AXE_HALF_HEIGHT_PX;
-  /**
-   * Reichweite des Flugs in Pixeln, als NEGATIVE `translate`-Strecke (Werfen behoben,
-   * Klaus: "ruckelt extrem beim Werfen und Aufkommen"). Vorher animierte
-   * `axe-fly-position` (App.css) direkt `bottom` – eine Layout-Eigenschaft, die der
-   * Browser bei JEDEM Animationsframe neu einsortieren muss (Reflow), 190ms lang bei
-   * JEDEM Wurf. `translate`/`transform` dagegen laufen rein auf dem Compositor, ohne
-   * Layout. `.axe-flying` startet weiterhin bei `bottom: 8%` (STATISCH, nur einmal
-   * berechnet), die Bewegung von dort bis zum Einschlag läuft jetzt komplett über
-   * `translate` – deshalb hier dieselbe 8%-Basis nochmal in Pixeln nachgerechnet.
+  /*
+   * ZWEITER, robusterer Anlauf (Klaus, nach erneutem Test: "immer noch Richtung Mitte,
+   * dann erst an den Rand"). Der erste Fix (Ausgleich um eine berechnete
+   * `FLIGHT_AXE_HALF_HEIGHT_PX`) war rechnerisch sauber hergeleitet, blieb aber eine
+   * KOMPENSATION obendrauf auf ein Unterkanten-Anker-Schema (`bottom`) – jede falsche
+   * Annahme über die tatsächlich gerenderte Icon-Höhe hätte den Fehler unbemerkt wieder
+   * hereingebracht. Jetzt komplett umgebaut, statt weiter nachzujustieren: `.axe-flying`
+   * verwendet ab sofort GENAU dieselbe Anker-Methode wie eine steckende Axt
+   * (`TargetBoard.tsx`: `top`/`left` auf die Zielkoordinate + `translate(-50%, -50%)`,
+   * legt die MITTE des Icons exakt auf den Punkt) – keine Höhen-Annahme mehr nötig,
+   * das Icon kann beliebig hoch sein, es wird immer korrekt zentriert.
    */
-  const flightStartBottom = (boardGeom?.height ?? 0) * 0.08;
-  const flightTravelPx = -(flightEndBottom - flightStartBottom);
+  const flightEndTopPx = impactY - AXE_EMBED_DEPTH_PX;
+  // Startposition wie zuvor bei 92% der Bühnenhöhe von oben (= 8% von unten).
+  const flightStartTopPx = (boardGeom?.height ?? 0) * 0.92;
+  const flightTravelPx = flightEndTopPx - flightStartTopPx;
 
   const overlayOpen = shopOpen || settingsOpen || worldMapOpen;
   const world = worldForLevel(game.levelIndex);
@@ -483,6 +468,7 @@ function App() {
             className="axe-flying"
             style={{
               animationDuration: `${FLIGHT_DURATION_MS}ms`,
+              top: `${flightStartTopPx}px`,
               ['--flight-x' as string]: `${flightX}px`,
               ['--flight-travel-px' as string]: `${flightTravelPx}px`,
             }}

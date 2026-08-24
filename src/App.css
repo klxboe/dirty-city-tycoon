@@ -176,14 +176,23 @@
 
 /*
  * Die Axt fliegt SENKRECHT nach oben – von der Stelle, an der getippt wurde, gerade
- * hoch bis zum Einschlagpunkt. App.tsx setzt dafür zwei Werte:
+ * hoch bis zum Einschlagpunkt. App.tsx setzt dafür:
  *   --flight-x           feste seitliche Position (0 = Mitte der Scheibe)
- *   --flight-end-bottom  wo der Flug endet, gemessen vom unteren Bühnenrand
+ *   top (inline)         Start-Y in Bühnenkoordinaten, gemessen von oben
+ *   --flight-travel-px   Verschiebung Y bis zum Einschlag (negativ = nach oben)
  *
  * Eine frühere Fassung ließ die Axt stattdessen von unten-Mitte SCHRÄG zum Ziel
  * fliegen. Das war für Spieler nicht lesbar – die Schräge entsprach nichts, was man
  * getan hatte. Die Drehung lag zusätzlich bei 900° in 140ms, also 2,5 Umdrehungen:
  * das ist keine sichtbare Drehung mehr, sondern Matsch. Jetzt eine saubere Umdrehung.
+ *
+ * GEFUNDENER BUG, zweiter Anlauf (Klaus per Fotoserie: "fliegt zuerst in die Mitte,
+ * dann erst an den Rand"): frühere Fassung ankerte über die UNTERKANTE des Icons
+ * (`bottom` + `translate` nur horizontal zentriert), während eine STECKENDE Axt
+ * (TargetBoard.tsx) ihre MITTE per `translate(-50%, -50%)` auf den Ziel-Radius legt.
+ * Ein erster Fix rechnete einen Höhen-Ausgleich dazu, blieb aber eine Kompensation auf
+ * dem falschen Anker-Schema. Jetzt stattdessen `top` + `translate(-50%, -50%)` –
+ * GENAU dieselbe Methode wie bei der steckenden Axt, keine Höhen-Annahme mehr nötig.
  */
 .axe-flying {
   position: absolute;
@@ -191,11 +200,12 @@
   --flight-x: 0px;
   --flight-travel-px: -200px;
   left: calc(50% + var(--flight-x));
-  bottom: 8%;
+  /* `top` kommt als Inline-Style aus App.tsx (misst von oben, hängt von der
+     gemessenen Bühnenhöhe ab). */
   /* Startwert der 0%-Keyframe unten vorwegnehmen, damit vor dem allerersten
      Animationsframe (z.B. ein sehr langsames Gerät) keine Sekunde lang die
      unverschobene Grundposition aufblitzt. */
-  translate: -50% 0;
+  translate: -50% -50%;
   /*
    * ZWEI getrennte Animationen statt einer: Position lief früher gemeinsam mit
    * Drehung/Squash in EINEM @keyframes-Block. Da die Position dort nur bei 0%/100%
@@ -242,10 +252,10 @@
  */
 @keyframes axe-fly-position {
   0% {
-    translate: -50% 0;
+    translate: -50% -50%;
   }
   100% {
-    translate: -50% var(--flight-travel-px);
+    translate: -50% calc(-50% + var(--flight-travel-px));
   }
 }
 
