@@ -13,6 +13,18 @@ function xpThresholdFor(startLevelIndex: number): number {
   return startLevelIndex * XP_PER_LEVEL * WORLD_UNLOCK_XP_MULTIPLIER;
 }
 
+/** Kleiner Kompass fürs Kopfzeilen-Icon – rein dekorativ (Klaus: "Weltkarte sieht
+ *  langweilig aus"), macht aus der reinen Textüberschrift eine kleine Szene. */
+function CompassIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" className="world-atlas__title-icon">
+      <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M15.5 8.5 13 13l-4.5 2.5L11 11Z" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 /** Kleines Schloss-Symbol für noch nicht erreichte Welten. */
 function LockIcon() {
   return (
@@ -292,6 +304,17 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
     delay: (seededRandom(i * 3 + 2) * 6).toFixed(1),
   }));
 
+  // Funkelnde Lichtpunkte auf dem Wasser – reine Atmosphäre, dieselbe Seed-Technik wie
+  // bei den Wolken, damit die Karte nicht bei jedem Öffnen anders aussieht.
+  const sparkleCount = Math.max(10, Math.round(nodes.length * 2.4));
+  const sparkles = Array.from({ length: sparkleCount }, (_, i) => ({
+    x: 4 + seededRandom(i * 19 + 41) * 92,
+    y: 4 + seededRandom(i * 23 + 53) * (totalHeight - 8),
+    r: 0.35 + seededRandom(i * 29 + 61) * 0.45,
+    delay: (seededRandom(i * 31 + 71) * 3).toFixed(2),
+    dur: (1.8 + seededRandom(i * 37 + 83) * 1.6).toFixed(2),
+  }));
+
   /**
    * Reise-Animation: statt beim Antippen sofort zu springen, reist eine kleine Axt
    * sichtbar den Sandpfad entlang zur Zielwelt – über beliebig viele Zwischen-Inseln
@@ -340,7 +363,10 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
   return (
     <div className="world-atlas">
       <header className="world-atlas__head">
-        <h2 className="world-atlas__title">Weltkarte</h2>
+        <h2 className="world-atlas__title">
+          <CompassIcon />
+          Weltkarte
+        </h2>
         <button className="world-atlas__close" onClick={onClose} aria-label="Schließen" disabled={!!travel}>
           ✕
         </button>
@@ -364,10 +390,34 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
                   <stop offset="100%" stopColor={n.accent} stopOpacity="1" />
                 </radialGradient>
               ))}
+              {/* Das Wasser tönt sich jetzt streckenweise zur Farbe der jeweils nächsten
+                  Welt (Klaus: "Weltkarte sieht langweilig aus") – vorher war der Ozean
+                  überall exakt derselbe Blauton, egal ob man gerade an der Wüste oder am
+                  Kosmos-Ende vorbeischaut. Reine additive Tönung über der Basisfarbe,
+                  keine harten Kanten zwischen den Zonen. */}
+              <linearGradient id="ocean-zones" x1="0" y1="0" x2="0" y2={totalHeight} gradientUnits="userSpaceOnUse">
+                {nodes.map((n, i) => (
+                  <stop key={n.key} offset={`${(centers[i].y / totalHeight) * 100}%`} stopColor={n.accent} />
+                ))}
+              </linearGradient>
             </defs>
 
-            <rect x="0" y="0" width="100" height={totalHeight} fill="#1c6fb5" />
+            <rect x="0" y="0" width="100" height={totalHeight} fill="#0b3258" />
+            <rect x="0" y="0" width="100" height={totalHeight} fill="url(#ocean-zones)" opacity="0.4" />
             <rect x="0" y="0" width="100" height={totalHeight} fill="url(#ocean-waves)" />
+
+            {/* Funkelnde Lichtpunkte auf dem Wasser. */}
+            {sparkles.map((s, i) => (
+              <circle
+                key={i}
+                cx={s.x}
+                cy={s.y}
+                r={s.r}
+                fill="#fff"
+                className="world-atlas__sparkle"
+                style={{ ['--sparkle-delay' as string]: `${s.delay}s`, ['--sparkle-dur' as string]: `${s.dur}s` }}
+              />
+            ))}
 
             {/* Wolken */}
             {clouds.map((c, i) => (

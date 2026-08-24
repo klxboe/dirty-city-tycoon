@@ -45,10 +45,30 @@
 
 .world-atlas__title {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 20px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.world-atlas__title-icon {
+  color: #ffd27a;
+  filter: drop-shadow(0 0 5px rgba(255, 210, 120, 0.6));
+  animation: world-atlas-compass-spin 8s linear infinite;
+}
+
+@keyframes world-atlas-compass-spin {
+  0%,
+  85%,
+  100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-18deg);
+  }
 }
 
 .world-atlas__close {
@@ -139,6 +159,23 @@
   stroke-width: 3.2;
   stroke-linecap: round;
   stroke-dasharray: 5 3.5;
+  filter: drop-shadow(0 0 2.5px rgba(255, 220, 150, 0.75));
+}
+
+/* Funkelnde Lichtpunkte auf dem Wasser, siehe `sparkles` in WorldMap.tsx. */
+.world-atlas__sparkle {
+  animation: world-atlas-sparkle-twinkle var(--sparkle-dur, 2.4s) ease-in-out infinite;
+  animation-delay: var(--sparkle-delay, 0s);
+}
+
+@keyframes world-atlas-sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }
 
 /* Inseln: dunklere Klippen-Ebene leicht versetzt darunter für Tiefe, die farbige
@@ -222,6 +259,17 @@
   .world-atlas__traveler-glow {
     animation: none;
   }
+
+  .world-atlas__title-icon,
+  .world-atlas__sparkle,
+  .world-node__badge::after,
+  .world-node__boss-badge {
+    animation: none;
+  }
+
+  .world-atlas__sparkle {
+    opacity: 0.4;
+  }
 }
 
 /* ---- Marker (unverändert von der vorherigen Fassung: Icon + Fortschrittsring). ---- */
@@ -279,6 +327,30 @@
   transform: scale(0.94);
 }
 
+/* Wandernder Glanzstreifen über freigeschalteten Marken – dieselbe Idee wie der
+   Glanzstreifen auf der Zielscheibe (TargetBoard.tsx), macht die sonst statischen
+   Kreis-Badges auf der Karte lebendiger. */
+.world-node__badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 255, 255, 0.4) 18deg, transparent 45deg, transparent 360deg);
+  animation: world-node-badge-shine 4.5s linear infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+@keyframes world-node-badge-shine {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.world-node--locked .world-node__badge::after {
+  display: none;
+}
+
 .world-node--locked .world-node__badge {
   background: radial-gradient(circle at 35% 30%, #4a4f58, #2a2d33 60%, #1a1c20 100%);
   /* Deutlich kräftiger abgedunkelt als vorher (Klaus: "gesperrte Bereiche sollen
@@ -309,10 +381,28 @@
     0 2px 6px rgba(0, 0, 0, 0.5),
     0 0 0 2px rgba(13, 58, 99, 0.9),
     0 0 10px 1px rgba(180, 90, 255, 0.6);
+  animation: world-node-boss-badge-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes world-node-boss-badge-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.5),
+      0 0 0 2px rgba(13, 58, 99, 0.9),
+      0 0 10px 1px rgba(180, 90, 255, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.5),
+      0 0 0 2px rgba(13, 58, 99, 0.9),
+      0 0 16px 4px rgba(180, 90, 255, 0.85);
+  }
 }
 
 .world-node--locked .world-node__boss-badge {
   filter: saturate(0.4) brightness(0.7);
+  animation: none;
 }
 
 .world-node__boss-name {
