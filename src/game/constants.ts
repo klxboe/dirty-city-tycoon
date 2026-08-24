@@ -596,6 +596,17 @@ function levelVariantProfile(variantSeed: number): LevelVariantProfile {
   }
 }
 
+/**
+ * Level-Index des ERSTEN Weltbosses (Sandkolossos, Wüste) – dient als Tempo-
+ * Referenz für ALLE Weltbosse (siehe `speedReferenceLevelIndex` in `generateLevel()`
+ * unten), damit sie unabhängig von ihrer tatsächlichen Levelnummer alle gleich
+ * schnell sind. Bewusst hier als eigene Konstante statt `WORLDS[1].startLevelIndex`
+ * zu importieren – vermeidet eine Abhängigkeit auf die genaue WORLDS-Reihenfolge in
+ * worlds.ts, der Wert 20 ist ohnehin an mehreren Stellen in diesem Projekt als
+ * "erster Weltboss" dokumentiert (siehe CLAUDE.md).
+ */
+const WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX = 20;
+
 function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): LevelConfig {
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
@@ -676,9 +687,27 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): Le
     1,
     (worldBoss ? Math.min(axeCountFor(levelIndex), 10) : axeCountFor(levelIndex)) + variantProfile.axeDelta,
   );
-  const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
+  const speedBonus = worldBoss ? 30 : boss ? 44 : 0; // Fruchtboss-Bonus 38->44 (Klaus: "Fruchtbosse ein Stück schwerer")
+  /*
+   * GEFUNDENER GRUND für "die späteren Weltbosse sind viel härter als der erste"
+   * (Klaus: "alle Weltbosse gleich schwer machen, aber anders"): Axt-/Hindernis-Zahl
+   * sind für JEDEN Weltboss schon lange gedeckelt (10/5, siehe oben) und damit
+   * ohnehin schon für alle identisch – aber das TEMPO skaliert weiterhin mit der
+   * tatsächlichen `levelIndex` (20/40/60/80/100), und bei `SPEED_STEP_PER_LEVEL`
+   * (1,9°/Sek. pro Level) macht der Abstand von Level 20 zu Level 100 satte 152°/Sek.
+   * aus – der letzte Weltboss war dadurch massiv schneller als der erste, obwohl die
+   * "Wall"-Werte für Äxte/Hindernisse längst identisch waren. Fix: für Weltboss-Level
+   * wird beim Tempo NICHT die echte `levelIndex` verwendet, sondern immer der erste
+   * Weltboss-Level-Index (20, Wüste) – alle fünf Weltbosse bekommen dadurch exakt
+   * dasselbe Tempo-Fundament. "Anders" (wie von Klaus gewünscht) kommt weiterhin über
+   * unterschiedliche Bild-Skins, Namen und die pro Kampf laufende Phasen-Eskalation.
+   */
+  const speedReferenceLevelIndex = worldBoss ? WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX : levelIndex;
   const boardSpeedDegPerSec = Math.round(
-    Math.min(MAX_SPEED_DEG_PER_SEC, (BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus) * variantProfile.speedFactor),
+    Math.min(
+      MAX_SPEED_DEG_PER_SEC,
+      (BASE_SPEED_DEG_PER_SEC + speedReferenceLevelIndex * SPEED_STEP_PER_LEVEL + speedBonus) * variantProfile.speedFactor,
+    ),
   );
 
   // Zwei teilerfremde Faktoren, damit sich Apfel- und Hindernis-Positionen über die
