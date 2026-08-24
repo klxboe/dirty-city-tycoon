@@ -104,10 +104,12 @@ workflows:
         # `beta_groups` angeben - das veröffentlicht direkt an die genannte(n)
         # Gruppe(n), ganz ohne Beta-Prüfung auszulösen.
         # ZUSÄTZLICH in App Store Connect nötig (separater, nicht per YAML lösbarer
-        # Teil desselben bekannten Fehlers): die Gruppe "Intern" muss auf MANUELLE
-        # Verteilung stehen statt der Standard-Automatik (TestFlight -> Intern ->
-        # Einstellungen) - sonst schlägt die Zuweisung selbst bei richtiger YAML
-        # weiterhin fehl.
+        # Teil desselben bekannten Fehlers): die Verteilungsart einer internen
+        # Gruppe wird NUR beim Erstellen festgelegt und lässt sich danach nicht
+        # mehr ändern (bestätigt per Recherche) - "Intern" wurde als AUTOMATISCHE
+        # Gruppe angelegt, das lässt keine explizite Zuweisung per API zu. Neue
+        # Gruppe "InternManuell" mit deaktivierter "Automatische Verteilung
+        # aktivieren"-Checkbox angelegt, genau dafür gedacht.
         beta_groups:
-          - Intern
+          - InternManuell
         submit_to_app_store: false
