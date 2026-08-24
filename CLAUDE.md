@@ -3108,6 +3108,66 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Hindernis-Anordnung – in der Sandbox wegen des rAF-Freeze-Problems ohnehin nicht
       beobachtbar) – bitte am Gerät bestätigen: Level 3 mehrfach neu anspielen sollte
       unterschiedliche Anordnungen zeigen, Level 50 dagegen jedes Mal gleich bleiben.
+- [x] **Echter Positions-Bug per Live-Debugging im Browser gefunden und behoben:
+      `boardGeom` blieb nach einem späten Reflow eingefroren (2026-08-24).** Klaus
+      weiterhin: "die Axt fliegt immer noch weiter, dann erst an den Rand" – trotz des
+      bereits sauber hergeleiteten Mitte-zu-Mitte-Ankerfixes vom Vortag. Diesmal nicht
+      weiter am Code gerätselt, sondern über den laufenden Dev-Server + einen
+      Cloudflare-Tunnel (`npm run dev` + `cloudflared tunnel --url http://localhost:5175`,
+      Browser-Pane per `preview_start` draufgehalten) LIVE im Browser gemessen statt nur
+      gelesen:
+      - React-Fiber-Props direkt aus dem DOM gezogen (`el['__reactProps$...']`), um
+        `onPointerDown`/`onClick`-Handler auch ohne funktionierende Klick-Koordinaten
+        auszulösen (die Browser-Pane komponiert hier keine Frames, `computer`-Klicks
+        mit Koordinaten schlugen fehl) – und direkt `getBoundingClientRect()` auf
+        `.stage`/`.target-board` vor UND nach dem Wurf verglichen.
+      - **Befund:** die Scheibe stand beim allerersten Layout-Messen (in
+        `useLayoutEffect`, `App.tsx`) an einer Position, verschob sich aber in einem
+        Test-Lauf um 34,5px, OHNE dass der `ResizeObserver` (beobachtet nur die GRÖSSE
+        der Bühne, nicht ihre Position) das je mitbekommen hätte – `boardGeom` blieb für
+        den Rest des Levels auf der alten Position eingefroren, das Flugziel wurde nie
+        neu berechnet. Genau das erklärt "fliegt weiter, dann erst an den Rand": nicht
+        die Anker-Methode war falsch (die vom Vortag war rechnerisch korrekt), sondern
+        die Messung selbst war stellenweise veraltet.
+      - **Fix:** zusätzlich zum bestehenden `ResizeObserver` ein doppeltes
+        `requestAnimationFrame(() => requestAnimationFrame(messen))` nach dem Mounten –
+        garantiert eine zweite Messung NACH einem abgeschlossenen Layout+Paint-Zyklus,
+        fängt jeden Reflow ab, den der ResizeObserver verpasst.
+      - **Wahrscheinliche Ursache des Reflows selbst mit erledigt:** Axt-/Scheiben-Skins
+        sind echte Bild-Dateien; sowohl die fliegende Axt (bei JEDEM Wurf neu gemountet)
+        als auch ein Boss-Levels-Scheibenbild wurden bisher erst beim ersten Gebrauch
+        angefordert – Klaus meldete dazu passend "beim Werfen wird die Axt kurz
+        unsichtbar" UND "Boss-Level zeigen zuerst normales Holz, erst später die
+        Frucht". Neuer Effekt in `App.tsx` lädt jetzt ALLE `AXE_IMAGES`/`BOARD_IMAGES`
+        (`new Image().src = ...`) einmal beim App-Start im Hintergrund vor. Im
+        Live-Test verschwand der 34,5px-Sprung nach diesem Vorab-Laden vollständig
+        (mehrfach mit geleertem `localStorage` und dem originalen Ablauf – Tages-
+        Belohnung abholen, dann "Los geht's" – nachgestellt, kein Sprung mehr
+        messbar) – der `requestAnimationFrame`-Fix bleibt trotzdem als Sicherheitsnetz
+        für andere, noch unbekannte Reflow-Auslöser bestehen.
+      - **Verifiziert per echtem Wurf im Browser** (nicht nur Code-Review): Ziel-Y der
+        fliegenden Axt (`flightEndTopPx`, aus `top` + `--flight-travel-px`
+        zurückgerechnet) stimmte exakt mit der tatsächlich gemessenen Scheibenposition
+        überein (360,00px in beiden Fällen) – zuvor lag eine Differenz von 34,5px vor.
+      - Nebenbei den Pause-Button-Vermerk aufgeklärt: dass er beim Werfen kurz
+        verschwindet, ist Absicht (nur zwischen zwei Würfen aktiv, siehe eigener
+        Abschnitt weiter oben), keine neue Fehlermeldung wert.
+- [x] **Level-Varianten strukturell erweitert: nicht nur andere Winkel, auch andere
+      Achsen-/Hindernis-/Tempo-Kombination (2026-08-24).** Klaus nach dem Reroll-Bugfix:
+      "es sind immer noch dieselben Level – es muss nicht bei Level 2 immer 2 Messer
+      sein und gleich viele Äxte, es soll mal 3 sein, aber sich vielleicht dafür nicht
+      so viel bewegen – ABWECHSLUNG IST WICHTIG, nur der Schwierigkeitsgrad soll gleich
+      bleiben". Neue `levelVariantProfile(variantSeed)` (`constants.ts`): 5 Profile,
+      eins pro Variante – Profil 0 unverändert (Basis-Kurve), die anderen vier
+      verschieben `axeCount` ODER `obstacleCount` um ±1 und gleichen das mit einem
+      GEGENLÄUFIGEN Tempo-Faktor aus (mehr Hindernisse → 10% langsamer, weniger Axt →
+      6% schneller, usw.), damit der GEFÜHLTE Schwierigkeitsgrad über alle 5 Varianten
+      ungefähr die Waage hält statt einfach nur schwerer/leichter zu werden. Gilt
+      bewusst NICHT für Boss-Level (Frucht- oder Weltboss) – deren Werte sind bereits
+      mehrfach fein austariert, ein zusätzlicher struktureller Ausschlag hätte das
+      wieder verschoben. `obstacleCount` zusätzlich hart auf `OBSTACLE_COUNT_CAP`
+      gedeckelt, falls Basis-Wert + Variante darüber hinausschießt. `tsc -b`/
+      `npm run build` sauber.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

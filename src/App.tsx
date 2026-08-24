@@ -18,6 +18,8 @@ import { useAxeGame } from './hooks/useAxeGame';
 import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import { worldForLevel, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
+import { AXE_IMAGES } from './game/axeShapes';
+import { BOARD_IMAGES } from './game/boardImages';
 import { initAds } from './game/ads';
 import { initPurchases } from './game/purchases';
 import {
@@ -93,6 +95,29 @@ function App() {
   useEffect(() => {
     initAds();
     initPurchases();
+  }, []);
+
+  /**
+   * GEFUNDENER BUG (Klaus: "beim Werfen wird die Axt kurz unsichtbar" + "bei Boss-Leveln
+   * zeigt die Scheibe zuerst das normale Holz, erst danach die Frucht"): Axt- UND
+   * Scheiben-Skins sind echte Bild-Dateien (siehe axeShapes.ts/boardImages.ts). Die
+   * fliegende Axt wird bei JEDEM Wurf neu gemountet (`key={flyingAxe.startedAt}`), ein
+   * Boss-Level wechselt den Scheiben-Skin erst beim Levelstart – beide Male fordert der
+   * Browser das Bild dann zum ERSTEN Mal an, wenn es noch nicht im Cache/Decoder-Speicher
+   * liegt. Bei einer 100ms-Flugzeit reicht diese Decodier-Verzögerung locker, um wie ein
+   * kurzes Verschwinden auszusehen. Fix: ALLE Axt-/Scheiben-Bilder einmal beim App-Start
+   * im Hintergrund laden (`new Image().src = ...`), damit der Browser sie längst decodiert
+   * hat, bevor sie das erste Mal im Spiel gebraucht werden.
+   */
+  useEffect(() => {
+    Object.values(AXE_IMAGES).forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+    Object.values(BOARD_IMAGES).forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -202,7 +227,28 @@ function App() {
     messen();
     const beobachter = new ResizeObserver(messen);
     beobachter.observe(stage);
-    return () => beobachter.disconnect();
+
+    /*
+     * GEFUNDENER BUG (Klaus: "Axt fliegt weiter, dann erst an den Rand" – per Live-
+     * Debugging im Browser bestätigt, nicht nur vermutet): die Scheibe verschiebt sich
+     * NACH diesem ersten `messen()`-Aufruf noch spürbar (in einem Test: 34,5px nach
+     * unten) – vermutlich ein später Reflow, nachdem der Browser tatsächlich fertig
+     * gelayoutet/gemalt hat. Der `ResizeObserver` beobachtet nur die GRÖSSE der Bühne,
+     * nicht ihre Position innerhalb der Seite – verschiebt sich die Scheibe bei
+     * gleichbleibender Bühnengröße (z.B. weil ein Geschwister-Element seine Höhe erst
+     * nach dem ersten Layout-Durchlauf final einnimmt), feuert er NIE, und `boardGeom`
+     * bleibt für den Rest des Levels auf der zu alten Position eingefroren – das
+     * Flugziel wird nie neu berechnet. Fix: zusätzlich zweimal per
+     * `requestAnimationFrame` nachmessen (doppeltes rAF ist die übliche Technik, um
+     * sicher NACH einem abgeschlossenen Layout+Paint-Zyklus zu landen) – fängt jeden
+     * späten Reflow ab, den der ResizeObserver verpasst.
+     */
+    const rafId = requestAnimationFrame(() => requestAnimationFrame(messen));
+
+    return () => {
+      beobachter.disconnect();
+      cancelAnimationFrame(rafId);
+    };
   }, [screen, game.levelIndex]);
 
   /*

@@ -544,6 +544,32 @@ export function bossFruitForLevel(levelIndex: number, runSeed = 0): BossFruit | 
 export const LEVEL_VARIANT_COUNT = 5;
 export const LEVEL_VARIANT_MAX_LEVEL_INDEX = 30;
 
+/**
+ * Fünf STRUKTURELLE Profile, eins pro Variante – nicht nur andere Winkel (siehe
+ * `appleSeed`/`obstacleSeed` unten), sondern eine andere Achsen-/Hindernis-/Tempo-
+ * KOMBINATION. Klaus, nach dem ersten Varianten-Fix (der nur Winkel drehte): "es muss
+ * nicht bei Level 2 immer 2 Messer sein und gleich viele Äxte, es soll mal 3 sein, aber
+ * sich vielleicht dafür nicht so viel bewegen – ABWECHSLUNG IST WICHTIG, nur der
+ * Schwierigkeitsgrad soll gleich bleiben". Jedes Profil AUSSER dem neutralen gleicht
+ * einen strukturellen Ausschlag (mehr Hindernisse ODER mehr Äxte) mit einem
+ * gegenläufigen Tempo-Faktor aus, damit sich der GEFÜHLTE Schwierigkeitsgrad über alle
+ * 5 Varianten ungefähr die Waage hält, statt einfach nur schwerer/leichter zu werden.
+ */
+function levelVariantProfile(variantSeed: number): { axeDelta: number; obstacleDelta: number; speedFactor: number } {
+  switch (variantSeed % LEVEL_VARIANT_COUNT) {
+    case 1:
+      return { axeDelta: 0, obstacleDelta: 1, speedFactor: 0.9 }; // ein Hindernis mehr, dafür spürbar ruhiger
+    case 2:
+      return { axeDelta: 0, obstacleDelta: -1, speedFactor: 1.1 }; // ein Hindernis weniger, dafür schneller
+    case 3:
+      return { axeDelta: 1, obstacleDelta: 0, speedFactor: 0.94 }; // eine Axt mehr (voller), etwas ruhiger
+    case 4:
+      return { axeDelta: -1, obstacleDelta: 0, speedFactor: 1.06 }; // eine Axt weniger, dafür etwas schneller
+    default:
+      return { axeDelta: 0, obstacleDelta: 0, speedFactor: 1 }; // Variante 0: die bisherige Basis-Kurve unverändert
+  }
+}
+
 function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): LevelConfig {
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
@@ -608,10 +634,21 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): Le
    * weiterhin gedeckelten Hindernis-Wert (siehe unten) soll sich das in der Mitte
    * zwischen "fast unmöglich" und "viel zu einfach" einpendeln.
    */
-  const axeCount = worldBoss ? Math.min(axeCountFor(levelIndex), 13) : axeCountFor(levelIndex);
+  // Strukturelle Variante NUR für Level 1-30 (siehe `levelVariantProfile()` oben) – bei
+  // Bossen (Frucht ODER Welt) bewusst NICHT angewendet: deren Werte sind schon mehrfach
+  // fein austariert ("Zurückgerudert"-Kommentare oben), ein zusätzlicher struktureller
+  // Ausschlag hätte diese Kalibrierung wieder durcheinandergebracht.
+  const variantProfile =
+    levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX && !boss && !worldBoss
+      ? levelVariantProfile(variantSeed)
+      : levelVariantProfile(0);
+  const axeCount = Math.max(
+    1,
+    (worldBoss ? Math.min(axeCountFor(levelIndex), 13) : axeCountFor(levelIndex)) + variantProfile.axeDelta,
+  );
   const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
-    Math.min(MAX_SPEED_DEG_PER_SEC, BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus),
+    Math.min(MAX_SPEED_DEG_PER_SEC, (BASE_SPEED_DEG_PER_SEC + levelIndex * SPEED_STEP_PER_LEVEL + speedBonus) * variantProfile.speedFactor),
   );
 
   // Zwei teilerfremde Faktoren, damit sich Apfel- und Hindernis-Positionen über die
@@ -643,7 +680,13 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): Le
    * viel zu einfach" – siehe auch Axt-/Tempo-Korrektur oben, alle drei Hebel
    * standen zusammen zu weit unten).
    */
-  const obstacleCount = worldBoss ? Math.min(obstacleCountFor(levelIndex), 5) : obstacleCountFor(levelIndex);
+  const obstacleCount = Math.max(
+    0,
+    Math.min(
+      OBSTACLE_COUNT_CAP,
+      (worldBoss ? Math.min(obstacleCountFor(levelIndex), 5) : obstacleCountFor(levelIndex)) + variantProfile.obstacleDelta,
+    ),
+  );
   const appleCount = appleCountFor(levelIndex);
   const preplacedAxeAngles = obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined;
 
