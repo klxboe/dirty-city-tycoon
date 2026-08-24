@@ -191,71 +191,51 @@
  * (`bottom` + `translate` nur horizontal zentriert), während eine STECKENDE Axt
  * (TargetBoard.tsx) ihre MITTE per `translate(-50%, -50%)` auf den Ziel-Radius legt.
  * Ein erster Fix rechnete einen Höhen-Ausgleich dazu, blieb aber eine Kompensation auf
- * dem falschen Anker-Schema. Jetzt stattdessen `top` + `translate(-50%, -50%)` –
- * GENAU dieselbe Methode wie bei der steckenden Axt, keine Höhen-Annahme mehr nötig.
+ * dem falschen Anker-Schema. Ein zweiter Fix stellte auf `top` + `translate(-50%,
+ * -50%)` um (dieselbe Methode wie bei der steckenden Axt) – rechnerisch korrekt,
+ * bestätigt per Live-Test im Desktop-Browser, ABER auf dem echten iPhone weiterhin
+ * derselbe sichtbare Sprung (Klaus per Fotoserie erneut bestätigt).
+ *
+ * DRITTER Anlauf: Verdacht auf einen WebKit/Safari-spezifischen Interpolations-Fehler
+ * bei der eigenständigen `translate`-Eigenschaft, wenn ihr animierter Wert ein
+ * `calc()` aus Prozent- UND Pixel-Anteil ist (`-50% calc(-50% + var(--flight-
+ * travel-px))`) – Desktop-Chrome tweent das sauber, iOS-WKWebView offenbar nicht
+ * zuverlässig (kein sanftes Interpolieren, sondern ein Sprung ans Ziel). Fix: ZWEI
+ * verschachtelte Elemente statt eines mit gemischter Prozent-Pixel-Angabe.
  */
-.axe-flying {
+/* Äußerer Anker: übernimmt NUR die Zentrierung, NIE animiert – exakt dieselbe
+   Methode wie bei einer steckenden Axt in TargetBoard.tsx. */
+.axe-flying-anchor {
   position: absolute;
   z-index: 1;
   --flight-x: 0px;
-  --flight-travel-px: -200px;
   left: calc(50% + var(--flight-x));
   /* `top` kommt als Inline-Style aus App.tsx (misst von oben, hängt von der
      gemessenen Bühnenhöhe ab). */
-  /* Startwert der 0%-Keyframe unten vorwegnehmen, damit vor dem allerersten
-     Animationsframe (z.B. ein sehr langsames Gerät) keine Sekunde lang die
-     unverschobene Grundposition aufblitzt. */
-  translate: -50% -50%;
-  /*
-   * ZWEI getrennte Animationen statt einer: Position lief früher gemeinsam mit
-   * Drehung/Squash in EINEM @keyframes-Block. Da die Position dort nur bei 0%/100%
-   * stand, das Transform aber zusätzlich bei 12%, bekam sie die komplette
-   * vorne-geladene Kurve über die GESAMTE Distanz gestreckt – nach ca. 10% der
-   * Flugzeit war die Axt schon fast am Ziel und "hing" für den Rest sichtbar fest
-   * (gemeldetes Gefühl: "bremst kurz vor dem Treffer ab"). Jetzt läuft die Position
-   * linear/gleichmäßig bis zum letzten Frame durch.
-   *
-   * Die Position läuft über die eigenständige `translate`-Eigenschaft (nicht mehr
-   * über `bottom`, siehe `axe-fly-position` unten – Performance-Fix, "ruckelt extrem
-   * beim Werfen"), Drehung/Squash weiterhin über die eigenständige `transform`-
-   * Eigenschaft. Beide sind reine Compositor-Eigenschaften (kein Reflow), können aber
-   * trotzdem UNABHÄNGIG voneinander per eigenem `animation-timing-function` laufen,
-   * weil es zwei GETRENNTE CSS-Eigenschaften sind – `translate`/`rotate`/`scale`/
-   * `transform` komponieren laut Spezifikation in dieser FESTEN Reihenfolge
-   * (`translate` zuerst, ganz am Ende `transform`). Rotation und Squash bleiben dabei
-   * bewusst ZUSAMMEN in einem `transform` (nicht zusätzlich in `rotate`+`scale`
-   * aufgeteilt): DEREN Reihenfolge untereinander ist nicht vertauschbar (siehe
-   * Kommentar bei `axe-fly-transform`) – nur die reine Verschiebung (`translate`)
-   * lässt sich gefahrlos herauslösen, weil zwei Verschiebungen kommutieren, in
-   * welcher Reihenfolge man sie auch komponiert.
-   */
-  /*
-   * Nur noch EINE Animation (reine Position) statt zwei (Position + Transform mit
-   * Squash-and-Stretch). Klaus nach echtem Testen: "fliegt ur langsam und irgendwie
-   * drüber kurz, bevor sie steckt – EXTREM CLEAN, GANZ EINFACH". Das kurze
-   * Überschwingen der Skalierung (scaleX 1.1 bei 12%) las sich vermutlich genau als
-   * dieses "kurz drüber" – jetzt komplett weg, die Axt bleibt während des gesamten
-   * Flugs bei ihrer normalen Form und bewegt sich nur geradlinig, wie bei Knife Hit.
-   */
-  animation-name: axe-fly-position;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
 /*
- * Reine, gleichmäßige Bewegung von Start bis Einschlag – keine Verlangsamung. Läuft
- * über `translate` statt `bottom`: eine mit `bottom` animierte Position zwingt den
- * Browser bei JEDEM Frame zu einem Reflow (Layout-Neuberechnung), 190ms lang bei
- * JEDEM Wurf – auf schwächeren Handys sichtbar ruckelig. `translate` läuft dagegen
- * rein auf dem Compositor-Thread, wie `transform`.
+ * Innerer, animierter Teil: NUR eine reine Pixel-`translateY()` – kein Prozentanteil
+ * mehr in der animierten Eigenschaft, damit hier kein calc()/Prozent-Interpolations-
+ * Sonderfall mehr auftreten kann. Läuft weiterhin über `transform` statt `top`/
+ * `bottom`, bleibt also compositor-basiert (kein Reflow, "ruckelt extrem beim
+ * Werfen"-Fix von früher bleibt erhalten).
  */
+.axe-flying {
+  --flight-travel-px: -200px;
+  animation-name: axe-fly-position;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
 @keyframes axe-fly-position {
   0% {
-    translate: -50% -50%;
+    transform: translateY(0px);
   }
   100% {
-    translate: -50% calc(-50% + var(--flight-travel-px));
+    transform: translateY(var(--flight-travel-px));
   }
 }
 

@@ -511,31 +511,54 @@ function App() {
         </div>
 
         {game.phase === 'flying' && game.flyingAxe && (
+          /*
+           * DRITTER Anlauf beim Flug-Positions-Bug (Klaus, per Fotoserie auf dem
+           * echten Gerät bestätigt: Axt sitzt sichtbar in der Mitte, bevor sie im
+           * NÄCHSTEN Frame an den Rand schnappt – der Bug bestand also weiter, obwohl
+           * die Mathematik im Desktop-Browser-Test exakt aufging). Verdacht: WebKit/
+           * Safari (iOS-WKWebView) interpoliert die eigenständige `translate`-
+           * Eigenschaft nicht zuverlässig, wenn ihr Wert ein `calc()` aus Prozent UND
+           * Pixeln ist (`-50% calc(-50% + var(--flight-travel-px))`, siehe vorherige
+           * Fassung) – im Desktop-Chrome-Test unauffällig, auf dem echten iPhone aber
+           * offenbar kein sauberes Tweening, sondern ein Sprung.
+           *
+           * Fix: zwei VERSCHACHTELTE Elemente statt eines mit gemischter Prozent-
+           * Pixel-Angabe. Äußerer Anker (`.axe-flying-anchor`) übernimmt NUR die
+           * Zentrierung (`transform: translate(-50%, -50%)`, statisch, NIE animiert) –
+           * exakt dieselbe Methode wie bei einer steckenden Axt in TargetBoard.tsx.
+           * Innen animiert `.axe-flying` NUR noch eine REINE Pixel-`translateY()`
+           * (kein Prozentanteil mehr in der animierten Eigenschaft) – das ist die am
+           * weitesten verbreitete, am wenigsten überraschungsanfällige Form einer CSS-
+           * Positions-Animation.
+           */
           <div
-            key={game.flyingAxe.startedAt}
-            className="axe-flying"
+            className="axe-flying-anchor"
             style={{
-              animationDuration: `${FLIGHT_DURATION_MS}ms`,
               top: `${flightStartTopPx}px`,
               ['--flight-x' as string]: `${flightX}px`,
-              ['--flight-travel-px' as string]: `${flightTravelPx}px`,
-            }}
-            /*
-             * Löst den Einschlag aus, statt dass useAxeGame das über einen eigenen
-             * setTimeout(FLIGHT_DURATION_MS) tut (siehe ausführliche Herleitung bei
-             * resolveThrow() in useAxeGame.ts – GENAU der Grund für den gemeldeten
-             * Mikro-Stopp: ein JS-Timer neben der CSS-Animation kann nachhinken, die Axt
-             * stand dann fertig am Ziel und wartete auf einen zweiten, unabhängigen
-             * Zeitgeber). `.axe-flying` trägt nur noch EINE Animation (reine Position,
-             * das frühere zweite Transform/Squash-and-Stretch wurde entfernt, siehe
-             * App.css) – der Namens-Check ist dadurch nicht mehr strikt nötig, bleibt
-             * aber als günstige Absicherung stehen, falls je eine zweite dazukommt.
-             */
-            onAnimationEnd={(e) => {
-              if (e.animationName === 'axe-fly-position') game.resolveThrow();
             }}
           >
-            <Axe size={FLIGHT_AXE_SIZE} skin={game.save.equippedAxeSkin} />
+            <div
+              key={game.flyingAxe.startedAt}
+              className="axe-flying"
+              style={{
+                animationDuration: `${FLIGHT_DURATION_MS}ms`,
+                ['--flight-travel-px' as string]: `${flightTravelPx}px`,
+              }}
+              /*
+               * Löst den Einschlag aus, statt dass useAxeGame das über einen eigenen
+               * setTimeout(FLIGHT_DURATION_MS) tut (siehe ausführliche Herleitung bei
+               * resolveThrow() in useAxeGame.ts – GENAU der Grund für den gemeldeten
+               * Mikro-Stopp: ein JS-Timer neben der CSS-Animation kann nachhinken, die
+               * Axt stand dann fertig am Ziel und wartete auf einen zweiten,
+               * unabhängigen Zeitgeber).
+               */
+              onAnimationEnd={(e) => {
+                if (e.animationName === 'axe-fly-position') game.resolveThrow();
+              }}
+            >
+              <Axe size={FLIGHT_AXE_SIZE} skin={game.save.equippedAxeSkin} />
+            </div>
           </div>
         )}
 
