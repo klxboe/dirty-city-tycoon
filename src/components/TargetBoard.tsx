@@ -189,8 +189,12 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
  * Radius-Ausgleich (halbe Icon-Höhe nach außen) wurde ausprobiert, aber wieder
  * zurückgenommen (siehe `STUCK_AXE_RADIUS` unten): der schob die Achse zu weit nach
  * AUSSEN, sichtbar weg vom Brett statt an dessen Rand.
+ *
+ * Wieder etwas angehoben auf 33 (Klaus: "Äxte ein Stück größer") – jetzt, wo Radius
+ * und Icon-Größe zueinander passen (siehe oben), verträgt sich ein etwas größeres
+ * Icon wieder besser, ohne den "reicht bis zur Mitte"-Effekt von vorher zurückzuholen.
  */
-const STUCK_AXE_SIZE = 28;
+const STUCK_AXE_SIZE = 33;
 /**
  * ÜBERKORRIGIERT UND ZURÜCKGENOMMEN (Klaus: "Äxte sind nicht mehr am Rand, sondern
  * weit entfernt vom Brett"): die volle halbe Icon-Höhe als Ausgleich addiert war zu

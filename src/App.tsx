@@ -70,7 +70,7 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
  * ihrer Icon-Mitte (nicht der Klingenspitze) auf den Steck-Radius zentriert wurde – bei
  * einem zu großen Icon reichte die Klinge dadurch weit Richtung Scheibenmitte.
  */
-const FLIGHT_AXE_SIZE = 28;
+const FLIGHT_AXE_SIZE = 33;
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
