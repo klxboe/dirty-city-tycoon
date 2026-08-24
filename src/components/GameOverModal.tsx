@@ -1,5 +1,6 @@
 import { Axe } from './Axe';
 import { Coin } from './Coin';
+import { VIDEO_RESCUE_COINS } from '../game/constants';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 
@@ -109,7 +110,7 @@ export function GameOverModal({
 
         {rescueAvailable && (
           <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
-            📺 Fortschritt mit Video
+            📺 Fortschritt + {VIDEO_RESCUE_COINS} Münzen
           </button>
         )}
         <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>

@@ -668,9 +668,13 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): Le
     levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX && !boss && !worldBoss
       ? levelVariantProfile(variantSeed)
       : levelVariantProfile(0);
+  // Weltboss-Axt-Deckel weiter auf 10 gesenkt (Klaus: "Weltbosse leichter machen,
+  // indem man weniger Äxte zum Werfen hat") – war 13, seit dem letzten Zurückrudern
+  // unverändert. Diesmal bewusst NUR die Achsenzahl angefasst, Tempo/Hindernis-Deckel
+  // bleiben unangetastet, damit klar bleibt, welcher Hebel welchen Effekt hatte.
   const axeCount = Math.max(
     1,
-    (worldBoss ? Math.min(axeCountFor(levelIndex), 13) : axeCountFor(levelIndex)) + variantProfile.axeDelta,
+    (worldBoss ? Math.min(axeCountFor(levelIndex), 10) : axeCountFor(levelIndex)) + variantProfile.axeDelta,
   );
   const speedBonus = worldBoss ? 30 : boss ? 38 : 0;
   const boardSpeedDegPerSec = Math.round(
@@ -864,6 +868,12 @@ export function streakMultiplier(streak: number): number {
 /** Boss-Level, dessen Axt man schon besitzt: gibt es stattdessen Münzen. War 150,
  * im selben zweiten Münz-Kürzungs-Durchgang wie oben mitreduziert. */
 export const BOSS_REPEAT_BONUS = 50;
+
+/** Münz-Belohnung für die einmalige Video-Rettung (siehe `rescueRun()` in
+ *  useAxeGame.ts) – Klaus: "Video-Button für 350 Coins Belohnung", zusätzlich zur
+ *  Fortsetzung des Laufs, damit sich das Anschauen spürbar lohnt statt nur "gratis
+ *  weiterspielen". */
+export const VIDEO_RESCUE_COINS = 350;
 
 /**
  * Tägliche Belohnung: 7-Tage-Zyklus, der sich danach wiederholt (Tag 8 = wieder

@@ -84,24 +84,25 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-standard', kind: 'axe', name: 'Holzfäller', blurb: 'Die treue Standard-Axt.', price: 0, source: 'shop' },
 
   // --- Zwölfer-Set, nach Gemini-Konzeptbildern gestaltet (Farben übernommen,
-  // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx). Zwei
-  // güngstigste Einstiegs-Äxte bleiben normale Münz-Käufe. ---
-  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 700, source: 'shop' },
-  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 1300, source: 'shop' },
-
-  // --- Zweites Zehner-Set (Gemini-Fotos, siehe axeShapes.ts/AXE_IMAGES): ganz normale
-  // Münz-Äxte, wie jede andere Axt im Shop. Preise übernehmen 1:1 die alten
-  // Münz-Preise des ersten (Echtgeld-)Sets unten (gleiche Reihenfolge: günstig -> teuer). ---
-  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 1900, source: 'shop' },
-  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 2500, source: 'shop' },
-  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 3000, source: 'shop' },
-  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 3400, source: 'shop' },
-  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 3800, source: 'shop' },
-  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 4400, source: 'shop' },
-  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 5300, source: 'shop' },
-  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 6200, source: 'shop' },
-  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 7200, source: 'shop' },
-  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 8300, source: 'shop' },
+  // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx). ---
+  //
+  // Preise durchgängig angehoben (Klaus: "generell alle ein Stück teurer") UND
+  // Wurzelhieb/Korallenschneide bewusst WEITER NACH UNTEN verschoben (Klaus: "die
+  // Äxte teurer machen, also weiter nach unten") – waren bisher die zwei günstigsten
+  // Einstiegs-Äxte direkt nach der kostenlosen Start-Axt, jetzt mit deutlich höherem
+  // Preis mitten in der Liste einsortiert statt am Anfang.
+  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 2200, source: 'shop' },
+  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 2900, source: 'shop' },
+  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 3400, source: 'shop' },
+  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 3600, source: 'shop' },
+  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 4000, source: 'shop' },
+  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 4100, source: 'shop' },
+  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 4600, source: 'shop' },
+  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 5300, source: 'shop' },
+  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 6300, source: 'shop' },
+  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 7300, source: 'shop' },
+  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 8400, source: 'shop' },
+  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 9600, source: 'shop' },
 
   // --- Die zehn teureren/"coolsten" Äxte aus dem Zwölfer-Set – das sind die
   // Echtgeld-Äxte (`source: 'iap'`, violett markierte Karten im Shop). Auf Klaus'

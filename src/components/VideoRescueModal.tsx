@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { showRewardedAd } from '../game/ads';
+import { VIDEO_RESCUE_COINS } from '../game/constants';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 import './VideoRescueModal.css';
@@ -62,7 +63,9 @@ export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps
         {status === 'success' && (
           <>
             <div className="modal-card__title">Belohnung erhalten!</div>
-            <div className="modal-card__body">Du machst genau da weiter, wo du aufgehört hast.</div>
+            <div className="modal-card__body">
+              +{VIDEO_RESCUE_COINS} Münzen! Du machst genau da weiter, wo du aufgehört hast.
+            </div>
             <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>
               Weiter geht's
             </button>

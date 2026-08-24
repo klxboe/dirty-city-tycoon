@@ -24,6 +24,7 @@ import {
   PERFECT_APPLE_BONUS,
   REWARD_MULTIPLIER,
   streakMultiplier,
+  VIDEO_RESCUE_COINS,
   worldBossPhaseSpeedMultiplier,
   worldBossPhaseSpinPattern,
   XP_PER_LEVEL,
@@ -371,14 +372,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    * (noch) nicht gibt – die Rettung bewahrt also Level-Fortschritt und Münzen, nicht die
    * Serie. Läuft rein clientseitig als Platzhalter für eine echte Rewarded-Video-Anzeige
    * (siehe `VideoRescueModal.tsx`) – hier wird nur der Spielzustand zurückgesetzt, das
-   * eigentliche Video/Ad-SDK ist noch nicht angebunden.
+   * eigentliche Video/Ad-SDK ist noch nicht angebunden. Gibt zusätzlich `VIDEO_RESCUE_COINS`
+   * Münzen gut (Klaus: "Video-Button für 350 Coins Belohnung").
    */
   const rescueRun = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'gameOver' || prev.rescueUsedThisRun) return prev;
       pendingThrowRef.current = false;
       const target = prev.levelIndex;
-      const nextSave: SaveData = { ...prev.save, currentLevel: target };
+      const nextSave: SaveData = { ...prev.save, currentLevel: target, coins: prev.save.coins + VIDEO_RESCUE_COINS };
       saveSave(nextSave);
       return {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
