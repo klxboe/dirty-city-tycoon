@@ -90,22 +90,24 @@ workflows:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        # GEFUNDENER BUG, zweiter Anlauf (2026-08-24): `submit_to_testflight: true`
-        # OHNE `beta_groups` reichte jeden Build für eine allgemeine Beta-App-Prüfung
-        # ein (POST /v1/betaAppReviewSubmissions) - blieb dadurch jedes Mal in der
-        # Warteschlange bei "Warten auf Prüfung" hängen (nur eine Prüfung gleichzeitig
-        # pro Version, musste jedes Mal manuell per "Aus Prüfung entfernen"
-        # freigeräumt werden). Der naheliegende Fix (`beta_groups: [Intern]`) schlägt
-        # mit einem KLAREN Apple-Fehler fehl: "Cannot add internal group to a build" -
-        # interne Gruppen lassen sich über diesen API-Weg gar nicht explizit
-        # zuweisen, die bekommen laut Apple automatisch Zugriff auf verarbeitete
-        # Builds, ohne dass irgendjemand sie "zuweist".
-        #
-        # Fix: `submit_to_testflight` komplett entfernt (Codemagic lädt die .ipa
-        # trotzdem hoch, siehe "Publishing"-Schritt oben - das läuft unabhängig
-        # davon). Kein automatisches Zuweisen mehr, dafür auch kein Hängenbleiben
-        # mehr - Klaus fügt den fertig hochgeladenen Build danach EINMAL manuell in
-        # App Store Connect (TestFlight -> Builds -> Build anklicken -> Gruppe
-        # "Intern" hinzufügen) zur Testgruppe hinzu, genau der Weg, der bei
-        # Build 1787514079 schon zuverlässig funktioniert hat.
+        # GEFUNDENER BUG, dritter Anlauf (2026-08-24), diesmal per Recherche in einer
+        # echten Codemagic-Diskussion mit demselben Fehler gelöst statt weiter zu raten
+        # (github.com/orgs/codemagic-ci-cd/discussions/2488 und /2536):
+        #   1. `submit_to_testflight: true` OHNE `beta_groups` reicht jeden Build für
+        #      eine allgemeine Beta-App-Prüfung ein - blieb dadurch in der
+        #      Warteschlange bei "Warten auf Prüfung" hängen.
+        #   2. `submit_to_testflight: true` ZUSAMMEN MIT `beta_groups` schlägt mit
+        #      "Cannot add internal group to a build" fehl - laut der Diskussion
+        #      lösen BEIDE zusammen weiterhin die Beta-Prüfung aus, die für interne
+        #      Gruppen so nicht funktioniert.
+        # Fix laut Diskussion: `submit_to_testflight` GANZ WEGLASSEN, NUR
+        # `beta_groups` angeben - das veröffentlicht direkt an die genannte(n)
+        # Gruppe(n), ganz ohne Beta-Prüfung auszulösen.
+        # ZUSÄTZLICH in App Store Connect nötig (separater, nicht per YAML lösbarer
+        # Teil desselben bekannten Fehlers): die Gruppe "Intern" muss auf MANUELLE
+        # Verteilung stehen statt der Standard-Automatik (TestFlight -> Intern ->
+        # Einstellungen) - sonst schlägt die Zuweisung selbst bei richtiger YAML
+        # weiterhin fehl.
+        beta_groups:
+          - Intern
         submit_to_app_store: false
