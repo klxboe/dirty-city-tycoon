@@ -91,4 +91,15 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
+        # GEFUNDENER BUG (2026-08-24): ohne explizite `beta_groups` reicht Codemagic
+        # jeden Build für eine allgemeine Beta-App-Prüfung ein (POST
+        # /v1/betaAppReviewSubmissions) - die braucht laut Apple nur EXTERNES
+        # Testing, nicht die interne Gruppe "Intern". Jeder neue Build blieb dadurch
+        # in der Warteschlange bei "Warten auf Prüfung" hängen, weil immer nur EINE
+        # Prüfung pro Version gleichzeitig laufen darf und die vorherige nie von
+        # selbst durchlief - musste jedes Mal manuell per "Aus Prüfung entfernen"
+        # freigeräumt werden. Fix: Build direkt der internen Gruppe zuweisen, das
+        # sollte laut Apples eigenen Regeln GAR KEINE Beta-App-Prüfung mehr auslösen.
+        beta_groups:
+          - Intern
         submit_to_app_store: false
