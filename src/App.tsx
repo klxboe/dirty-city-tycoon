@@ -328,7 +328,22 @@ function App() {
     prevGemsRef.current = game.save.gems;
   }, [game.save.gems]);
 
-  const hint = game.phase === 'ready' ? 'Tippen zum Werfen – triff die Lücke' : '';
+  /*
+   * GEFUNDENER BUG (Klaus: "der Pause-Button und der Hinweistext müssen die ganze
+   * Zeit sichtbar bleiben"): der Hinweistext (und die Bereitschafts-Axt daneben,
+   * siehe `.stage__ready-axe` unten) verschwanden bisher WÄHREND des Fluges
+   * (`phase !== 'ready'`) – das ist ein echter DOM-Knoten innerhalb von
+   * `.stage__thrower-zone`, einem normalen Flex-Kind, kein absolut positioniertes
+   * Element. Verschwindet er, schrumpft die Thrower-Zone, und `.stage__board-zone`
+   * (flex:1, teilt sich denselben Platz) wächst dadurch minimal – GENAU DAS könnte
+   * erklären, warum die Scheibe bei JEDEM Wurf leicht verschiebt, während
+   * `boardGeom` noch die Messung von VOR diesem Verschwinden benutzt (die eigentliche
+   * Ursache für "Axt fliegt/steckt in der Mitte", die keine der bisherigen
+   * Positions-Fixes beheben konnte, weil sie alle mit einer bereits VERALTETEN
+   * `boardGeom`-Messung rechneten). Text bleibt jetzt konstant, kein Verschwinden
+   * mehr, keine Layout-Verschiebung mehr durch diesen Text.
+   */
+  const hint = 'Tippen zum Werfen – triff die Lücke';
 
   const handlePointerDown = () => {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
@@ -470,13 +485,13 @@ function App() {
         </div>
 
         {/*
-         * Pause-Button: nur sichtbar, während `phase === 'ready'` ist (zwischen zwei
-         * Würfen) – bewusst NICHT während eine Axt fliegt, damit Pausieren nie mit der
-         * Flug-/Kollisions-Logik interagieren muss. `stopPropagation` ist nötig, weil
-         * der Button INNERHALB von `.stage` liegt, dessen `onPointerDown` sonst einen
-         * Wurf auslösen würde.
+         * Pause-Button: bleibt jetzt DURCHGEHEND sichtbar (Klaus: "der muss die ganze
+         * Zeit sichtbar bleiben") – vorher war er nur zwischen zwei Würfen da
+         * (`phase === 'ready'`), verschwand also bei jedem Wurf kurz. `stopPropagation`
+         * ist nötig, weil der Button INNERHALB von `.stage` liegt, dessen
+         * `onPointerDown` sonst einen Wurf auslösen würde.
          */}
-        {game.phase === 'ready' && !overlayOpen && !paused && (
+        {!overlayOpen && !paused && (
           <button
             className="stage__pause-button"
             aria-label="Pause"
@@ -572,9 +587,18 @@ function App() {
         )}
 
         <div className="stage__thrower-zone">
-          {/* Die "bereitliegende" Axt zeigt, von wo geworfen wird. */}
-          {game.phase !== 'flying' && game.axesThrown < game.axeCount && (
-            <div className="stage__ready-axe">
+          {/*
+           * Die "bereitliegende" Axt zeigt, von wo geworfen wird. War bisher komplett
+           * UNMOUNTED während des Fluges (`phase !== 'flying'`-Bedingung) – ein
+           * echter DOM-Knoten mit echter Größe innerhalb dieser Flex-Zone, dessen
+           * Verschwinden vermutlich GENAU die Layout-Verschiebung auslöste, die den
+           * "Axt fliegt/steckt in der Mitte"-Bug verursacht hat (siehe Kommentar bei
+           * `hint` oben). Jetzt bleibt der Platz IMMER reserviert (`visibility:
+           * hidden` statt Unmounten) – die Bereitschafts-Axt verschwindet weiterhin
+           * optisch während des Wurfs, ändert aber nicht mehr die Höhe der Zone.
+           */}
+          {game.axesThrown < game.axeCount && (
+            <div className="stage__ready-axe" style={game.phase === 'flying' ? { visibility: 'hidden' } : undefined}>
               <Axe size={FLIGHT_AXE_SIZE} skin={game.save.equippedAxeSkin} />
             </div>
           )}
