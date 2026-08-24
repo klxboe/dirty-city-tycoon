@@ -182,31 +182,25 @@ export const AXE_STICK_RATIO = BOARD_RADIUS / (BOARD_SIZE / 2);
  */
 /**
  * Größe des Icons einer steckenden Axt. War 40 (unabhängig von `BOARD_SIZE`), dann 37
- * (nur proportional zur Brett-Verkleinerung mitskaliert) – beides ließ die
- * Klingenspitze weit Richtung Mitte reichen, weil `STUCK_AXE_RADIUS` (siehe unten)
- * das Icon an seiner MITTE zentriert, nicht an der Klingenspitze. Bei einer Icon-Höhe
- * von size*1.5 reicht die Hälfte davon zusätzlich zum eigentlichen Steck-Radius nach
- * INNEN – auf dem kleineren 190px-Brett (Radius 88) macht das einen großen Unterschied.
- * GEFUNDENER BUG, ECHTE URSACHE (Klaus: "Axt ist immer noch in der Mitte", bestätigt per
- * Fotoserie NACH DREI erfolglosen Versuchen, die FLUG-Animation zu fixen): das Problem
- * lag nie im Flug, sondern hier – jede STECKENDE Axt reichte schon vorher zu weit
- * Richtung Mitte, die Flug-Fixes konnten das gar nicht beheben, weil sie exakt auf
- * diese (falsche) Steck-Position zielten. Deutlich verkleinert, UND `STUCK_AXE_RADIUS`
- * unten um die halbe Icon-Höhe nach außen verschoben, damit die KLINGENSPITZE (nicht
- * die Icon-Mitte) exakt bei `AXE_EMBED_DEPTH_PX` einsticht.
+ * (nur proportional zur Brett-Verkleinerung mitskaliert) – beides ließ die Klinge auf
+ * dem kleineren 190px-Brett (Radius 88) spürbar weit Richtung Mitte reichen, weil
+ * `translate(-50%, -50%)` das Icon an seiner MITTE statt an der Klingenspitze
+ * zentriert. Auf 28 verkleinert, um diesen Effekt zu dämpfen – ein zusätzlicher
+ * Radius-Ausgleich (halbe Icon-Höhe nach außen) wurde ausprobiert, aber wieder
+ * zurückgenommen (siehe `STUCK_AXE_RADIUS` unten): der schob die Achse zu weit nach
+ * AUSSEN, sichtbar weg vom Brett statt an dessen Rand.
  */
 const STUCK_AXE_SIZE = 28;
-/** Halbe Icon-Höhe (size × 1,5, wie in Axe.tsx) – Ausgleich, damit die KLINGENSPITZE
- *  statt der Icon-Mitte bei der gewünschten Einstecktiefe landet (siehe oben). */
-const STUCK_AXE_HALF_HEIGHT_PX = (STUCK_AXE_SIZE * 1.5) / 2;
 /**
- * Tatsächlicher Render-Radius für steckende Äxte: `BOARD_RADIUS - AXE_EMBED_DEPTH_PX`
- * wäre die gewünschte Position der KLINGENSPITZE – da `translate(-50%, -50%)` aber die
- * Icon-MITTE auf diesen Radius legt, muss der tatsächliche Radius um die halbe
- * Icon-Höhe nach AUSSEN verschoben werden, damit die Klingenspitze (innere Kante)
- * exakt dort landet. Siehe ausführliche Herleitung im Kommentar bei `STUCK_AXE_SIZE`.
+ * ÜBERKORRIGIERT UND ZURÜCKGENOMMEN (Klaus: "Äxte sind nicht mehr am Rand, sondern
+ * weit entfernt vom Brett"): die volle halbe Icon-Höhe als Ausgleich addiert war zu
+ * viel – bei `STUCK_AXE_HALF_HEIGHT_PX` (21px) landete die Icon-MITTE bei Radius 102,
+ * schon 14px AUSSERHALB des sichtbaren Rands (`BOARD_RADIUS` 88). Zurück auf die
+ * einfache Formel ohne Höhen-Ausgleich – zusammen mit dem bereits verkleinerten Icon
+ * (`STUCK_AXE_SIZE` 28 statt vorher 37/40) sitzt die Axt jetzt spürbar näher an der
+ * Mitte als beim allerersten Report, aber wieder sichtbar AM Rand statt weit davor.
  */
-const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX + STUCK_AXE_HALF_HEIGHT_PX;
+const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
 const APPLE_RADIUS = 111;
 const APPLE_STEM_LENGTH = 15;

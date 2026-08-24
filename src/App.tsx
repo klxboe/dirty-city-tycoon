@@ -71,10 +71,6 @@ function stickRadiusPx(geom: BoardGeometry | null): number {
  * einem zu großen Icon reichte die Klinge dadurch weit Richtung Scheibenmitte.
  */
 const FLIGHT_AXE_SIZE = 28;
-/** Halbe Icon-Höhe – derselbe Ausgleich wie `STUCK_AXE_HALF_HEIGHT_PX` in
- *  TargetBoard.tsx, damit die Klingenspitze (nicht die Icon-Mitte) exakt am
- *  Einschlagpunkt landet. */
-const FLIGHT_AXE_HALF_HEIGHT_PX = (FLIGHT_AXE_SIZE * 1.5) / 2;
 
 // Rein dekorativer Staub, der langsam nach oben treibt – für Atmosphäre.
 const DUST_MOTES = [
@@ -213,6 +209,15 @@ function App() {
    * die nutzbare Höhe auch ohne Fenster-Resize, wenn die Browserleiste ein- und
    * ausfährt. Ein reiner `window.resize`-Listener würde das verpassen.
    */
+  /**
+   * Ausgelagert (statt lokal in der Messungs-`useLayoutEffect`), damit `handlePointerDown`
+   * unten VOR jedem einzelnen Wurf zusätzlich frisch nachmessen kann – letzte
+   * Absicherung gegen jeden noch verbliebenen, minimalen Reflow zwischen zwei Würfen
+   * (Klaus nach dem Fix der großen Verschiebung: "die Axt fliegt immer noch ein Mini-
+   * Stück weiter als sie soll, bevor sie zurückkommt" – deutlich kleiner als der vorige
+   * große Sprung, aber noch spürbar).
+   */
+  const messenRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
     if (screen !== 'game') return;
     const stage = stageRef.current;
@@ -229,6 +234,7 @@ function App() {
         height: s.height,
       });
     };
+    messenRef.current = messen;
 
     messen();
     const beobachter = new ResizeObserver(messen);
@@ -348,6 +354,12 @@ function App() {
   const handlePointerDown = () => {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
 
+    // Direkt vor jedem Wurf nochmal frisch nachmessen (siehe `messenRef` oben) – letzte
+    // Absicherung gegen einen minimalen Reflow zwischen zwei Würfen, den weder der
+    // ResizeObserver noch das doppelte rAF beim Level-Start abfangen würden, weil
+    // beide nur beim Level-Wechsel laufen, nicht bei jedem einzelnen Wurf.
+    messenRef.current();
+
     // WO man tippt, spielt keine Rolle – die Axt geht immer geradeaus nach oben,
     // wie beim Vorbild "Knife Hit". Es gab zwischendurch eine Ziel-Mechanik; die hat
     // das Spiel unnötig kompliziert gemacht und wurde wieder entfernt.
@@ -377,18 +389,15 @@ function App() {
    * VIERTER Anlauf – die ECHTE Ursache gefunden (Klaus: "es ist genau gleich", nachdem
    * drei rein FLUG-seitige Fixes (Höhen-Ausgleich, Mitte-zu-Mitte-Anker, reine Pixel-
    * Animation) alle wirkungslos blieben). Identisches Ergebnis bei drei technisch
-   * verschiedenen Ansätzen bedeutet: der Fehler lag nie im Flug selbst. Er lag darin,
+   * verschiedenen Ansätzen bedeutet: der Fehler lag nie im Flug selbst, sondern darin,
    * dass `translate(-50%, -50%)` die ICON-MITTE auf den Ziel-Radius legt, nicht die
-   * KLINGENSPITZE – bei einem (für das inzwischen kleinere Brett) zu großen Icon reicht
-   * die halbe Icon-Höhe dadurch zusätzlich Richtung Scheibenmitte. Das betraf die
-   * STECKENDE Axt in TargetBoard.tsx genauso wie die fliegende – die Flug-Fixes zielten
-   * exakt auf diese (falsche) Steck-Position, konnten das Problem also gar nicht lösen.
-   * Fix: `AXE_EMBED_DEPTH_PX` bezeichnet jetzt die gewünschte Position der
-   * KLINGENSPITZE; `FLIGHT_AXE_HALF_HEIGHT_PX` gleicht das für die Icon-Mitte-
-   * Zentrierung aus – exakt dieselbe Korrektur wie `STUCK_AXE_RADIUS` in
-   * TargetBoard.tsx, damit beide Seiten wieder auf denselben Punkt zielen.
+   * Klingenspitze. Ein Radius-Ausgleich (halbe Icon-Höhe nach außen, analog zu
+   * `STUCK_AXE_RADIUS` in TargetBoard.tsx) wurde ausprobiert, schob die Axt aber zu weit
+   * von der Scheibe weg (Klaus: "Äxte sind nicht mehr am Rand, sondern weit entfernt") –
+   * wieder zurückgenommen, das kleinere `FLIGHT_AXE_SIZE` bleibt als alleinige
+   * Milderung stehen.
    */
-  const flightEndTopPx = impactY - AXE_EMBED_DEPTH_PX + FLIGHT_AXE_HALF_HEIGHT_PX;
+  const flightEndTopPx = impactY - AXE_EMBED_DEPTH_PX;
   // Startposition wie zuvor bei 92% der Bühnenhöhe von oben (= 8% von unten).
   const flightStartTopPx = (boardGeom?.height ?? 0) * 0.92;
   const flightTravelPx = flightEndTopPx - flightStartTopPx;
