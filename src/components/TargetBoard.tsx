@@ -386,6 +386,25 @@ export const TargetBoard = forwardRef<TargetBoardHandle, TargetBoardProps>(funct
             <div className="target-board__shimmer" />
             <div className="target-board__bullseye">
               <div className="target-board__bullseye-ring" />
+              {/* TEMPORÄRER Build-Marker (Klaus: "damit ich sehe, ob der Build
+                  durchging") – rein zur Deployment-Kontrolle, kein Balancing-/
+                  Design-Element. Wieder entfernen, sobald die Build-Pipeline
+                  zuverlässig läuft. */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#3ddc5a',
+                  transform: 'translate(-50%, -50%)',
+                  boxShadow: '0 0 4px 1px rgba(61, 220, 90, 0.8)',
+                  pointerEvents: 'none',
+                  zIndex: 5,
+                }}
+              />
               {BULLSEYE_SPARKLE_ANGLES.map((angle, i) => (
                 <span
                   key={i}
