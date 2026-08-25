@@ -1,6 +1,5 @@
 import { Axe } from './Axe';
 import { Coin } from './Coin';
-import { VIDEO_RESCUE_COINS } from '../game/constants';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 
@@ -108,16 +107,14 @@ export function GameOverModal({
           <Coin size={15} /> Münzen insgesamt: <strong>{totalCoins}</strong>
         </div>
 
+        {/* Reine Fortschritts-Rettung, KEINE Münzbelohnung mehr (Klaus: "wenn man
+            verkackt, soll man mit Video nur Fortschritt nicht verlieren, nicht
+            zusätzlich 350 bekommen") – die Münzbelohnung gibt es nur noch beim
+            komplett unabhängigen Hauptmenü-Button (siehe StartScreen.tsx). */}
         {rescueAvailable && (
-          <div className="gameover-video-cta">
-            {/* Die Münzzahl steht nicht mehr im Button-Text (Klaus: "statt Fortschritt+350
-                nur Fortschritt"), sondern als eigenes, leicht schwebendes Abzeichen darüber
-                ("350 soll im Menü irgendwo so schweben"). */}
-            <span className="gameover-video-cta__badge">+{VIDEO_RESCUE_COINS}</span>
-            <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
-              📺 Fortschritt
-            </button>
-          </div>
+          <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
+            📺 Fortschritt
+          </button>
         )}
         <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>
           Nochmal spielen

@@ -58,7 +58,9 @@ export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: V
     <div className="modal-backdrop">
       <div className="modal-card video-rescue">
         <div className="video-rescue__screen">
-          {status === 'success' && <span className="video-rescue__icon">🎁</span>}
+          {/* 'rescue' bewahrt nur den Fortschritt, ist keine Belohnung – eigenes Schild-
+              statt Geschenk-Icon, damit das auch optisch nicht wie ein Bonus wirkt. */}
+          {status === 'success' && <span className="video-rescue__icon">{variant === 'rescue' ? '🛡️' : '🎁'}</span>}
           {status === 'loading' && <span className="video-rescue__countdown">📺</span>}
           {status === 'error' && <span className="video-rescue__icon">⚠️</span>}
         </div>
@@ -77,10 +79,13 @@ export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: V
 
         {status === 'success' && (
           <>
-            <div className="modal-card__title">Belohnung erhalten!</div>
+            {/* Klaus: "wenn man verkackt, soll man mit Video NUR Fortschritt nicht
+                verlieren, nicht zusätzlich 350 bekommen" – 'rescue' erwähnt deshalb
+                bewusst KEINE Münzen mehr, weder im Titel noch im Text. */}
+            <div className="modal-card__title">{variant === 'rescue' ? 'Fortschritt gerettet!' : 'Belohnung erhalten!'}</div>
             <div className="modal-card__body">
               {variant === 'rescue'
-                ? `+${VIDEO_RESCUE_COINS} Münzen! Du machst genau da weiter, wo du aufgehört hast.`
+                ? 'Du machst genau da weiter, wo du aufgehört hast.'
                 : `+${VIDEO_RESCUE_COINS} Münzen gutgeschrieben!`}
             </div>
             <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>

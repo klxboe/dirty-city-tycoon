@@ -213,40 +213,6 @@
   box-shadow: 0 2px 0 #123f94;
 }
 
-/* Wrapper nur wegen der schwebenden Münz-Anzeige (siehe .gameover-video-cta__badge) –
-   der Button selbst behält sein normales Layout/seine volle Breite. */
-.gameover-video-cta {
-  position: relative;
-}
-
-/* Schwebendes "+350"-Abzeichen über dem Video-Button statt der Zahl im Button-Text
-   selbst (Klaus: "350 soll im Menü irgendwo so schweben"). */
-.gameover-video-cta__badge {
-  position: absolute;
-  top: -11px;
-  right: 14px;
-  z-index: 1;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #ffd76a, #ff9d3c);
-  color: #4a2600;
-  font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-  animation: gameover-badge-float 1.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes gameover-badge-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
 /* Dritte, bewusst zurückhaltende Möglichkeit zurück zum Hauptmenü – keine eigene
    Farbfläche/Schatten wie die beiden Haupt-Buttons darüber, nur Text, damit die
    Blick-Hierarchie klar bleibt (Video/Nochmal spielen zuerst, das hier ist die
@@ -284,9 +250,5 @@
   .gameover-cracks {
     animation: none;
     opacity: 0.3;
-  }
-
-  .gameover-video-cta__badge {
-    animation: none;
   }
 }

@@ -382,15 +382,20 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    * (noch) nicht gibt – die Rettung bewahrt also Level-Fortschritt und Münzen, nicht die
    * Serie. Läuft rein clientseitig als Platzhalter für eine echte Rewarded-Video-Anzeige
    * (siehe `VideoRescueModal.tsx`) – hier wird nur der Spielzustand zurückgesetzt, das
-   * eigentliche Video/Ad-SDK ist noch nicht angebunden. Gibt zusätzlich `VIDEO_RESCUE_COINS`
-   * Münzen gut (Klaus: "Video-Button für 350 Coins Belohnung").
+   * eigentliche Video/Ad-SDK ist noch nicht angebunden.
+   *
+   * GIBT BEWUSST KEINE `VIDEO_RESCUE_COINS` mehr (Klaus: "wenn man verkackt, soll man
+   * mit Video NUR Fortschritt nicht verlieren, nicht zusätzlich 350 bekommen") – diese
+   * Münzbelohnung war ursprünglich hier eingebaut, ist inzwischen aber exklusiv dem
+   * NEUEN, komplett unabhängigen Hauptmenü-Button vorbehalten (siehe `watchAdReward()`
+   * unten). Die Rettung hier bewahrt ausschließlich den Lauf-Fortschritt.
    */
   const rescueRun = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'gameOver' || prev.rescueUsedThisRun) return prev;
       pendingThrowRef.current = false;
       const target = prev.levelIndex;
-      const nextSave: SaveData = { ...prev.save, currentLevel: target, coins: prev.save.coins + VIDEO_RESCUE_COINS };
+      const nextSave: SaveData = { ...prev.save, currentLevel: target };
       saveSave(nextSave);
       return {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
