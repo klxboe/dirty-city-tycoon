@@ -112,19 +112,6 @@ export function StartScreen({
       </div>
 
       <div className="start__top">
-        {/* Eigener, jederzeit nutzbarer Rewarded-Video-Button GENAU hier bei Highscore/
-            Münzen/XP (Klaus: "im Hauptmenü, einfach da, wo man den Highscore sieht, wo
-            man die Coins sieht, XP sieht und so, da soll's irgendwo so ein Schwebe-
-            Button geben") – komplett unabhängig von der Game-Over-Rettung (`rescueRun`),
-            die unverändert bleibt. Schwebt sanft (siehe `start-ad-button-float`), lädt
-            über denselben Rewarded-Video-Flow wie die Rettung (`VideoRescueModal`,
-            `variant="reward"`), gibt aber nur eine Münz-Belohnung ohne jede Auswirkung
-            auf einen laufenden Versuch. */}
-        <button className="start__ad-button" onClick={onWatchAd} aria-label="Werbevideo für 350 Münzen ansehen">
-          <span className="start__ad-button-icon">📺</span>
-          <span className="start__ad-button-text">+350</span>
-        </button>
-
         <h1 className="start__title" onClick={handleLogoTap}>
           Axe<span className="start__title-accent">Throw</span>
         </h1>
@@ -164,6 +151,21 @@ export function StartScreen({
       <div className="start__art">
         <Axe size={92} skin={axeSkin} />
       </div>
+
+      {/* Eigener, jederzeit nutzbarer Rewarded-Video-Button – ursprünglich oben rechts
+          bei Highscore/Münzen/XP platziert, kollidierte dort aber sichtbar mit dem
+          Logo (Klaus, mit Screenshot vom echten Gerät: "mach den Video für 350 hier
+          her" + eingekreiste leere Fläche unter der Axt). Jetzt in genau dieser
+          leeren Zone zwischen Axt-Bild und Button-Stapel, komplett unabhängig von der
+          Game-Over-Rettung (`rescueRun`), die unverändert bleibt. Nur außerhalb des
+          Erstlauf-Tutorials (dort füllt `.start__rules` denselben Platz) – ein
+          Werbevideo-Angebot direkt beim allerersten Öffnen wäre verfrüht. */}
+      {!showTutorial && (
+        <button className="start__ad-button" onClick={onWatchAd} aria-label="Werbevideo für 350 Münzen ansehen">
+          <span className="start__ad-button-icon">📺</span>
+          <span className="start__ad-button-text">+350</span>
+        </button>
+      )}
 
       {showTutorial ? (
         <div className="start__rules">

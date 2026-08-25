@@ -124,31 +124,29 @@
   gap: var(--space-2);
 }
 
-/* Rewarded-Video-Button fürs Hauptmenü, unabhängig von der Game-Over-Rettung –
-   sitzt bewusst GENAU dort, wo Highscore/Münzen/XP zu sehen sind (Klaus: "einfach
-   da, wo man den Highscore sieht, wo man die Coins sieht, XP sieht und so"), statt
-   im normalen Button-Stapel unten. `position: absolute` nimmt ihn aus dem
-   zentrierten Spalten-Fluss von `.start__top` heraus, ohne dessen Layout zu
-   verschieben. Die Schwebe-Animation (Klaus: "schweben Button") ist bewusst
-   dieselbe Bob-Bewegung wie der "Du bist hier"-Pin auf der Weltkarte und das
-   Video-Rettungs-Abzeichen im Game-Over-Fenster – ein wiedererkennbares Signal
-   für "hier gibt's was, ohne dass man's verpasst". */
+/* Rewarded-Video-Button fürs Hauptmenü, unabhängig von der Game-Over-Rettung.
+   Stand ursprünglich `position: absolute` oben rechts bei Highscore/Münzen/XP –
+   Klaus meldete danach per Screenshot vom echten Gerät, dass er dort sichtbar mit
+   dem "AxeThrow"-Logo kollidiert, und wollte ihn stattdessen in die leere Fläche
+   zwischen Axt-Bild und Button-Stapel verschoben haben. Jetzt ein ganz normales
+   Flex-Kind im Fluss von `.start` (das zentriert seine Kinder ohnehin schon per
+   `align-items: center`) statt absoluter Positionierung – kein Kollisionsrisiko
+   mit Nachbarelementen mehr, egal wie lang Logo/Highscore-Zahl gerade sind. Die
+   Schwebe-Animation (Klaus: "schweben Button") ist bewusst dieselbe Bob-Bewegung
+   wie der "Du bist hier"-Pin auf der Weltkarte und das Video-Rettungs-Abzeichen im
+   Game-Over-Fenster – ein wiedererkennbares Signal für "hier gibt's was". */
 .start__ad-button {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 5px;
   border: 1px solid rgba(255, 206, 61, 0.5);
   border-radius: var(--radius-full);
-  padding: 6px 12px 6px 10px;
+  padding: 7px 14px 7px 11px;
   background: linear-gradient(135deg, #ffd76a, #ff9d3c);
   color: #4a2600;
   font-family: inherit;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), 0 0 14px 1px rgba(255, 183, 3, 0.35);
   animation: start-ad-button-float 1.8s ease-in-out infinite;
