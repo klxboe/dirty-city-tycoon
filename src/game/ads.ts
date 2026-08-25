@@ -27,19 +27,18 @@ import type { AdMobRewardItem, AdOptions, RewardAdOptions } from '@capacitor-com
 export const USE_TEST_AD = true;
 
 /**
- * ECHTE IDs fehlen noch – müssen in der AdMob-Konsole für EINE NEUE, EIGENE
- * "Axe Throw"-App angelegt werden (nicht die IDs von Habituo wiederverwenden,
- * jede App braucht ihre eigene AdMob-App + Ad Unit). Bis dahin bewusst auf
- * Googles Test-IDs gesetzt, damit der Code schon lauffähig ist:
- * - App ID gehört zusätzlich in Info.plist (`GADApplicationIdentifier`) UND
- *   `AndroidManifest.xml` (falls Android dazukommt) – nicht nur hierhin.
- * - Sobald echte IDs existieren: hier UND in Info.plist ersetzen, `USE_TEST_AD`
- *   auf `false`.
+ * Echte IDs der eigenen "Axe Throw Master"-App in AdMob (apps.admob.com,
+ * angelegt 2026-08-25) – NICHT Habituos IDs, jede App braucht ihre eigene
+ * AdMob-App + Ad Units. App-ID ist zusätzlich in Info.plist
+ * (`GADApplicationIdentifier`) eingetragen und MUSS mit dieser hier
+ * übereinstimmen. `USE_TEST_AD` steht trotzdem noch auf `true` (siehe oben) –
+ * erst auf `false` stellen, sobald die Ad Units live gegengeprüft sind (AdMob
+ * braucht laut eigener Aussage bis zu einer Stunde, bevor ein frisch
+ * angelegter Anzeigenblock überhaupt ausliefert).
  */
-export const REAL_APP_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX';
-const REAL_REWARDED_AD_UNIT_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-/** Ebenfalls noch Platzhalter – eigene Interstitial-Ad-Unit in derselben neuen AdMob-App anlegen. */
-const REAL_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
+export const REAL_APP_ID = 'ca-app-pub-6242365338373368~1168909682';
+const REAL_REWARDED_AD_UNIT_ID = 'ca-app-pub-6242365338373368/7505307652';
+const REAL_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-6242365338373368/9487588683';
 
 const TEST_REWARDED_AD_UNIT_ID = 'ca-app-pub-3940256099942544/1712485313';
 /** Googles offizielle Test-ID fürs Interstitial (iOS) – wie oben, garantiert lauffähig. */
