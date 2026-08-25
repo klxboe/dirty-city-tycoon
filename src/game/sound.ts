@@ -39,6 +39,22 @@ export function unlockAudio(): void {
   getContext();
 }
 
+/**
+ * Generischer UI-Klick für JEDEN Button in der App (siehe globaler Klick-Listener
+ * in App.tsx) – Klaus: "baue Sounds ein wenn man auf einen Button klickt, damit es
+ * sich deutlich hochwertiger anfühlt". Bewusst sehr kurz und leise (ein doppelter,
+ * hoher "Tick" statt eines vollen Tons) – soll bei jedem einzelnen Tap in der
+ * Werkstatt/den Menüs unauffällig mitlaufen, nicht wie ein eigenständiger Soundeffekt
+ * aus dem Spiel selbst (playHitSound etc.) auffallen.
+ */
+export function playClickSound(): void {
+  const ctx = getContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(ctx, 1000, now, 0.05, 'sine', 0.07);
+  playTone(ctx, 1600, now + 0.016, 0.035, 'sine', 0.045);
+}
+
 /** Boss besiegt: aufsteigende Fanfare. */
 export function playBossSound(): void {
   const ctx = getContext();

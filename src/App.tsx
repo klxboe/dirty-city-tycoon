@@ -23,6 +23,7 @@ import { BOARD_IMAGES } from './game/boardImages';
 import { initAds } from './game/ads';
 import { initPurchases } from './game/purchases';
 import {
+  playClickSound,
   playCoinSound,
   playBossSound,
   playLevelCompleteSound,
@@ -120,6 +121,26 @@ function App() {
       const img = new Image();
       img.src = src;
     });
+  }, []);
+
+  /**
+   * Globaler Klick-Sound für JEDEN Button in der App (Klaus: "baue Sounds ein wenn
+   * man auf einen Button klickt, damit es sich deutlich hochwertiger anfühlt") – EIN
+   * einziger Listener auf Dokument-Ebene statt in jedem einzelnen Menü/Modal/der
+   * Werkstatt/etc. den `onClick` von Hand um einen Sound zu ergänzen. Capture-Phase,
+   * damit ein `stopPropagation()` irgendwo im Baum (z.B. der Pause-Button auf der
+   * Bühne, der das Werfen der Axt verhindern muss) den Sound trotzdem nicht schluckt.
+   * `click` statt `pointerdown`, damit ein Antippen, das man vor dem Loslassen noch
+   * wegzieht (kein echtes Klick-Ereignis), auch keinen Sound auslöst.
+   */
+  useEffect(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      if ((event.target as HTMLElement | null)?.closest('button')) {
+        playClickSound();
+      }
+    };
+    document.addEventListener('click', handleGlobalClick, true);
+    return () => document.removeEventListener('click', handleGlobalClick, true);
   }, []);
 
   const stageRef = useRef<HTMLDivElement>(null);
