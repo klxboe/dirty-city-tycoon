@@ -1,7 +1,9 @@
+import { getStrings, type Language } from '../game/i18n';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 
 interface PauseModalProps {
+  lang: Language;
   onResume: () => void;
   onBackToMenu: () => void;
 }
@@ -17,16 +19,17 @@ interface PauseModalProps {
  * (siehe App.tsx) – bewusst NICHT während eine Axt fliegt, damit die Pause-Funktion
  * die Flug-/Kollisions-Logik nie berühren muss.
  */
-export function PauseModal({ onResume, onBackToMenu }: PauseModalProps) {
+export function PauseModal({ lang, onResume, onBackToMenu }: PauseModalProps) {
+  const t = getStrings(lang);
   return (
     <div className="modal-backdrop">
       <div className="modal-card">
-        <div className="modal-card__title">Pausiert</div>
+        <div className="modal-card__title">{t.pause.title}</div>
         <button className="modal-card__button modal-card__button--ocean" onClick={onResume}>
-          Fortsetzen
+          {t.pause.resume}
         </button>
         <button className="modal-card__button modal-card__button--secondary" onClick={onBackToMenu}>
-          Zurück zum Menü
+          {t.pause.backToMenu}
         </button>
       </div>
     </div>

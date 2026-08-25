@@ -17,7 +17,8 @@ import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
 import { displayLevelFor, worldById, worldStyleVars } from './game/worlds';
-import { EASTER_EGG_SKINS } from './game/shop';
+import { EASTER_EGG_SKINS, localizedBossFruitName } from './game/shop';
+import { getStrings } from './game/i18n';
 import { AXE_IMAGES } from './game/axeShapes';
 import { BOARD_IMAGES } from './game/boardImages';
 import { initAds, showInterstitialAd } from './game/ads';
@@ -389,7 +390,7 @@ function App() {
    * `boardGeom`-Messung rechneten). Text bleibt jetzt konstant, kein Verschwinden
    * mehr, keine Layout-Verschiebung mehr durch diesen Text.
    */
-  const hint = 'Tippen zum Werfen – triff die Lücke';
+  const hint = getStrings(game.save.language).stage.hint;
 
   const handlePointerDown = () => {
     unlockAudio(); // muss innerhalb der Nutzer-Interaktion passieren, sonst blockt der Browser Audio
@@ -449,6 +450,8 @@ function App() {
   // wieder absichtlich eine andere Welt anklickt". `activeWorldId` wird nur bei einem
   // bewussten Weltkarten-Sprung aktualisiert (siehe goToLevel() in useAxeGame.ts).
   const world = worldById(game.save.activeWorldId);
+  const lang = game.save.language;
+  const t = getStrings(lang);
 
   if (screen === 'start') {
     return (
@@ -464,6 +467,7 @@ function App() {
           showTutorial={!game.save.tutorialSeen}
           defeatedWorldBosses={game.save.defeatedWorldBosses}
           activeWorldId={game.save.activeWorldId}
+          lang={lang}
           onWatchAd={() => setAdRewardOpen(true)}
           onPlay={startPlaying}
           onOpenShop={() => setShopOpen(true)}
@@ -473,13 +477,15 @@ function App() {
         />
 
         {shopOpen && (
-          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+          <Shop save={game.save} lang={lang} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
         )}
         {settingsOpen && (
           <SettingsModal
             soundOn={game.save.soundOn}
             bestLevel={game.save.bestLevel}
+            lang={lang}
             onToggleSound={game.setSoundOn}
+            onSetLanguage={game.setLanguage}
             onClose={() => setSettingsOpen(false)}
           />
         )}
@@ -489,6 +495,7 @@ function App() {
             xp={game.save.xp}
             currentLevelIndex={game.levelIndex}
             defeatedWorldBosses={game.save.defeatedWorldBosses}
+            lang={lang}
             onSelectLevel={(levelIndex) => {
               game.goToLevel(levelIndex);
               startPlaying();
@@ -503,6 +510,7 @@ function App() {
           <DailyRewardModal
             streak={game.dailyReward.streak}
             reward={game.dailyReward.reward}
+            lang={lang}
             onClaim={game.claimDailyReward}
           />
         )}
@@ -510,6 +518,7 @@ function App() {
         {adRewardOpen && (
           <VideoRescueModal
             variant="reward"
+            lang={lang}
             onFinished={() => {
               game.watchAdReward();
               setAdRewardOpen(false);
@@ -533,6 +542,7 @@ function App() {
         streak={game.streak}
         isBoss={!!game.bossFruit}
         isWorldBoss={!!game.worldBossName}
+        lang={lang}
         onOpenShop={() => setShopOpen(true)}
       />
 
@@ -563,7 +573,7 @@ function App() {
         {!overlayOpen && !paused && (
           <button
             className="stage__pause-button"
-            aria-label="Pause"
+            aria-label={t.stage.pauseAria}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => setPaused(true)}
           >
@@ -574,8 +584,8 @@ function App() {
         {/* Boss-Level bekommen ein eigenes Schild, damit der Moment klar erkennbar ist. */}
         {game.bossFruit && (
           <div className="stage__boss-tag">
-            <span className="stage__boss-tag-label">Boss</span>
-            <span className="stage__boss-tag-name">{game.bossFruit.name}</span>
+            <span className="stage__boss-tag-label">{t.stage.bossLabel}</span>
+            <span className="stage__boss-tag-name">{localizedBossFruitName(game.bossFruit, lang)}</span>
           </div>
         )}
 
@@ -583,8 +593,8 @@ function App() {
             das hier ist das "Tor" vor der Welt, keine Routine-Prüfung. */}
         {game.worldBossName && (
           <div className="stage__boss-tag stage__boss-tag--world">
-            <span className="stage__boss-tag-label">⚠ Weltboss</span>
-            <span className="stage__boss-tag-name">{game.worldBossName}</span>
+            <span className="stage__boss-tag-label">{t.stage.worldBossLabel}</span>
+            <span className="stage__boss-tag-name">{lang === 'en' ? game.worldBossNameEn : game.worldBossName}</span>
           </div>
         )}
 
@@ -693,12 +703,12 @@ function App() {
               }}
             >
               {game.phase === 'gameOver'
-                ? 'Axt zersplittert!'
+                ? t.stage.outcomeFail
                 : game.worldBossName
-                  ? 'Weltboss besiegt!'
+                  ? t.stage.outcomeWorldBoss
                   : game.bossFruit
-                    ? 'Boss besiegt!'
-                    : 'Geschafft!'}
+                    ? t.stage.outcomeBoss
+                    : t.stage.outcomeWin}
             </span>
           </div>
         )}
@@ -708,20 +718,22 @@ function App() {
             wechseln, ohne dass klar ist, DASS und WOHIN man gerade gesprungen ist. */}
         {levelIntroVisible && (
           <div className="stage__level-intro">
-            <span>Level {displayLevelFor(game.levelIndex)}</span>
+            <span>{t.stage.levelIntro(displayLevelFor(game.levelIndex))}</span>
           </div>
         )}
       </div>
 
       {shopOpen && (
-        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+        <Shop save={game.save} lang={lang} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
       )}
 
       {settingsOpen && (
         <SettingsModal
           soundOn={game.save.soundOn}
           bestLevel={game.save.bestLevel}
+          lang={lang}
           onToggleSound={game.setSoundOn}
+          onSetLanguage={game.setLanguage}
           onClose={() => setSettingsOpen(false)}
         />
       )}
@@ -737,6 +749,7 @@ function App() {
           totalXp={game.save.xp}
           streak={game.streak}
           isCampaignComplete={game.isCampaignComplete}
+          lang={lang}
           onNext={() => {
             // Weltboss-Sieg: NICHT nahtlos weiterspielen ("nach dem Boss soll man nur
             // die Welt geschafft haben, nicht zu Level 22 oder so kommen – der Boss
@@ -779,6 +792,7 @@ function App() {
           totalCoins={game.save.coins}
           axeSkin={game.save.equippedAxeSkin}
           rescueAvailable={!game.rescueUsedThisRun}
+          lang={lang}
           onWatchVideo={() => setVideoRescueOpen(true)}
           onPlayAgain={() => {
             // Interstitial VOR dem eigentlichen Neustart zeigen (falls fällig, siehe
@@ -806,6 +820,7 @@ function App() {
 
       {videoRescueOpen && (
         <VideoRescueModal
+          lang={lang}
           onFinished={() => {
             // Wer schon ein Rewarded-Video für die Rettung gesehen hat, bekommt KEIN
             // zusätzliches Interstitial obendrauf (Klaus: "nicht zu lange") – ein
@@ -820,7 +835,7 @@ function App() {
         />
       )}
 
-      {paused && <PauseModal onResume={() => setPaused(false)} onBackToMenu={() => setScreen('start')} />}
+      {paused && <PauseModal lang={lang} onResume={() => setPaused(false)} onBackToMenu={() => setScreen('start')} />}
     </div>
   );
 }

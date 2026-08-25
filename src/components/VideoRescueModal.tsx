@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { showRewardedAd } from '../game/ads';
 import { VIDEO_RESCUE_COINS } from '../game/constants';
+import { getStrings, type Language } from '../game/i18n';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 import './VideoRescueModal.css';
 
 interface VideoRescueModalProps {
+  lang: Language;
   /** Wird aufgerufen, sobald die Belohnung wirklich verdient wurde (Nutzer hat das Video zu Ende gesehen). */
   onFinished: () => void;
   onCancel: () => void;
@@ -36,8 +38,9 @@ type Status = 'loading' | 'success' | 'error';
  * "Erneut versuchen" statt die App in einem endlosen Lade-Zustand hängen zu lassen
  * (siehe App-Store-Audit 2026-08-22, Abschnitt "Offline/Netzwerkverhalten").
  */
-export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: VideoRescueModalProps) {
+export function VideoRescueModal({ lang, onFinished, onCancel, variant = 'rescue' }: VideoRescueModalProps) {
   const [status, setStatus] = useState<Status>('loading');
+  const t = getStrings(lang);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,12 +70,12 @@ export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: V
 
         {status === 'loading' && (
           <>
-            <div className="modal-card__title">Werbevideo läuft …</div>
+            <div className="modal-card__title">{t.videoRescue.loadingTitle}</div>
             <div className="modal-card__body">
-              {variant === 'rescue' ? 'Danke fürs Anschauen – gleich geht’s weiter.' : 'Danke fürs Anschauen!'}
+              {variant === 'rescue' ? t.videoRescue.loadingBodyRescue : t.videoRescue.loadingBodyReward}
             </div>
             <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
-              Abbrechen
+              {t.videoRescue.cancel}
             </button>
           </>
         )}
@@ -82,30 +85,27 @@ export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: V
             {/* Klaus: "wenn man verkackt, soll man mit Video NUR Fortschritt nicht
                 verlieren, nicht zusätzlich 350 bekommen" – 'rescue' erwähnt deshalb
                 bewusst KEINE Münzen mehr, weder im Titel noch im Text. */}
-            <div className="modal-card__title">{variant === 'rescue' ? 'Fortschritt gerettet!' : 'Belohnung erhalten!'}</div>
+            <div className="modal-card__title">
+              {variant === 'rescue' ? t.videoRescue.successTitleRescue : t.videoRescue.successTitleReward}
+            </div>
             <div className="modal-card__body">
-              {variant === 'rescue'
-                ? 'Du machst genau da weiter, wo du aufgehört hast.'
-                : `+${VIDEO_RESCUE_COINS} Münzen gutgeschrieben!`}
+              {variant === 'rescue' ? t.videoRescue.successBodyRescue : t.videoRescue.successBodyReward(VIDEO_RESCUE_COINS)}
             </div>
             <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>
-              {variant === 'rescue' ? "Weiter geht's" : 'Super!'}
+              {variant === 'rescue' ? t.videoRescue.successButtonRescue : t.videoRescue.successButtonReward}
             </button>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <div className="modal-card__title">Video nicht verfügbar</div>
-            <div className="modal-card__body">
-              Gerade ist kein Video verfügbar – bitte prüfe deine Internetverbindung und versuch es
-              nochmal.
-            </div>
+            <div className="modal-card__title">{t.videoRescue.errorTitle}</div>
+            <div className="modal-card__body">{t.videoRescue.errorBody}</div>
             <button className="modal-card__button modal-card__button--ocean" onClick={retry}>
-              Erneut versuchen
+              {t.videoRescue.retry}
             </button>
             <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
-              Abbrechen
+              {t.videoRescue.cancel}
             </button>
           </>
         )}

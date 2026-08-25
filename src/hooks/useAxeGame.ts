@@ -34,6 +34,7 @@ import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
 import { WORLD_BOSSES, worldForLevel } from '../game/worlds';
 import { setMuted } from '../game/sound';
+import type { Language } from '../game/i18n';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
 /**
@@ -530,6 +531,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
+  /** Sprache der gesamten UI umschalten (siehe game/i18n.ts, Settings-Fenster). */
+  const setLanguage = useCallback((language: Language) => {
+    setState((prev) => {
+      const nextSave: SaveData = { ...prev.save, language };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
   /**
    * Oster-Ei: schaltet einen versteckten Skin frei, ausgelöst über ein Geheimnis in
    * der UI (siehe StartScreen.tsx – mehrfaches Antippen des Logos). Bewusst
@@ -636,6 +646,8 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     /** Name des Weltbosses, falls dieses Level das "Tor" vor einer Welt ist (siehe
      *  isWorldBossLevel()/WORLD_BOSSES in worlds.ts), sonst `null`. */
     worldBossName: worldBoss?.name ?? null,
+    /** Englischer Name desselben Weltbosses, siehe game/i18n.ts. */
+    worldBossNameEn: worldBoss?.nameEn ?? null,
     /** Boss-Level (beide Arten) zeigen die Scheibe des Bosses statt des ausgerüsteten
      *  Designs – Weltboss hat dabei Vorrang, falls beide sich je theoretisch
      *  überschneiden sollten (kommt aktuell nicht vor, jeder Level-Index ist höchstens
@@ -655,6 +667,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     equipSkin,
     unlockEasterEgg,
     setSoundOn,
+    setLanguage,
     tradeFigurines,
     claimDailyReward,
     markTutorialSeen,

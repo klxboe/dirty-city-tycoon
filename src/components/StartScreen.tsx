@@ -4,7 +4,8 @@ import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
-import { displayLevelFor, isWorldBossLevel, worldById, worldForLevel } from '../game/worlds';
+import { getStrings, type Language } from '../game/i18n';
+import { displayLevelFor, isWorldBossLevel, localizedWorldName, worldById, worldForLevel } from '../game/worlds';
 import './StartScreen.css';
 
 interface StartScreenProps {
@@ -25,6 +26,7 @@ interface StartScreenProps {
    *  Welt"-Anzeige – ändert sich NUR bei einem bewussten Weltkarten-Sprung, nicht bei
    *  jedem Levelwechsel/Game Over (siehe goToLevel() in useAxeGame.ts). */
   activeWorldId: string;
+  lang: Language;
   /** Öffnet den Rewarded-Video-Flow für die Hauptmenü-Münzbelohnung (App.tsx) – gibt
    *  dieselbe Summe wie die Game-Over-Rettung (VIDEO_RESCUE_COINS), ist aber jederzeit
    *  vom Hauptmenü aus nutzbar, unabhängig von einem laufenden Versuch. */
@@ -53,6 +55,7 @@ export function StartScreen({
   showTutorial,
   defeatedWorldBosses,
   activeWorldId,
+  lang,
   onWatchAd,
   onPlay,
   onOpenShop,
@@ -111,6 +114,7 @@ export function StartScreen({
   // Spielen drückt, erst wenn man wieder ABSICHTLICH auf Wald klickt, soll es
   // geändert werden".
   const activeWorld = worldById(activeWorldId);
+  const t = getStrings(lang);
 
   return (
     <div className="start">
@@ -132,13 +136,13 @@ export function StartScreen({
             (Klaus: "Highscore soll gefühlt der Mittelpunkt sein") – große Zahl mit
             Pokal-Label, direkt unter dem Logo, bevor überhaupt die Welt/Währungen kommen. */}
         <div className="start__highscore">
-          <span className="start__highscore-label">🏆 Highscore</span>
-          <span className="start__highscore-value">Level {bestLevel}</span>
+          <span className="start__highscore-label">{t.start.highscoreLabel}</span>
+          <span className="start__highscore-value">{t.gameOver.highscoreValue(bestLevel)}</span>
         </div>
 
         <div className="start__world-badge" style={{ ['--world-accent' as string]: activeWorld.colors.accent }}>
           <span className="start__world-dot" />
-          Aktuelle Welt: <strong>{activeWorld.name}</strong>
+          {t.start.activeWorld} <strong>{localizedWorldName(activeWorld, lang)}</strong>
         </div>
 
         <div className="start__stats">
@@ -157,7 +161,7 @@ export function StartScreen({
             </span>
           )}
         </div>
-        {secretFoundMsg && <div className="start__secret-toast">Geheimnis gefunden! Schau in der Werkstatt vorbei.</div>}
+        {secretFoundMsg && <div className="start__secret-toast">{t.start.secretFound}</div>}
       </div>
 
       <div className="start__art">
@@ -173,7 +177,7 @@ export function StartScreen({
           Erstlauf-Tutorials (dort füllt `.start__rules` denselben Platz) – ein
           Werbevideo-Angebot direkt beim allerersten Öffnen wäre verfrüht. */}
       {!showTutorial && (
-        <button className="start__ad-button" onClick={onWatchAd} aria-label="Werbevideo für 350 Münzen ansehen">
+        <button className="start__ad-button" onClick={onWatchAd} aria-label={t.start.adButtonAria}>
           <span className="start__ad-button-icon">📺</span>
           <span className="start__ad-button-text">+350</span>
         </button>
@@ -181,27 +185,31 @@ export function StartScreen({
 
       {showTutorial ? (
         <div className="start__rules">
-          <h2 className="start__rules-title">So geht's</h2>
+          <h2 className="start__rules-title">{t.start.rulesTitle}</h2>
           <ul className="start__rules-list">
             <li>
               <span className="start__rules-icon">👆</span>
               <span>
-                Tippen wirft eine Axt – immer geradeaus. Es zählt nur, <strong>wann</strong> du tippst.
+                {t.start.ruleTimingPre}
+                <strong>{t.start.ruleTimingStrong}</strong>
+                {t.start.ruleTimingRest}
               </span>
             </li>
             <li>
               <span className="start__rules-icon">🍎</span>
-              <span>Triff nah an den Äpfeln, das gibt Münzen für neue Äxte und Scheiben.</span>
+              <span>{t.start.ruleApples}</span>
             </li>
             <li>
               <span className="start__rules-icon">💥</span>
               <span>
-                Triffst du deine <strong>eigene Axt</strong>, ist der Lauf vorbei. Timing zählt.
+                {t.start.ruleOwnAxePre}
+                <strong>{t.start.ruleOwnAxeStrong}</strong>
+                {t.start.ruleOwnAxeRest}
               </span>
             </li>
             <li>
               <span className="start__rules-icon">🏆</span>
-              <span>Jedes {BOSS_EVERY}. Level ist ein Boss – schaffst du ihn, gehört dir seine Axt.</span>
+              <span>{t.start.ruleBoss(BOSS_EVERY)}</span>
             </li>
           </ul>
         </div>
@@ -217,20 +225,20 @@ export function StartScreen({
               am ABSOLUTEN continueLevel, damit "Los geht's" wirklich nur beim
               allerersten Level der gesamten Kampagne erscheint. */}
           {isBossGate
-            ? 'Weiter zur Weltkarte'
+            ? t.start.continueToWorldMap
             : continueLevel > 1
-              ? `Weiter – Level ${displayLevelFor(continueLevel - 1)}`
-              : 'Los geht’s'}
+              ? t.start.continueLevel(displayLevelFor(continueLevel - 1))
+              : t.start.playFirst}
         </button>
         <button className="start__button start__button--ghost" onClick={onOpenWorldMap}>
-          Weltkarte
+          {t.start.worldMap}
         </button>
         <div className="start__button-row">
           <button className="start__button start__button--ghost" onClick={onOpenShop}>
-            Werkstatt
+            {t.start.shop}
           </button>
           <button className="start__button start__button--ghost" onClick={onOpenSettings}>
-            Einstellungen
+            {t.start.settings}
           </button>
         </div>
       </div>

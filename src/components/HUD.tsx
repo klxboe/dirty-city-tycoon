@@ -1,6 +1,7 @@
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { LEVELS_PER_BLOCK } from '../game/constants';
+import { getStrings, type Language } from '../game/i18n';
 import './HUD.css';
 
 interface HUDProps {
@@ -24,6 +25,7 @@ interface HUDProps {
    * eigenständige Prüfung, deshalb bekommt er hier eine eigene, zahlenfreie Anzeige.
    */
   isWorldBoss: boolean;
+  lang: Language;
   onOpenShop: () => void;
 }
 
@@ -35,16 +37,17 @@ interface HUDProps {
  * wie weit ein Game Over zurückwerfen würde. Der Stern am Ende markiert den
  * Block-Abschluss.
  */
-export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, streak, isBoss, isWorldBoss, onOpenShop }: HUDProps) {
+export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, streak, isBoss, isWorldBoss, lang, onOpenShop }: HUDProps) {
+  const t = getStrings(lang);
   return (
     <header className="hud">
       <div className={`hud__level ${isBoss ? 'hud__level--boss' : ''}`}>
         {isWorldBoss ? (
-          <span className="hud__level-label hud__level-label--world-boss">⚔ Weltboss</span>
+          <span className="hud__level-label hud__level-label--world-boss">{t.hud.worldBoss}</span>
         ) : (
           <>
             <span className="hud__level-number">{level}</span>
-            <span className="hud__level-label">{isBoss ? 'Boss' : 'Level'}</span>
+            <span className="hud__level-label">{isBoss ? t.hud.boss : t.hud.level}</span>
           </>
         )}
         {/* Serie erst ab dem ersten wirksamen Multiplikator zeigen – vorher wäre sie nur Zahlensalat. */}
@@ -54,7 +57,7 @@ export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, s
       {/* Block-Fortschritt ist ein reines Normal-Modus-Konzept (10er-Block), bei einem
           Weltboss ausgeblendet statt eine falsche Zugehörigkeit vorzugaukeln. */}
       {!isWorldBoss && (
-        <div className="hud__progress" aria-label={`Level ${levelInBlock + 1} von ${LEVELS_PER_BLOCK} im Block`}>
+        <div className="hud__progress" aria-label={t.hud.progressAria(levelInBlock + 1, LEVELS_PER_BLOCK)}>
           {Array.from({ length: LEVELS_PER_BLOCK }).map((_, i) => (
             <span
               key={i}
@@ -71,7 +74,7 @@ export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, s
         <button
           className={`hud__coins ${coinsFlash ? 'hud__coins--flash' : ''}`}
           onClick={onOpenShop}
-          aria-label="Werkstatt öffnen"
+          aria-label={t.hud.openShopAria}
         >
           <span className="hud__coins-value">{coins}</span>
           <Coin size={26} />
@@ -82,7 +85,7 @@ export function HUD({ level, levelInBlock, coins, coinsFlash, gems, gemsFlash, s
           <button
             className={`hud__gems ${gemsFlash ? 'hud__gems--flash' : ''}`}
             onClick={onOpenShop}
-            aria-label="Werkstatt öffnen"
+            aria-label={t.hud.openShopAria}
           >
             <span className="hud__gems-value">{gems}</span>
             <Gem size={15} />

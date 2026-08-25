@@ -4,8 +4,9 @@ import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { useCountUp } from '../hooks/useCountUp';
-import { getBossFruit, getSkin } from '../game/shop';
-import { WORLD_BOSSES } from '../game/worlds';
+import { getBossFruit, getSkin, localizedBossFruitName, localizedSkinName } from '../game/shop';
+import { getStrings, type Language } from '../game/i18n';
+import { WORLD_BOSSES, localizedWorldBossName } from '../game/worlds';
 import type { LevelReward } from '../game/types';
 import './LevelCompleteModal.css';
 
@@ -31,6 +32,7 @@ interface LevelCompleteModalProps {
   streak: number;
   /** Wahr genau einmal: wenn gerade Level 100 (der letzte feste Kampagnen-Level) geschafft wurde. */
   isCampaignComplete: boolean;
+  lang: Language;
   onNext: () => void;
   onOpenShop: () => void;
 }
@@ -45,9 +47,11 @@ export function LevelCompleteModal({
   totalXp,
   streak,
   isCampaignComplete,
+  lang,
   onNext,
   onOpenShop,
 }: LevelCompleteModalProps) {
+  const t = getStrings(lang);
   // Zählt die verdienten Münzen hoch, statt sie fertig hinzuklatschen – fühlt sich
   // nach Belohnung an statt nach Zahl auf einem Zettel.
   const shownCoins = useCountUp(reward.total, 700);
@@ -74,21 +78,19 @@ export function LevelCompleteModal({
       <div className={`modal-card ${boss || worldBoss ? 'modal-card--boss' : ''}`}>
         {worldBoss ? (
           <>
-            <div className="modal-card__kicker">Weltboss besiegt</div>
-            <div className="modal-card__title">{worldBoss.name} bezwungen!</div>
+            <div className="modal-card__kicker">{t.levelComplete.worldBossKicker}</div>
+            <div className="modal-card__title">{t.levelComplete.worldBossTitle(localizedWorldBossName(worldBoss, lang))}</div>
           </>
         ) : boss ? (
           <>
-            <div className="modal-card__kicker">Boss besiegt</div>
-            <div className="modal-card__title">{boss.name} geknackt!</div>
+            <div className="modal-card__kicker">{t.levelComplete.bossKicker}</div>
+            <div className="modal-card__title">{t.levelComplete.bossTitle(localizedBossFruitName(boss, lang))}</div>
           </>
         ) : (
-          <div className="modal-card__title">Level {level} geschafft!</div>
+          <div className="modal-card__title">{t.levelComplete.levelTitle(level)}</div>
         )}
 
-        <div className="modal-card__body">
-          {applesCollected} von {appleCount} {appleCount === 1 ? 'Apfel' : 'Äpfeln'} eingesammelt.
-        </div>
+        <div className="modal-card__body">{t.levelComplete.applesBody(applesCollected, appleCount)}</div>
 
         {/* Frisch freigeschaltete Boss-Axt – der eigentliche Moment des Levels. */}
         {unlockedAxe && (
@@ -97,8 +99,8 @@ export function LevelCompleteModal({
               <Axe size={44} skin={unlockedAxe.id} />
             </div>
             <div className="modal-card__unlock-text">
-              <span className="modal-card__unlock-label">Neue Axt</span>
-              <span className="modal-card__unlock-name">{unlockedAxe.name}</span>
+              <span className="modal-card__unlock-label">{t.levelComplete.newAxe}</span>
+              <span className="modal-card__unlock-name">{localizedSkinName(unlockedAxe, lang)}</span>
             </div>
           </div>
         )}
@@ -129,62 +131,58 @@ export function LevelCompleteModal({
         <div className="reward-breakdown">
           {reward.apples > 0 && (
             <span className="reward-breakdown__row">
-              Äpfel <strong>+{reward.apples}</strong>
+              {t.levelComplete.breakdownApples} <strong>+{reward.apples}</strong>
             </span>
           )}
           <span className="reward-breakdown__row">
-            Level geschafft <strong>+{reward.base}</strong>
+            {t.levelComplete.breakdownLevelDone} <strong>+{reward.base}</strong>
           </span>
           {reward.perfect > 0 && (
             <span className="reward-breakdown__row reward-breakdown__row--bonus">
-              Alle Äpfel! <strong>+{reward.perfect}</strong>
+              {t.levelComplete.breakdownPerfect} <strong>+{reward.perfect}</strong>
             </span>
           )}
           {reward.block > 0 && (
             <span className="reward-breakdown__row reward-breakdown__row--bonus">
-              Block geschafft <strong>+{reward.block}</strong>
+              {t.levelComplete.breakdownBlock} <strong>+{reward.block}</strong>
             </span>
           )}
           {reward.streakMultiplier > 1 && (
             <span className="reward-breakdown__row reward-breakdown__row--bonus">
-              Serie ×{streak} <strong>×{reward.streakMultiplier.toFixed(2)}</strong>
+              {t.levelComplete.breakdownStreak(streak)} <strong>×{reward.streakMultiplier.toFixed(2)}</strong>
             </span>
           )}
           {/* XP läuft bewusst NICHT durch den Münz-Serien-Multiplikator (siehe
               Kommentar in useAxeGame.ts) – deshalb eigene Zeile statt Teil der
               Münz-Aufschlüsselung oben. */}
           <span className="reward-breakdown__row reward-breakdown__row--gems">
-            XP <strong>+{reward.xp}</strong>
+            {t.levelComplete.breakdownXp} <strong>+{reward.xp}</strong>
           </span>
           {reward.gems > 0 && (
             <span className="reward-breakdown__row reward-breakdown__row--gems">
-              Goldener Apfel <strong>+{reward.gems} Diamanten</strong>
+              {t.levelComplete.breakdownGoldenApple} <strong>+{reward.gems} {t.common.gems}</strong>
             </span>
           )}
           {reward.figurines > 0 && (
             <span className="reward-breakdown__row reward-breakdown__row--gems">
-              Sammelfigur <strong>+{reward.figurines}</strong>
+              {t.levelComplete.breakdownFigurine} <strong>+{reward.figurines}</strong>
             </span>
           )}
         </div>
 
-        <div className="modal-card__sub">
-          Münzen insgesamt: <strong>{totalCoins}</strong>
-        </div>
+        <div className="modal-card__sub">{t.levelComplete.totalCoins(totalCoins)}</div>
         {totalGems > 0 && (
           <div className="modal-card__sub">
-            <Gem size={13} /> Diamanten insgesamt: <strong>{totalGems}</strong>
+            <Gem size={13} /> {t.levelComplete.totalGems(totalGems)}
           </div>
         )}
-        <div className="modal-card__sub">
-          XP insgesamt: <strong>{totalXp}</strong>
-        </div>
+        <div className="modal-card__sub">{t.levelComplete.totalXp(totalXp)}</div>
 
         {/* Einmalige Glückwunsch-Zeile bei Level 100 – danach geht's im Endlos-Modus
             einfach weiter, deshalb bleibt der Weiter-Button unten immer da. */}
-        {isCampaignComplete && <div className="modal-card__badge">Alle 100 Level gemeistert! 🎉</div>}
+        {isCampaignComplete && <div className="modal-card__badge">{t.levelComplete.campaignComplete}</div>}
         <button className="modal-card__button modal-card__button--secondary" onClick={onOpenShop}>
-          Werkstatt öffnen
+          {t.levelComplete.openShop}
         </button>
       </div>
     </div>

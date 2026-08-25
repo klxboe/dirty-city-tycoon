@@ -7,6 +7,7 @@
 import { COINS_PER_LEGACY_APPLE, CURRENCY_SAVE_KEY, SAVE_KEY } from './constants';
 import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
 import { WORLDS } from './worlds';
+import type { Language } from './i18n';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -85,6 +86,13 @@ export interface SaveData {
    * bestimmen.
    */
   activeWorldId: string;
+  /**
+   * Sprache der gesamten UI (Klaus: "bei Einstellungen soll man das gesamte Spiel auf
+   * Englisch schalten können"). Dauerhaft gespeichert, nicht an einen Lauf gebunden.
+   * `'de'` ist der Standard (bisheriges Verhalten für alte Spielstände ohne dieses
+   * Feld). Siehe game/i18n.ts für die eigentlichen Übersetzungen.
+   */
+  language: Language;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -106,6 +114,7 @@ const EMPTY_SAVE: SaveData = {
   levelVariantSeed: 0,
   defeatedWorldBosses: [],
   activeWorldId: WORLDS[0].id,
+  language: 'de',
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -150,6 +159,7 @@ export function loadSave(): SaveData {
           typeof parsed.activeWorldId === 'string' && WORLDS.some((w) => w.id === parsed.activeWorldId)
             ? parsed.activeWorldId
             : WORLDS[0].id,
+        language: parsed.language === 'en' ? 'en' : 'de',
       };
     }
 

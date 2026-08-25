@@ -10,6 +10,8 @@
 // Optik + eigene Bosse (siehe HERO_BOSSES in shop.ts). "Mehr Level" im eigentlichen
 // Sinn gibt der Endlos-Modus nach Level 120 (siehe LEVEL_COUNT-Grenze in constants.ts).
 
+import type { Language } from './i18n';
+
 export const WORLDS_LEVEL_COUNT = 20;
 
 /**
@@ -25,6 +27,8 @@ export type DecorKind = 'trees' | 'cacti' | 'icicles' | 'lava' | 'stars' | 'city
 export interface World {
   id: string;
   name: string;
+  /** Englischer Name, siehe game/i18n.ts. */
+  nameEn: string;
   /** 0-basierter erster Level-Index dieser Welt. */
   startLevelIndex: number;
   decor: DecorKind;
@@ -44,6 +48,7 @@ export const WORLDS: World[] = [
   {
     id: 'forest',
     name: 'Wald',
+    nameEn: 'Forest',
     startLevelIndex: 0,
     decor: 'trees',
     colors: {
@@ -58,6 +63,7 @@ export const WORLDS: World[] = [
   {
     id: 'desert',
     name: 'Wüste',
+    nameEn: 'Desert',
     startLevelIndex: 20,
     decor: 'cacti',
     colors: {
@@ -72,6 +78,7 @@ export const WORLDS: World[] = [
   {
     id: 'ice',
     name: 'Eis',
+    nameEn: 'Ice',
     startLevelIndex: 40,
     decor: 'icicles',
     colors: {
@@ -86,6 +93,7 @@ export const WORLDS: World[] = [
   {
     id: 'volcano',
     name: 'Vulkan',
+    nameEn: 'Volcano',
     startLevelIndex: 60,
     decor: 'lava',
     colors: {
@@ -100,6 +108,7 @@ export const WORLDS: World[] = [
   {
     id: 'cosmos',
     name: 'Kosmos',
+    nameEn: 'Cosmos',
     startLevelIndex: 80,
     decor: 'stars',
     colors: {
@@ -114,6 +123,7 @@ export const WORLDS: World[] = [
   {
     id: 'metro',
     name: 'Heldenstadt',
+    nameEn: 'Hero City',
     startLevelIndex: HERO_WORLD_START,
     decor: 'city',
     colors: {
@@ -129,6 +139,8 @@ export const WORLDS: World[] = [
 
 export interface WorldBoss {
   name: string;
+  /** Englischer Name, siehe game/i18n.ts. */
+  nameEn: string;
   /** Eigenes Scheiben-Design für den Kampf – überschreibt für dieses eine Level das
    *  ausgerüstete Design, genau wie `bossFruit.boardSkinId` es für die normalen
    *  5-Level-Bosse schon tut (siehe `activeBoardSkin` in useAxeGame.ts). Bild folgt
@@ -145,11 +157,11 @@ export interface WorldBoss {
  * Tutorial-Einstieg für neue Spieler, siehe eigener Kommentar bei `isWorldBossLevel()`.
  */
 export const WORLD_BOSSES: Record<string, WorldBoss> = {
-  desert: { name: 'Sandkolossos', boardSkinId: 'board-boss-desert' },
-  ice: { name: 'Frostwardin', boardSkinId: 'board-boss-ice' },
-  volcano: { name: 'Aschenschlund', boardSkinId: 'board-boss-volcano' },
-  cosmos: { name: 'Leerenwächter', boardSkinId: 'board-boss-cosmos' },
-  metro: { name: 'Turmbrecher', boardSkinId: 'board-boss-metro' },
+  desert: { name: 'Sandkolossos', nameEn: 'Sand Colossus', boardSkinId: 'board-boss-desert' },
+  ice: { name: 'Frostwardin', nameEn: 'Frostwarden', boardSkinId: 'board-boss-ice' },
+  volcano: { name: 'Aschenschlund', nameEn: 'Ashmaw', boardSkinId: 'board-boss-volcano' },
+  cosmos: { name: 'Leerenwächter', nameEn: 'Void Warden', boardSkinId: 'board-boss-cosmos' },
+  metro: { name: 'Turmbrecher', nameEn: 'Towerbreaker', boardSkinId: 'board-boss-metro' },
 };
 
 /**
@@ -189,6 +201,16 @@ export function worldForLevel(levelIndex: number): World {
  */
 export function worldById(id: string): World {
   return WORLDS.find((w) => w.id === id) ?? WORLDS[0];
+}
+
+/** Weltname in der aktuellen UI-Sprache (siehe game/i18n.ts). */
+export function localizedWorldName(world: World, lang: Language): string {
+  return lang === 'en' ? world.nameEn : world.name;
+}
+
+/** Weltboss-Name in der aktuellen UI-Sprache (siehe game/i18n.ts). */
+export function localizedWorldBossName(boss: WorldBoss, lang: Language): string {
+  return lang === 'en' ? boss.nameEn : boss.name;
 }
 
 /**

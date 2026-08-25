@@ -14,10 +14,13 @@ import {
   LEGENDARY_SKINS,
   boardStyleVars,
   isFreeSkin,
+  localizedSkinBlurb,
+  localizedSkinName,
   type SkinDef,
 } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
 import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
+import { getStrings, type Language } from '../game/i18n';
 import { HERO_WORLD_START } from '../game/worlds';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
@@ -26,6 +29,7 @@ type Tab = 'axe' | 'board' | 'legendary' | 'extras';
 
 interface ShopProps {
   save: SaveData;
+  lang: Language;
   onBuy: (skinId: string) => void;
   onEquip: (skinId: string) => void;
   onTradeFigurines: () => void;
@@ -57,15 +61,15 @@ function SkinPreview({ skin }: { skin: SkinDef }) {
   );
 }
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'axe', label: 'Äxte' },
-  { id: 'board', label: 'Scheiben' },
-  { id: 'legendary', label: 'Legendär' },
-  { id: 'extras', label: 'Extras' },
-];
-
-export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
+export function Shop({ save, lang, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
+  const t = getStrings(lang);
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'axe', label: t.shop.tabAxes },
+    { id: 'board', label: t.shop.tabBoards },
+    { id: 'legendary', label: t.shop.tabLegendary },
+    { id: 'extras', label: t.shop.tabExtras },
+  ];
 
   const items =
     tab === 'axe'
@@ -80,7 +84,7 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
     <div className="modal-backdrop">
       <div className="shop">
         <header className="shop__head">
-          <h2 className="shop__title">Werkstatt</h2>
+          <h2 className="shop__title">{t.shop.title}</h2>
           <div className="shop__wallet">
             <div className="shop__coins">
               <Coin size={18} />
@@ -96,25 +100,19 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
         </header>
 
         <div className="shop__tabs">
-          {TABS.map((t) => (
+          {TABS.map((tabDef) => (
             <button
-              key={t.id}
-              className={`shop__tab ${tab === t.id ? 'shop__tab--active' : ''}`}
-              onClick={() => setTab(t.id)}
+              key={tabDef.id}
+              className={`shop__tab ${tab === tabDef.id ? 'shop__tab--active' : ''}`}
+              onClick={() => setTab(tabDef.id)}
             >
-              {t.label}
+              {tabDef.label}
             </button>
           ))}
         </div>
 
-        {tab === 'legendary' && (
-          <p className="shop__note">Aufwendige Designs für Diamanten – die gibt's nur durch goldene Äpfel.</p>
-        )}
-        {tab === 'extras' && (
-          <p className="shop__note">
-            Boss-Beute und Geheimnisse – nicht käuflich, nur zu erspielen oder zu finden.
-          </p>
-        )}
+        {tab === 'legendary' && <p className="shop__note">{t.shop.legendaryNote}</p>}
+        {tab === 'extras' && <p className="shop__note">{t.shop.extrasNote}</p>}
 
         {/* Sammelfiguren aus Heldenstadt: reiner Vorrat statt einzeln verwalteter
             Sammlung, deshalb ein einfacher Gesamt-Eintausch statt einer Liste. Nur
@@ -125,8 +123,8 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
               <Apple size={26} figurine />
             </div>
             <div className="shop-card__info">
-              <span className="shop-card__name">Sammelfiguren: {save.figurines}</span>
-              <span className="shop-card__blurb">Eingetauscht bringt jede Figur {GEMS_PER_FIGURINE} Diamanten.</span>
+              <span className="shop-card__name">{t.shop.figurinesLabel(save.figurines)}</span>
+              <span className="shop-card__blurb">{t.shop.figurinesBlurb(GEMS_PER_FIGURINE)}</span>
             </div>
             <button className="shop-card__action shop-card__action--buy" onClick={onTradeFigurines}>
               <Gem size={15} />
@@ -167,20 +165,20 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
                 {isMystery && !owned ? <div className="shop-card__preview shop-card__preview--mystery">?</div> : <SkinPreview skin={skin} />}
 
                 <div className="shop-card__info">
-                  <span className="shop-card__name">{isMystery && !owned ? '???' : skin.name}</span>
-                  <span className="shop-card__blurb">{isMystery && !owned ? 'Ein gut gehütetes Geheimnis.' : skin.blurb}</span>
+                  <span className="shop-card__name">{isMystery && !owned ? t.shop.mysteryName : localizedSkinName(skin, lang)}</span>
+                  <span className="shop-card__blurb">{isMystery && !owned ? t.shop.mysteryBlurb : localizedSkinBlurb(skin, lang)}</span>
                 </div>
 
                 {equipped ? (
-                  <span className="shop-card__badge">Ausgerüstet</span>
+                  <span className="shop-card__badge">{t.shop.equipped}</span>
                 ) : owned ? (
                   <button className="shop-card__action" onClick={() => onEquip(skin.id)}>
-                    Anlegen
+                    {t.shop.equip}
                   </button>
                 ) : skin.source === 'boss' ? (
-                  <span className="shop-card__locked">Level {bossLevel}</span>
+                  <span className="shop-card__locked">{t.shop.lockedLevel(bossLevel ?? 0)}</span>
                 ) : skin.source === 'egg' ? (
-                  <span className="shop-card__locked">???</span>
+                  <span className="shop-card__locked">{t.shop.mysteryName}</span>
                 ) : (
                   <button
                     className="shop-card__action shop-card__action--buy"
@@ -197,7 +195,7 @@ export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopPr
         </div>
 
         <button className="shop__close" onClick={onClose}>
-          Weiter werfen
+          {t.shop.close}
         </button>
       </div>
     </div>

@@ -65,3 +65,31 @@
 .settings-toggle--on .settings-toggle__knob {
   transform: translateX(22px);
 }
+
+/* Sprachumschalter (Deutsch/English) - zweigeteilter Schalter analog zur früheren
+   Schwierigkeitsgrad-Auswahl (siehe CLAUDE.md), aber nur zwei feste Optionen. */
+.settings-lang-toggle {
+  display: flex;
+  border-radius: var(--radius-full);
+  background: #1b1f27;
+  border: 1px solid var(--color-border);
+  padding: 2px;
+  gap: 2px;
+}
+
+.settings-lang-toggle__option {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, rgba(255, 255, 255, 0.6));
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.settings-lang-toggle__option--active {
+  background: var(--color-primary);
+  color: #08210f;
+}

@@ -3509,6 +3509,65 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Werkstatt-Aufruf im Browser: alle 10 Äxte erscheinen als normale Münz-Karten
       (12500-32000) ohne Premium-Badge, `tsc -b`/`npm run build`/`npx cap sync ios`
       sauber, frischer Tab ohne Konsolenfehler.
+- [x] **Weltkarte: Boss-Kampf-Button pro Welt + komplette englische Sprachoption
+      (2026-08-25).** Klaus, zwei Anfragen gleichzeitig: "auf jeder Welt bei der
+      Weltkarte soll es noch einen Button geben, wo man gegen den jeweiligen Boss
+      kämpfen kann, den starken mit Gesicht" (siehe eigener Eintrag oben) UND "bei
+      Einstellungen soll man das gesamte Spiel auf Englisch schalten können".
+      Zweiteres ist der größte Einzel-Umbau der Session:
+      - **Neues zentrales Übersetzungsmodul** (`game/i18n.ts`): ein großes, nach
+        Komponente gruppiertes `Strings`-Objekt (TypeScript erzwingt, dass `de`/`en`
+        exakt dieselbe Struktur haben – ein Tippfehler oder eine vergessene
+        Übersetzung fällt sofort beim Kompilieren auf, nicht erst beim Spielen).
+        Dynamische Texte (Levelnummern, Namen, Zahlen) laufen über Funktionen statt
+        fixer Strings, damit Wortstellung pro Sprache unabhängig bleibt (z.B.
+        "Weiter – Level N" vs. "Continue – Level N").
+      - **`SaveData.language: 'de' | 'en'`** (storage.ts, Default `'de'`, alte
+        Spielstände ohne dieses Feld migrieren automatisch dorthin), neue
+        `setLanguage()`-Aktion in `useAxeGame.ts`, neuer Sprachumschalter
+        (zwei Buttons "Deutsch"/"English") im Einstellungen-Fenster.
+      - **Skin-/Welt-/Boss-Namen bekommen eigene `nameEn`/`blurbEn`-Felder direkt
+        bei ihrer Definition** (`shop.ts`: alle 44 Skins in `AXE_SKINS`/
+        `BOARD_SKINS`/`LEGENDARY_*`/`EASTER_EGG_SKINS`, `worlds.ts`: alle 6 Welten +
+        5 Weltbosse, `shop.ts`: alle 10 Boss-Früchte + 4 Heldenstadt-Bosse) statt in
+        der zentralen Tabelle – die gehören inhaltlich zu den Daten, nicht zur
+        UI-Chrome. Neue Helferfunktionen `localizedSkinName()`/`localizedSkinBlurb()`/
+        `localizedBossFruitName()` (shop.ts), `localizedWorldName()`/
+        `localizedWorldBossName()` (worlds.ts) wählen je nach `lang` die richtige
+        Variante. Generierte Skins (`BOSS_AXE_SKINS`/`HERO_AXE_SKINS`, per `.map()`
+        aus den Boss-Namen gebaut) brauchten dadurch nur je EINEN englischen
+        Namen/eine Vorlage statt 14 einzelner Übersetzungen.
+      - **Jede Komponente mit sichtbarem Text bekam eine neue `lang: Language`-Prop**
+        (StartScreen, WorldMap, Shop, HUD, GameOverModal, LevelCompleteModal,
+        PauseModal, DailyRewardModal, VideoRescueModal, SettingsModal), durchgereicht
+        von `App.tsx`s `game.save.language` – dieselbe Prop-Drilling-Konvention wie
+        der Rest des Projekts (`save`, `onBuy` etc.), kein Context/Provider nötig für
+        eine einzelne, selten wechselnde Einstellung.
+      - **Ein echter Übersetzungsfehler beim eigenen Nachprüfen gefunden:** der
+        Wurf-Hinweistext auf der Bühne ("Tippen zum Werfen – triff die Lücke", in
+        `App.tsx` als lokale Konstante VOR der `lang`-Definition) wurde beim ersten
+        Durchgang komplett übersehen, weil er nicht in einer der durchsuchten JSX-
+        Renderstellen lag, sondern in einer eigenen Variable weiter oben. Ein
+        gezielter Sweep über alle Komponenten (Suche nach Umlauten außerhalb von
+        Kommentaren) hat das aufgedeckt, `stage.hint` in i18n.ts ergänzt und die
+        Konstante auf `getStrings(game.save.language).stage.hint` umgestellt.
+      - **Weltkarten-Boss-Button** (siehe voriger Eintrag): "⚔ Gegen X kämpfen" pro
+        Welt mit unbesiegtem Weltboss, ruft dieselbe Reise-Navigation wie das
+        normale Antippen des Knotens auf, macht den Bosskampf aber als eigene,
+        klar beschriftete Aktion sichtbar.
+      Verifiziert per echtem Klick-Test im Browser (Live-Simulation über React-
+      Fiber-Handler, mehrere FRISCHE Tabs wegen angesammelter HMR-Reste in älteren
+      Tabs): Startbildschirm, Einstellungen (inkl. neuem Sprachumschalter),
+      Weltkarte (inkl. neuem Boss-Button, Welt-/Bossnamen), Werkstatt (alle 47
+      Skin-Namen/Beschreibungen inkl. Boss-Beute-Äxte), HUD und der Wurf-
+      Hinweistext, sowie das Pause-Menü – alle korrekt auf Deutsch UND Englisch,
+      Umschalten übersteht einen Reload (localStorage-Persistenz bestätigt). Ein
+      echter Levelabschluss/Game Over ließ sich wie immer nicht per Browser-
+      Automatisierung erzwingen (rAF-/Animations-Einschränkung dieser Sandbox,
+      siehe eigener Abschnitt weiter oben) – LevelCompleteModal/GameOverModal
+      nutzen aber exakt dasselbe `getStrings(lang)`-Muster wie die fünf bereits
+      bestätigten Komponenten. `tsc -b`/`npm run build`/`npx cap sync ios` sauber,
+      keine Konsolenfehler in frischen Tabs.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

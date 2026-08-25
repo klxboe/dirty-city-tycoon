@@ -4,6 +4,7 @@
 // Die Scheiben-Farben stehen bewusst HIER als Daten und nicht in TargetBoard.css:
 // TargetBoard setzt sie als CSS-Variablen inline. So braucht eine neue Frucht nur
 // einen Eintrag in dieser Datei statt zusätzlich einen CSS-Block.
+import type { Language } from './i18n';
 
 export type SkinKind = 'axe' | 'board';
 /**
@@ -24,12 +25,25 @@ export interface SkinDef {
   name: string;
   /** Kurze Beschreibung für die Shop-Karte. */
   blurb: string;
+  /** Englischer Name/Beschreibung, siehe game/i18n.ts. */
+  nameEn: string;
+  blurbEn: string;
   /**
    * Preis in Münzen (source 'shop') oder Diamanten (source 'gem'). 0 = von Anfang an
    * dabei. Bei 'boss'/'egg' ohne Bedeutung.
    */
   price: number;
   source: SkinSource;
+}
+
+/** Skin-Name in der aktuellen UI-Sprache (siehe game/i18n.ts). */
+export function localizedSkinName(skin: SkinDef, lang: Language): string {
+  return lang === 'en' ? skin.nameEn : skin.name;
+}
+
+/** Skin-Beschreibung in der aktuellen UI-Sprache (siehe game/i18n.ts). */
+export function localizedSkinBlurb(skin: SkinDef, lang: Language): string {
+  return lang === 'en' ? skin.blurbEn : skin.blurb;
 }
 
 /** Farbwerte einer Zielscheibe. Landen 1:1 als CSS-Variablen auf dem Board-Element. */
@@ -65,7 +79,7 @@ export interface AxeStyle {
 // ---------------------------------------------------------------------------
 
 export const AXE_SKINS: SkinDef[] = [
-  { id: 'axe-standard', kind: 'axe', name: 'Holzfäller', blurb: 'Die treue Standard-Axt.', price: 0, source: 'shop' },
+  { id: 'axe-standard', kind: 'axe', name: 'Holzfäller', blurb: 'Die treue Standard-Axt.', nameEn: 'Woodcutter', blurbEn: 'The trusty standard axe.', price: 0, source: 'shop' },
 
   // --- Zwölfer-Set, nach Gemini-Konzeptbildern gestaltet (Farben übernommen,
   // Form bleibt wie bei jeder Axt die gemeinsame Silhouette aus Axe.tsx). ---
@@ -75,18 +89,18 @@ export const AXE_SKINS: SkinDef[] = [
   // Äxte teurer machen, also weiter nach unten") – waren bisher die zwei günstigsten
   // Einstiegs-Äxte direkt nach der kostenlosen Start-Axt, jetzt mit deutlich höherem
   // Preis mitten in der Liste einsortiert statt am Anfang.
-  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 2500, source: 'shop' },
-  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 3300, source: 'shop' },
-  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 3900, source: 'shop' },
-  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 4100, source: 'shop' },
-  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 4600, source: 'shop' },
-  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 4700, source: 'shop' },
-  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 5300, source: 'shop' },
-  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 6100, source: 'shop' },
-  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 7200, source: 'shop' },
-  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 8400, source: 'shop' },
-  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 9700, source: 'shop' },
-  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 11000, source: 'shop' },
+  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', nameEn: 'Pine Chop', blurbEn: 'Simple, sturdy, smells like fresh-cut wood.', price: 2500, source: 'shop' },
+  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', nameEn: 'Blacksteel', blurbEn: 'Forged matte black, swallows every bit of light.', price: 3300, source: 'shop' },
+  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', nameEn: 'Rootstrike', blurbEn: 'Living wood that never quite stopped growing.', price: 3900, source: 'shop' },
+  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', nameEn: 'Viking Axe', blurbEn: 'Ancient pattern, sharp for generations unchanged.', price: 4100, source: 'shop' },
+  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', nameEn: 'Coral Edge', blurbEn: 'Straight from the reef, still damp from the sea.', price: 4600, source: 'shop' },
+  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', nameEn: 'Fire Axe', blurbEn: 'The embers never fully die, no matter how cold the wind.', price: 4700, source: 'shop' },
+  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', nameEn: 'Frost Axe', blurbEn: 'Bitterly cold, the blade never fogs up.', price: 5300, source: 'shop' },
+  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', nameEn: 'Neon Axe', blurbEn: 'Loud and garish, just like the block it comes from.', price: 6100, source: 'shop' },
+  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', nameEn: 'Crystal Axe', blurbEn: 'Grown, not forged, shatters light into splinters.', price: 7200, source: 'shop' },
+  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', nameEn: 'Lightning Axe', blurbEn: 'Smells of ozone right before impact.', price: 8400, source: 'shop' },
+  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', nameEn: 'Gold Axe', blurbEn: 'Too pretty to throw – throws great anyway.', price: 9700, source: 'shop' },
+  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', nameEn: 'Demon Axe', blurbEn: 'Whispers softly when no one else is around.', price: 11000, source: 'shop' },
 
   // --- Die zehn teuersten/"coolsten" Äxte aus dem Zwölfer-Set. Waren kurzzeitig
   // als Echtgeld-Käufe geplant (`source: 'iap'`), Klaus hat sich dagegen entschieden
@@ -97,16 +111,16 @@ export const AXE_SKINS: SkinDef[] = [
   // `axe-demon` (11000) als neue Preis-Spitze der Liste, in derselben relativen
   // Reihenfolge wie zuvor bei den priceCents-Werten (199 Cent -> günstigste hier,
   // 799 Cent -> teuerste). ---
-  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 12500, source: 'shop' },
-  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 14000, source: 'shop' },
-  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 15500, source: 'shop' },
-  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 17000, source: 'shop' },
-  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 19000, source: 'shop' },
-  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 21000, source: 'shop' },
-  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 23500, source: 'shop' },
-  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 26000, source: 'shop' },
-  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 29000, source: 'shop' },
-  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 32000, source: 'shop' },
+  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', nameEn: 'Steamforge', blurbEn: 'Ticks, hisses, and still hits dead-on.', price: 12500, source: 'shop' },
+  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', nameEn: 'Rune Axe', blurbEn: 'Ancient runes glow faintly in the dark steel.', price: 14000, source: 'shop' },
+  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', nameEn: 'Tideblade', blurbEn: 'Shaped like a wave that never quite breaks.', price: 15500, source: 'shop' },
+  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', nameEn: 'Starblade', blurbEn: 'A shard of night sky, set in silver.', price: 17000, source: 'shop' },
+  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', nameEn: 'Thornvenom', blurbEn: 'Poison-green veins pulse beneath the blade.', price: 19000, source: 'shop' },
+  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', nameEn: 'Magma Break', blurbEn: 'Freshly cooled crust, glowing hot at the core.', price: 21000, source: 'shop' },
+  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', nameEn: 'Plague Axe', blurbEn: 'Smells of bog and bad decisions.', price: 23500, source: 'shop' },
+  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', nameEn: 'Royal Axe', blurbEn: 'Ceremonially forged, battle-tested all the same.', price: 26000, source: 'shop' },
+  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', nameEn: 'Data Axe', blurbEn: 'Firmware update included, blade stays sharp.', price: 29000, source: 'shop' },
+  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', nameEn: 'Lightwing', blurbEn: 'Gleams as if it had never seen blood.', price: 32000, source: 'shop' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -114,32 +128,34 @@ export const AXE_SKINS: SkinDef[] = [
 // ---------------------------------------------------------------------------
 
 export const BOARD_SKINS: SkinDef[] = [
-  { id: 'board-oak', kind: 'board', name: 'Eiche', blurb: 'Klassisches helles Zielholz.', price: 0, source: 'shop' },
-  { id: 'board-walnut', kind: 'board', name: 'Nussbaum', blurb: 'Dunkles Holz, messingfarbener Ring.', price: 230, source: 'shop' },
-  { id: 'board-ice', kind: 'board', name: 'Gletscher', blurb: 'Gefrorene Scheibe mit blauem Schimmer.', price: 700, source: 'shop' },
-  { id: 'board-volcano', kind: 'board', name: 'Vulkan', blurb: 'Erkaltete Lava mit glühenden Rissen.', price: 1600, source: 'shop' },
-  { id: 'board-ebony', kind: 'board', name: 'Ebenholz', blurb: 'Tiefschwarzes Holz mit Silberadern.', price: 3000, source: 'shop' },
+  { id: 'board-oak', kind: 'board', name: 'Eiche', blurb: 'Klassisches helles Zielholz.', nameEn: 'Oak', blurbEn: 'Classic light target wood.', price: 0, source: 'shop' },
+  { id: 'board-walnut', kind: 'board', name: 'Nussbaum', blurb: 'Dunkles Holz, messingfarbener Ring.', nameEn: 'Walnut', blurbEn: 'Dark wood, brass-colored ring.', price: 230, source: 'shop' },
+  { id: 'board-ice', kind: 'board', name: 'Gletscher', blurb: 'Gefrorene Scheibe mit blauem Schimmer.', nameEn: 'Glacier', blurbEn: 'Frozen board with a blue shimmer.', price: 700, source: 'shop' },
+  { id: 'board-volcano', kind: 'board', name: 'Vulkan', blurb: 'Erkaltete Lava mit glühenden Rissen.', nameEn: 'Volcano', blurbEn: 'Cooled lava with glowing cracks.', price: 1600, source: 'shop' },
+  { id: 'board-ebony', kind: 'board', name: 'Ebenholz', blurb: 'Tiefschwarzes Holz mit Silberadern.', nameEn: 'Ebony', blurbEn: 'Deep black wood with silver veins.', price: 3000, source: 'shop' },
   {
     id: 'board-webslinger',
     kind: 'board',
     name: 'Spinnennetz',
     blurb: 'Die Speichen sehen verdächtig nach einem Netz aus der Nachbarschaft aus.',
+    nameEn: 'Web',
+    blurbEn: 'The spokes suspiciously resemble a web from the neighborhood.',
     price: 1150,
     source: 'shop',
   },
 
   // --- Zweites Zehner-Set (siehe Kommentar bei AXE_SKINS oben – dieselbe Logik:
   // Farb-Skin auf der bestehenden Scheiben-Darstellung, bis die Gemini-Bilder da sind) ---
-  { id: 'board-oldwood', kind: 'board', name: 'Kiefernscheibe', blurb: 'Hell, einfach, riecht nach Werkstatt.', price: 400, source: 'shop' },
-  { id: 'board-dark', kind: 'board', name: 'Dunkelscheibe', blurb: 'Fast schwarz, nur der Kern glimmt schwach.', price: 1050, source: 'shop' },
-  { id: 'board-frost', kind: 'board', name: 'Frostscheibe', blurb: 'Reif statt Rinde, knirscht bei jedem Treffer.', price: 950, source: 'shop' },
-  { id: 'board-crystalboard', kind: 'board', name: 'Quarzscheibe', blurb: 'Gewachsener Quarz statt Holz, klar bis auf den Grund.', price: 2500, source: 'shop' },
-  { id: 'board-magic', kind: 'board', name: 'Magische Scheibe', blurb: 'Die Maserung verändert sich, wenn niemand hinsieht.', price: 3300, source: 'shop' },
-  { id: 'board-ash', kind: 'board', name: 'Aschescheibe', blurb: 'Erkaltete Asche, innen noch spürbar warm.', price: 1400, source: 'shop' },
-  { id: 'board-cursed', kind: 'board', name: 'Verfluchte Scheibe', blurb: 'Die Risse heilen von selbst nach – jedes Mal ein bisschen anders.', price: 2900, source: 'shop' },
-  { id: 'board-golden', kind: 'board', name: 'Goldscheibe', blurb: 'Schwer, glänzend, unverschämt teuer aussehend.', price: 4000, source: 'shop' },
-  { id: 'board-tech', kind: 'board', name: 'Technikscheibe', blurb: 'Leise Lüftergeräusche bei jedem Treffer.', price: 2100, source: 'shop' },
-  { id: 'board-fantasyboss', kind: 'board', name: 'Fantasy-Scheibe', blurb: 'Sieht aus, als käme sie direkt aus einem Bosskampf.', price: 3600, source: 'shop' },
+  { id: 'board-oldwood', kind: 'board', name: 'Kiefernscheibe', blurb: 'Hell, einfach, riecht nach Werkstatt.', nameEn: 'Pine Board', blurbEn: 'Light, simple, smells like a workshop.', price: 400, source: 'shop' },
+  { id: 'board-dark', kind: 'board', name: 'Dunkelscheibe', blurb: 'Fast schwarz, nur der Kern glimmt schwach.', nameEn: 'Dark Board', blurbEn: 'Almost black, only the core glows faintly.', price: 1050, source: 'shop' },
+  { id: 'board-frost', kind: 'board', name: 'Frostscheibe', blurb: 'Reif statt Rinde, knirscht bei jedem Treffer.', nameEn: 'Frost Board', blurbEn: 'Frost instead of bark, crunches with every hit.', price: 950, source: 'shop' },
+  { id: 'board-crystalboard', kind: 'board', name: 'Quarzscheibe', blurb: 'Gewachsener Quarz statt Holz, klar bis auf den Grund.', nameEn: 'Quartz Board', blurbEn: 'Grown quartz instead of wood, clear to the core.', price: 2500, source: 'shop' },
+  { id: 'board-magic', kind: 'board', name: 'Magische Scheibe', blurb: 'Die Maserung verändert sich, wenn niemand hinsieht.', nameEn: 'Magic Board', blurbEn: 'The grain shifts when no one’s looking.', price: 3300, source: 'shop' },
+  { id: 'board-ash', kind: 'board', name: 'Aschescheibe', blurb: 'Erkaltete Asche, innen noch spürbar warm.', nameEn: 'Ash Board', blurbEn: 'Cooled ash, still noticeably warm inside.', price: 1400, source: 'shop' },
+  { id: 'board-cursed', kind: 'board', name: 'Verfluchte Scheibe', blurb: 'Die Risse heilen von selbst nach – jedes Mal ein bisschen anders.', nameEn: 'Cursed Board', blurbEn: 'The cracks heal themselves – a little differently each time.', price: 2900, source: 'shop' },
+  { id: 'board-golden', kind: 'board', name: 'Goldscheibe', blurb: 'Schwer, glänzend, unverschämt teuer aussehend.', nameEn: 'Gold Board', blurbEn: 'Heavy, shiny, outrageously expensive-looking.', price: 4000, source: 'shop' },
+  { id: 'board-tech', kind: 'board', name: 'Technikscheibe', blurb: 'Leise Lüftergeräusche bei jedem Treffer.', nameEn: 'Tech Board', blurbEn: 'Faint fan noise with every hit.', price: 2100, source: 'shop' },
+  { id: 'board-fantasyboss', kind: 'board', name: 'Fantasy-Scheibe', blurb: 'Sieht aus, als käme sie direkt aus einem Bosskampf.', nameEn: 'Fantasy Board', blurbEn: 'Looks like it came straight out of a boss fight.', price: 3600, source: 'shop' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -150,6 +166,8 @@ export const BOARD_SKINS: SkinDef[] = [
 export interface BossFruit {
   id: string;
   name: string;
+  /** Englischer Name, siehe game/i18n.ts. */
+  nameEn: string;
   /** Scheiben-Design des Boss-Levels (überschreibt das ausgerüstete). */
   boardSkinId: string;
   /** Axt, die es als Belohnung gibt. */
@@ -157,16 +175,16 @@ export interface BossFruit {
 }
 
 export const BOSS_FRUITS: BossFruit[] = [
-  { id: 'melon', name: 'Wassermelone', boardSkinId: 'board-melon', axeSkinId: 'axe-melon' },
-  { id: 'orange', name: 'Orange', boardSkinId: 'board-orange', axeSkinId: 'axe-orange' },
-  { id: 'kiwi', name: 'Kiwi', boardSkinId: 'board-kiwi', axeSkinId: 'axe-kiwi' },
-  { id: 'dragon', name: 'Drachenfrucht', boardSkinId: 'board-dragon', axeSkinId: 'axe-dragon' },
-  { id: 'pineapple', name: 'Ananas', boardSkinId: 'board-pineapple', axeSkinId: 'axe-pineapple' },
-  { id: 'lemon', name: 'Zitrone', boardSkinId: 'board-lemon', axeSkinId: 'axe-lemon' },
-  { id: 'berry', name: 'Blaubeere', boardSkinId: 'board-berry', axeSkinId: 'axe-berry' },
-  { id: 'pomegranate', name: 'Granatapfel', boardSkinId: 'board-pomegranate', axeSkinId: 'axe-pomegranate' },
-  { id: 'coconut', name: 'Kokosnuss', boardSkinId: 'board-coconut', axeSkinId: 'axe-coconut' },
-  { id: 'grape', name: 'Traube', boardSkinId: 'board-grape', axeSkinId: 'axe-grape' },
+  { id: 'melon', name: 'Wassermelone', nameEn: 'Watermelon', boardSkinId: 'board-melon', axeSkinId: 'axe-melon' },
+  { id: 'orange', name: 'Orange', nameEn: 'Orange', boardSkinId: 'board-orange', axeSkinId: 'axe-orange' },
+  { id: 'kiwi', name: 'Kiwi', nameEn: 'Kiwi', boardSkinId: 'board-kiwi', axeSkinId: 'axe-kiwi' },
+  { id: 'dragon', name: 'Drachenfrucht', nameEn: 'Dragon Fruit', boardSkinId: 'board-dragon', axeSkinId: 'axe-dragon' },
+  { id: 'pineapple', name: 'Ananas', nameEn: 'Pineapple', boardSkinId: 'board-pineapple', axeSkinId: 'axe-pineapple' },
+  { id: 'lemon', name: 'Zitrone', nameEn: 'Lemon', boardSkinId: 'board-lemon', axeSkinId: 'axe-lemon' },
+  { id: 'berry', name: 'Blaubeere', nameEn: 'Blueberry', boardSkinId: 'board-berry', axeSkinId: 'axe-berry' },
+  { id: 'pomegranate', name: 'Granatapfel', nameEn: 'Pomegranate', boardSkinId: 'board-pomegranate', axeSkinId: 'axe-pomegranate' },
+  { id: 'coconut', name: 'Kokosnuss', nameEn: 'Coconut', boardSkinId: 'board-coconut', axeSkinId: 'axe-coconut' },
+  { id: 'grape', name: 'Traube', nameEn: 'Grape', boardSkinId: 'board-grape', axeSkinId: 'axe-grape' },
 ];
 
 /** Die Frucht-Äxte als Skins – tauchen im Shop unter "Boss-Beute" auf, nicht zum Kauf. */
@@ -175,6 +193,8 @@ export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit) => ({
   kind: 'axe',
   name: `${fruit.name}-Axt`,
   blurb: `Beute aus dem ${fruit.name}-Boss.`,
+  nameEn: `${fruit.nameEn} Axe`,
+  blurbEn: `Loot from the ${fruit.nameEn} boss.`,
   price: 0,
   source: 'boss',
 }));
@@ -192,10 +212,10 @@ export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit) => ({
 // ---------------------------------------------------------------------------
 
 export const HERO_BOSSES: BossFruit[] = [
-  { id: 'drone', name: 'Drohnenwächter', boardSkinId: 'board-drone', axeSkinId: 'axe-drone' },
-  { id: 'neon', name: 'Neonmaske', boardSkinId: 'board-neon', axeSkinId: 'axe-neon' },
-  { id: 'gargoyle', name: 'Wasserspeier', boardSkinId: 'board-gargoyle', axeSkinId: 'axe-gargoyle' },
-  { id: 'antenna', name: 'Antennentitan', boardSkinId: 'board-antenna', axeSkinId: 'axe-antenna' },
+  { id: 'drone', name: 'Drohnenwächter', nameEn: 'Drone Warden', boardSkinId: 'board-drone', axeSkinId: 'axe-drone' },
+  { id: 'neon', name: 'Neonmaske', nameEn: 'Neon Mask', boardSkinId: 'board-neon', axeSkinId: 'axe-neon' },
+  { id: 'gargoyle', name: 'Wasserspeier', nameEn: 'Gargoyle', boardSkinId: 'board-gargoyle', axeSkinId: 'axe-gargoyle' },
+  { id: 'antenna', name: 'Antennentitan', nameEn: 'Antenna Titan', boardSkinId: 'board-antenna', axeSkinId: 'axe-antenna' },
 ];
 
 /** Die Helden-Bossäxte als Skins – wie BOSS_AXE_SKINS, nur für die Heldenstadt-Bosse. */
@@ -204,6 +224,8 @@ export const HERO_AXE_SKINS: SkinDef[] = HERO_BOSSES.map((boss) => ({
   kind: 'axe',
   name: `${boss.name}-Axt`,
   blurb: `Beute aus dem Kampf gegen den ${boss.name}.`,
+  nameEn: `${boss.nameEn} Axe`,
+  blurbEn: `Loot from the fight against the ${boss.nameEn}.`,
   price: 0,
   source: 'boss',
 }));
@@ -218,6 +240,8 @@ export const LEGENDARY_AXE_SKINS: SkinDef[] = [
     kind: 'axe',
     name: 'Sternenhagel',
     blurb: 'Aus einem Meteoriten geschmiedet, glüht noch immer nach.',
+    nameEn: 'Meteor Shower',
+    blurbEn: 'Forged from a meteorite, still glowing faintly.',
     price: 52,
     source: 'gem',
   },
@@ -226,6 +250,8 @@ export const LEGENDARY_AXE_SKINS: SkinDef[] = [
     kind: 'axe',
     name: 'Phönixfeder',
     blurb: 'Verbrennt nie ganz – die Glut erlischt nur, um neu zu entfachen.',
+    nameEn: 'Phoenix Feather',
+    blurbEn: 'Never fully burns out – the embers only fade to reignite.',
     price: 70,
     source: 'gem',
   },
@@ -237,6 +263,8 @@ export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
     kind: 'board',
     name: 'Galaxie',
     blurb: 'Ein Ausschnitt Sternennebel, eingefangen in Holz.',
+    nameEn: 'Galaxy',
+    blurbEn: 'A slice of nebula, captured in wood.',
     price: 58,
     source: 'gem',
   },
@@ -245,6 +273,8 @@ export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
     kind: 'board',
     name: 'Kristallkern',
     blurb: 'Gewachsener Kristall statt Holz – hart, klar, kalt.',
+    nameEn: 'Crystal Core',
+    blurbEn: 'Grown crystal instead of wood – hard, clear, cold.',
     price: 80,
     source: 'gem',
   },
@@ -263,6 +293,8 @@ export const EASTER_EGG_SKINS: SkinDef[] = [
     kind: 'axe',
     name: 'Quietsche-Ente',
     blurb: 'Wie sie hier hineingeraten ist, weiß niemand.',
+    nameEn: 'Rubber Duck',
+    blurbEn: 'Nobody knows how it ended up here.',
     price: 0,
     source: 'egg',
   },
@@ -292,6 +324,11 @@ export function isFreeSkin(id: string): boolean {
 
 export function getBossFruit(id: string): BossFruit | undefined {
   return BOSS_FRUITS.find((fruit) => fruit.id === id) ?? HERO_BOSSES.find((boss) => boss.id === id);
+}
+
+/** Boss-Frucht-/Helden-Boss-Name in der aktuellen UI-Sprache (siehe game/i18n.ts). */
+export function localizedBossFruitName(fruit: BossFruit, lang: Language): string {
+  return lang === 'en' ? fruit.nameEn : fruit.name;
 }
 
 // ---------------------------------------------------------------------------

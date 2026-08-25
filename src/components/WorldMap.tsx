@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Axe } from './Axe';
 import { LEVEL_COUNT, WORLD_UNLOCK_XP_MULTIPLIER, XP_PER_LEVEL } from '../game/constants';
-import { WORLD_BOSSES, WORLDS, WORLDS_LEVEL_COUNT, type DecorKind } from '../game/worlds';
+import { getStrings, type Language } from '../game/i18n';
+import { WORLD_BOSSES, WORLDS, WORLDS_LEVEL_COUNT, localizedWorldBossName, localizedWorldName, type DecorKind } from '../game/worlds';
 import './WorldMap.css';
 
 /** XP-Schwelle einer Welt, aus ihrem Level-Bereich abgeleitet – kein eigenes Datenfeld
@@ -128,6 +129,7 @@ interface WorldMapProps {
   /** Welt-IDs, deren Weltboss schon (mindestens einmal, dauerhaft) besiegt wurde – zeigt
    *  dann keinen Bossnamen mehr am Knoten, siehe `bossName` unten. */
   defeatedWorldBosses: string[];
+  lang: Language;
   onSelectLevel: (levelIndex: number) => void;
   onClose: () => void;
 }
@@ -239,18 +241,20 @@ const DECOR_OFFSETS: [number, number][] = [
   [-0.5, 0.15],
 ];
 
-export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses, onSelectLevel, onClose }: WorldMapProps) {
+export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses, lang, onSelectLevel, onClose }: WorldMapProps) {
+  const t = getStrings(lang);
   const nodes: MapNode[] = WORLDS.map((world) => {
     const threshold = xpThresholdFor(world.startLevelIndex);
+    const worldBoss = WORLD_BOSSES[world.id];
     return {
       key: world.id,
-      name: world.name,
+      name: localizedWorldName(world, lang),
       // Klaus: "bei den Welten (1-20 Level) weg, es soll nur die benötigten XP dort
       // stehen" – der Level-Bereich ("Level 1-20") ist raus, alle Knoten (gesperrt
       // UND freigeschaltet) zeigen jetzt einheitlich die XP-Schwelle dieser Welt statt
       // zweier unterschiedlicher Textformen (siehe frühere Fassung mit "Ab Level X
       // (durch XP)" nur für gesperrte Welten).
-      sublabel: `${threshold} XP`,
+      sublabel: t.worldMap.xpSuffix(threshold),
       accent: world.colors.accent,
       bgTop: world.colors.bgTop,
       icon: world.decor,
@@ -262,15 +266,15 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
       // storage.ts) – die Karte soll dann nicht mehr mit einem Bosskampf werben, der
       // an diesem Level-Index gar nicht mehr stattfindet (siehe generateLevel() in
       // constants.ts).
-      bossName: defeatedWorldBosses.includes(world.id) ? null : (WORLD_BOSSES[world.id]?.name ?? null),
+      bossName: defeatedWorldBosses.includes(world.id) || !worldBoss ? null : localizedWorldBossName(worldBoss, lang),
     };
   });
 
   if (bestLevel > LEVEL_COUNT) {
     nodes.push({
       key: 'endless',
-      name: 'Endlos-Modus',
-      sublabel: `Highscore Level ${bestLevel}`,
+      name: t.worldMap.endlessMode,
+      sublabel: t.worldMap.endlessHighscore(bestLevel),
       accent: '#2ec4b6',
       bgTop: '#0d1a1c',
       icon: 'endless',
@@ -377,9 +381,9 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
       <header className="world-atlas__head">
         <h2 className="world-atlas__title">
           <CompassIcon />
-          Weltkarte
+          {t.worldMap.title}
         </h2>
-        <button className="world-atlas__close" onClick={onClose} aria-label="Schließen" disabled={!!travel}>
+        <button className="world-atlas__close" onClick={onClose} aria-label={t.worldMap.closeAria} disabled={!!travel}>
           ✕
         </button>
       </header>
@@ -510,13 +514,13 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                   } ${node.bossName ? 'world-node--boss' : ''}`}
                   style={{ ['--node-accent' as string]: node.accent }}
                 >
-                  {node.isCurrent && !travel && <span className="world-node__pin">Du bist hier</span>}
+                  {node.isCurrent && !travel && <span className="world-node__pin">{t.worldMap.youAreHere}</span>}
 
                   <button
                     className="world-node__badge"
                     disabled={!node.unlocked || !!travel}
                     onClick={() => startTravel(i)}
-                    aria-label={`${node.name}, ${node.sublabel}${node.bossName ? `, Weltboss ${node.bossName}` : ''}`}
+                    aria-label={t.worldMap.nodeAria(node.name, node.sublabel, node.bossName)}
                   >
                     <svg className="world-node__ring" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="46" className="world-node__ring-track" />
@@ -545,7 +549,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                         (gesperrt ODER freigeschaltet ohne Boss) zeigt `node.sublabel`
                         einheitlich die XP-Schwelle dieser Welt, siehe Kommentar oben. */}
                     {node.unlocked && node.bossName ? (
-                      <span className="world-node__boss-name">⚔ {node.bossName}</span>
+                      <span className="world-node__boss-name">{t.worldMap.bossLabel(node.bossName)}</span>
                     ) : (
                       <span className="world-node__sub">{node.sublabel}</span>
                     )}
@@ -566,7 +570,7 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                           startTravel(i);
                         }}
                       >
-                        ⚔ Gegen {node.bossName} kämpfen
+                        {t.worldMap.fightBoss(node.bossName)}
                       </button>
                     )}
                   </div>

@@ -1,10 +1,12 @@
 import { Axe } from './Axe';
 import { Coin } from './Coin';
+import { getStrings, type Language } from '../game/i18n';
 import './LevelCompleteModal.css';
 import './GameOverModal.css';
 
 interface GameOverModalProps {
   level: number;
+  lang: Language;
   /** Höchstes je erreichtes Level – bleibt als Highscore stehen. */
   bestLevel: number;
   /** Münzen, die dieser Lauf gekostet hat (gesammelte Äpfel des laufenden Levels). */
@@ -58,10 +60,12 @@ export function GameOverModal({
   totalCoins,
   axeSkin,
   rescueAvailable,
+  lang,
   onWatchVideo,
   onPlayAgain,
   onBackToMenu,
 }: GameOverModalProps) {
+  const t = getStrings(lang);
   return (
     <div className="modal-backdrop modal-backdrop--danger">
       {/* Riss-Overlay über den ganzen Bildschirm, direkt hinter der Karte – derselbe
@@ -91,20 +95,16 @@ export function GameOverModal({
           </div>
         </div>
 
-        <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">Axt zersplittert!</div>
-        <div className="modal-card__body">Du hast deine eigene Axt getroffen – in Level {level}.</div>
+        <div className="modal-card__title modal-card__title--fail modal-card__title--stamp">{t.gameOver.title}</div>
+        <div className="modal-card__body">{t.gameOver.body(level)}</div>
 
         <div className="modal-card__record">
-          Highscore: <strong>Level {bestLevel}</strong>
+          {t.gameOver.highscore} <strong>{t.gameOver.highscoreValue(bestLevel)}</strong>
         </div>
 
-        {coinsLost > 0 && (
-          <div className="modal-card__sub modal-card__sub--warn">
-            {coinsLost} {coinsLost === 1 ? 'Apfel' : 'Äpfel'} aus diesem Level verloren.
-          </div>
-        )}
+        {coinsLost > 0 && <div className="modal-card__sub modal-card__sub--warn">{t.gameOver.applesLost(coinsLost)}</div>}
         <div className="modal-card__sub">
-          <Coin size={15} /> Münzen insgesamt: <strong>{totalCoins}</strong>
+          <Coin size={15} /> {t.gameOver.totalCoins(totalCoins)}
         </div>
 
         {/* Reine Fortschritts-Rettung, KEINE Münzbelohnung mehr (Klaus: "wenn man
@@ -113,14 +113,14 @@ export function GameOverModal({
             komplett unabhängigen Hauptmenü-Button (siehe StartScreen.tsx). */}
         {rescueAvailable && (
           <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
-            📺 Fortschritt
+            {t.gameOver.watchVideo}
           </button>
         )}
         <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>
-          Nochmal spielen
+          {t.gameOver.playAgain}
         </button>
         <button className="modal-card__button modal-card__button--ghost" onClick={onBackToMenu}>
-          Zum Hauptmenü
+          {t.gameOver.backToMenu}
         </button>
       </div>
     </div>
