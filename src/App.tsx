@@ -722,7 +722,22 @@ function App() {
             // Level-Index dafür unverändert stehen (siehe dortiger Kommentar) und
             // markiert die Welt als besiegt – zurück zum Hauptmenü statt einer
             // automatischen Weiterfahrt in eine neue Begegnung.
-            const wasWorldBoss = Boolean(game.worldBossName);
+            //
+            // GEFUNDENER BUG (Klaus: "nach dem Boss kommt man jetzt zu einem extrem
+            // schwierigen Level 1, obwohl der Boss kein Level haben soll – es soll
+            // Gratulation stehen und zum Hauptmenü gehen"): dieser Check nutzte bisher
+            // `game.worldBossName` – das wird aus `state.save.defeatedWorldBosses`
+            // abgeleitet, und GENAU dieses Feld setzt der Belohnungs-Effekt in
+            // useAxeGame.ts schon, SOBALD `phase` auf 'levelComplete' wechselt – lange
+            // BEVOR dieses Modal (nach `LEVEL_COMPLETE_DELAY_MS` Verzögerung) überhaupt
+            // erscheint. Der `onNext`-Closure hier wird erst beim tatsächlichen Rendern
+            // des Modals erzeugt, sieht also schon das AKTUALISIERTE (bereits als
+            // besiegt vermerkte) `defeatedWorldBosses` – `game.worldBossName` war zu
+            // diesem Zeitpunkt fälschlich schon `null`, der ganze Ast lief nie. Fix:
+            // `game.reward.worldBossId` statt `game.worldBossName` – der Reward ist ein
+            // einmalig beim Levelabschluss eingefrorener Schnappschuss (siehe
+            // computeReward() in useAxeGame.ts), bleibt unabhängig davon korrekt.
+            const wasWorldBoss = Boolean(game.reward?.worldBossId);
             game.nextLevel();
             if (wasWorldBoss) {
               setScreen('start');
