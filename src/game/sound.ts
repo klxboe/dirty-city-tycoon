@@ -132,32 +132,44 @@ export function playThrowSound(): void {
   noise.start(now);
 }
 
-/** Axt steckt sauber im Holz: kurzer, dumpfer "Thunk". */
+/**
+ * Axt steckt sauber im Holz: kurzer, dumpfer "Thunk". Klaus: "einen etwas mehr
+ * hölzigen Sound wenn man das Brett trifft" – Rauschanteil von einem helleren
+ * 900Hz-Klick auf einen dumpferen 500Hz-Thud gesenkt, dazu ein zweiter, leicht
+ * verstimmter Oberton (210Hz statt nur eines einzelnen 140Hz-Tons) fürs Holz-Timbre
+ * (ein echter Holzschlag klingt nie nach einer einzelnen reinen Frequenz).
+ */
 export function playHitSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  playNoiseBurst(ctx, now, 0.07, 900, 0.22);
-  playTone(ctx, 140, now, 0.12, 'triangle', 0.18);
+  playNoiseBurst(ctx, now, 0.09, 500, 0.2);
+  playTone(ctx, 95, now, 0.14, 'triangle', 0.2);
+  playTone(ctx, 210, now + 0.008, 0.09, 'sine', 0.08);
 }
 
 /**
- * Game Over (Axt trifft die eigene steckende Axt): tiefer Holz-Krach + Splittern.
- * War erst ein heller "Klack" (zu harmlos), dann ein gleitender Dissonanz-Stoß (Klaus:
- * "Sound beim Verkacken war vorher besser" – die Dissonanz-Version kam nicht gut an).
- * Klaus' eigener Vorschlag: "so ein Holz-zerbrechen-Sound" – exakt der alte
- * `playBreakSound()`-Klang (tiefer Krach + Splittern), nur jetzt hier statt beim
- * normalen Levelabschluss (der hat inzwischen `playLevelCompleteSound()`, einen
- * eigenen, fröhlicheren Jingle) – ein zerbrechendes Brett passt inhaltlich sogar besser
- * zu "man hat gerade verloren" als zu "Level geschafft".
+ * Game Over (Axt trifft die eigene steckende Axt). War erst ein heller "Klack" (zu
+ * harmlos), dann ein gleitender Dissonanz-Stoß (kam nicht gut an), dann ein tiefer
+ * Holz-Krach ("so ein Holz-zerbrechen-Sound", Klaus' eigener Vorschlag).
+ *
+ * Nochmal geändert (Klaus: "einen zerscherbten Sound wenn man ein anderes Messer
+ * trifft") – der Holz-Krach passte zum ALLGEMEINEN "verloren"-Gefühl, aber nicht
+ * mehr zum KONKRETEN Ereignis: zwei Klingen, die aufeinanderprallen, splittern nicht
+ * wie Holz, sie zerspringen wie Metall/Glas. Heller, scharfer Knall (Rauschanteil
+ * jetzt hochfrequent statt dumpf) plus mehrere schnell hintereinander verklingende
+ * hohe "Splitter"-Töne (dieselbe Idee wie die visuellen Funken in GameOverModal.tsx,
+ * nur als Ton), der tiefe Ton bleibt als spürbarer Einschlag unter dem Zerspringen.
  */
 export function playGameOverSound(): void {
   const ctx = getContext();
   if (!ctx) return;
   const now = ctx.currentTime;
-  playNoiseBurst(ctx, now, 0.22, 500, 0.32);
-  playNoiseBurst(ctx, now + 0.06, 0.18, 280, 0.26);
-  playTone(ctx, 90, now, 0.28, 'sawtooth', 0.18);
+  playNoiseBurst(ctx, now, 0.05, 3200, 0.28);
+  playTone(ctx, 90, now, 0.16, 'sawtooth', 0.14);
+  [2400, 3100, 1900, 3600].forEach((freq, i) => {
+    playTone(ctx, freq, now + 0.02 + i * 0.035, 0.09, 'triangle', 0.09);
+  });
 }
 
 /**
