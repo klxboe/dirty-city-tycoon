@@ -3252,6 +3252,65 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       ließen sich wie bei jedem bisherigen Balancing-Schritt nicht per
       Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
       echtes Spielen auf dem Gerät steht wie üblich noch aus.
+- [x] **Weltboss dauerhaft besiegbar, Video-Rettungs-Button vereinfacht, Level-20-25-
+      Wall entfernt (2026-08-25).** Vier Klaus-Anfragen in einem Rutsch:
+      - **"Statt Fortschritt+350 nur Fortschritt, 350 soll im Menü irgendwo so
+        schweben":** `GameOverModal.tsx` zeigt den Video-Rettungs-Button jetzt nur
+        noch als "📺 Fortschritt", die Münzzahl sitzt als eigenes, sanft auf-/ab
+        schwebendes Abzeichen (`.gameover-video-cta__badge`, dieselbe Bob-Idee wie
+        der "Du bist hier"-Pin auf der Weltkarte) über dem Button statt im Text.
+      - **"Nach dem Boss soll man nur die Welt geschafft haben, nicht zu Level 22
+        oder so kommen, der Boss ist separat und hat kein Level" + "Boss nur einmal
+        besiegen müssen, dann ist der Hintergrund beim normalen Spiel die Wüste zum
+        Beispiel" + "wenn man den Boss einmal spielt und dann zurück zum Hauptmenü
+        geht, soll man ins normale Spiel zurückkommen, nicht wieder zur Weltkarte":**
+        bis dahin gab es KEINEN dauerhaften "besiegt"-Zustand für einen Weltboss –
+        jeder neue Lauf (Highscore-Prinzip: Game Over wirft auf Level 1 zurück)
+        musste ihn zwangsläufig erneut bekämpfen, und ein Sieg ließ den Lauf nahtlos
+        in "Level 22" weiterlaufen. Neues, dauerhaftes `SaveData.defeatedWorldBosses`
+        (Welt-IDs, übersteht Game Over wie XP/Münzen, `storage.ts`). `generateLevel()`
+        (`constants.ts`) bekommt einen vierten Parameter `defeatedWorldBosses` und
+        erzeugt an einem Welt-Start-Level nur noch dann einen Weltboss, wenn die
+        Welt dort NICHT schon vermerkt ist – danach ist GENAU dieser Level-Index für
+        immer ein normaler, thematisch passender Level (Musste durch `useAxeGame.ts`
+        komplett durchgereicht werden: `createLevelState()`/`levelConfigAt()` haben
+        jetzt überall einen vierten Parameter). Die Belohnungs-Gutschrift-Effekt
+        (`useAxeGame.ts`) trägt eine gerade besiegte Welt sofort dauerhaft ein.
+        `nextLevel()` erkennt einen Weltboss-Sieg über `prev.reward?.worldBossId`
+        (NICHT über einen erneuten `levelConfigAt()`-Aufruf mit dem schon
+        aktualisierten Spielstand – der würde zu diesem Zeitpunkt fälschlich schon
+        `undefined` liefern) und lässt den Level-Index bewusst UNVERÄNDERT stehen
+        statt `+1` – kein Sprung zu "Level 22". `App.tsx` schickt nach einem
+        Weltboss-Sieg (`onNext` der `LevelCompleteModal`) zurück zum Hauptmenü statt
+        nahtlos weiterzuspielen. `StartScreen.tsx`s `isBossGate` ("Weiter zur
+        Weltkarte" statt normalem Weiterspielen) UND `WorldMap.tsx`s
+        Bossname-Anzeige am Welt-Knoten berücksichtigen jetzt beide den
+        Sieg-Status – nach dem Sieg zeigt der Hauptbutton direkt "Weiter – Level N"
+        statt der Weltkarten-Sperre, und die Karte zeigt den normalen Level-Bereich
+        statt des Bossnamens.
+      - **"Ab Level 25 wird es unmöglich gefühlt, mach zwar alles schwerer, aber ab
+        Level 20 steigert sich die Schwierigkeit nicht mehr":** beide Beobachtungen
+        hatten dieselbe Ursache – die siebte-Härte-Durchgang-"Wall" bei Level 20-25
+        (`axeCountFor`: Sprung auf 17, `obstacleBaseFor`: Sprung auf Basis 8) war ein
+        Spitze-dann-Einbruch, kein Anstieg: direkt danach fiel die Kurve für Level
+        26-30 auf die ALTEN Werte (12/5) zurück und blieb bis Level 42 darunter – ein
+        einzelner brutaler Stachel statt spürbaren Fortschritts. Beide Kurven
+        laufen jetzt lückenlos steigend durch: `axeCountFor` 7→8→10→11→12→14→16→18→20,
+        `obstacleBaseFor` (Basis) 0→1→2→3→4→5→6→7→8→9 – jede Stufe mindestens so hoch
+        wie die vorherige, nirgends mehr ein Rückschritt. Level 20-25 sind dadurch
+        spürbar leichter als vorher, aber die Kurve hört nie auf zu steigen.
+      Verifiziert per echtem Spielstand im Browser (Save-Feld `currentLevel`/
+      `defeatedWorldBosses` direkt gesetzt, da ein echter Weltboss-Sieg wegen des
+      dokumentierten rAF-Freeze-Problems – siehe eigener Abschnitt weiter oben – in
+      der automatisierten Umgebung nicht in Echtzeit erspielbar ist): Level 21
+      (Wüste-Tor) zeigt bei `defeatedWorldBosses=[]` weiterhin korrekt "Weiter zur
+      Weltkarte", nach Eintrag von `'desert'` stattdessen "Weiter – Level 21" und
+      lädt dort tatsächlich einen normalen Level (6 Hindernisse, kein Weltboss-Tag).
+      Level 25 (Fruchtboss "Zitrone") zeigt jetzt 11 Äxte/5 Hindernisse statt der
+      alten 17/8-10. Ein echter Game Over (per simuliertem `animationend`-Event
+      erzwungen, siehe Kollisions-Test-Muster weiter oben) zeigt das Game-Over-Fenster
+      korrekt mit "📺 Fortschritt" + separat schwebendem "+350"-Abzeichen. `tsc -b`/
+      `npm run build` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
