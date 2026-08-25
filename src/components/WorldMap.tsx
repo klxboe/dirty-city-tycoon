@@ -549,6 +549,26 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                     ) : (
                       <span className="world-node__sub">{node.sublabel}</span>
                     )}
+                    {/* Eigener, klar beschrifteter Button NUR für den Weltboss ("den starken
+                        mit Gesicht", zur Abgrenzung von den schwächeren Boss-FRÜCHTEN alle 5
+                        Level) – zusätzlich zum normalen Antippen des Knotens, das ohnehin
+                        schon zuerst auf den Weltboss trifft (der sitzt immer am Welt-Start,
+                        siehe isWorldBossLevel in worlds.ts). Nur sichtbar, solange der
+                        Weltboss dieser Welt noch nicht besiegt ist – danach ist der
+                        Level-Index für immer ein normaler Level, es gibt nichts mehr zu
+                        bekämpfen (siehe generateLevel() in constants.ts). */}
+                    {node.unlocked && node.bossName && (
+                      <button
+                        className="world-node__fight-boss"
+                        disabled={!!travel}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startTravel(i);
+                        }}
+                      >
+                        ⚔ Gegen {node.bossName} kämpfen
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

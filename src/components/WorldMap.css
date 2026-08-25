@@ -516,3 +516,24 @@
 .world-node--locked .world-node__sub {
   color: rgba(255, 255, 255, 0.55);
 }
+
+/* Eigener Boss-Kampf-Button pro Welt (nur solange der jeweilige Weltboss noch nicht
+   besiegt ist, siehe WorldMap.tsx) - bewusst knallig/rot statt im normalen Blau-Ton
+   der Karte, damit er als eigene Aktion erkennbar ist statt wie Fließtext zu wirken. */
+.world-node__fight-boss {
+  margin-top: 4px;
+  padding: 4px 9px;
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  background: linear-gradient(135deg, #ff6b6b, #b3261e);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(179, 38, 30, 0.5);
+  white-space: nowrap;
+}
+
+.world-node__fight-boss:disabled {
+  opacity: 0.5;
+}
