@@ -4,7 +4,7 @@ import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
-import { displayLevelFor, isWorldBossLevel, worldForLevel } from '../game/worlds';
+import { displayLevelFor, isWorldBossLevel, worldById, worldForLevel } from '../game/worlds';
 import './StartScreen.css';
 
 interface StartScreenProps {
@@ -21,6 +21,10 @@ interface StartScreenProps {
   showTutorial: boolean;
   /** Welt-IDs, deren Weltboss schon (mindestens einmal, dauerhaft) besiegt wurde. */
   defeatedWorldBosses: string[];
+  /** Dauerhaft gespeicherter Welt-Skin (siehe worldById in worlds.ts) für die "Aktuelle
+   *  Welt"-Anzeige – ändert sich NUR bei einem bewussten Weltkarten-Sprung, nicht bei
+   *  jedem Levelwechsel/Game Over (siehe goToLevel() in useAxeGame.ts). */
+  activeWorldId: string;
   /** Öffnet den Rewarded-Video-Flow für die Hauptmenü-Münzbelohnung (App.tsx) – gibt
    *  dieselbe Summe wie die Game-Over-Rettung (VIDEO_RESCUE_COINS), ist aber jederzeit
    *  vom Hauptmenü aus nutzbar, unabhängig von einem laufenden Versuch. */
@@ -48,6 +52,7 @@ export function StartScreen({
   axeSkin,
   showTutorial,
   defeatedWorldBosses,
+  activeWorldId,
   onWatchAd,
   onPlay,
   onOpenShop,
@@ -79,9 +84,10 @@ export function StartScreen({
     }, SECRET_TAP_WINDOW_MS);
   };
 
-  // Welche Welt als Nächstes drankommt – rein informativ, damit der Startbildschirm
-  // schon vorher zeigt, wo man landet, statt das erst nach dem Start-Tap zu erfahren.
-  const world = worldForLevel(Math.max(0, continueLevel - 1));
+  // Welt an der tatsächlichen Level-POSITION (nicht die Anzeige!) – nur für die
+  // isBossGate-Prüfung unten, die wissen muss, ob GENAU dieser Level-Index ein noch
+  // unbesiegtes Weltboss-Tor ist.
+  const positionWorld = worldForLevel(Math.max(0, continueLevel - 1));
   /**
    * Steht der Spielstand GENAU am Weltboss-Tor (siehe isWorldBossLevel) UND ist dessen
    * Weltboss noch NICHT besiegt, darf der Haupt-Button nicht direkt in den Bosskampf
@@ -98,7 +104,13 @@ export function StartScreen({
    * einmal spielt und dann zurück zum Hauptmenü geht, soll man ins normale Spiel
    * zurückkommen, nicht wieder zur Weltkarte").
    */
-  const isBossGate = isWorldBossLevel(Math.max(0, continueLevel - 1)) && !defeatedWorldBosses.includes(world.id);
+  const isBossGate = isWorldBossLevel(Math.max(0, continueLevel - 1)) && !defeatedWorldBosses.includes(positionWorld.id);
+  // "Aktuelle Welt"-Anzeige nutzt bewusst den dauerhaft gespeicherten Skin
+  // (`activeWorldId`), NICHT die Level-Position – Klaus: "wenn man auf Wüste klickt,
+  // soll es dann immer Wüste-Hintergrund bleiben, auch wenn man im Hauptmenü auf
+  // Spielen drückt, erst wenn man wieder ABSICHTLICH auf Wald klickt, soll es
+  // geändert werden".
+  const activeWorld = worldById(activeWorldId);
 
   return (
     <div className="start">
@@ -124,9 +136,9 @@ export function StartScreen({
           <span className="start__highscore-value">Level {bestLevel}</span>
         </div>
 
-        <div className="start__world-badge" style={{ ['--world-accent' as string]: world.colors.accent }}>
+        <div className="start__world-badge" style={{ ['--world-accent' as string]: activeWorld.colors.accent }}>
           <span className="start__world-dot" />
-          Aktuelle Welt: <strong>{world.name}</strong>
+          Aktuelle Welt: <strong>{activeWorld.name}</strong>
         </div>
 
         <div className="start__stats">

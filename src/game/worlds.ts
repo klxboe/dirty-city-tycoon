@@ -177,6 +177,21 @@ export function worldForLevel(levelIndex: number): World {
 }
 
 /**
+ * Welt anhand ihrer ID statt ihrer Level-Position – für den dauerhaft gespeicherten
+ * "aktiven" Welt-Skin (`SaveData.activeWorldId`, siehe storage.ts). Klaus: "wenn man
+ * auf Wüste klickt, soll es dann immer Wüste-Hintergrund bleiben, auch wenn man im
+ * Hauptmenü auf Spielen drückt – erst wenn man dann wieder ABSICHTLICH auf Wald
+ * klickt, soll es geändert werden". Der Hintergrund/Skin hängt seitdem NICHT mehr an
+ * der aktuellen Level-Position (die nach einem Game Over ohnehin auf Level 1
+ * zurückspringt, siehe Highscore-Prinzip), sondern an dieser separaten, nur bei einem
+ * bewussten Weltkarten-Sprung aktualisierten ID. Unbekannte/leere IDs fallen auf die
+ * erste Welt zurück (safety net, z.B. bei einem beschädigten Spielstand).
+ */
+export function worldById(id: string): World {
+  return WORLDS.find((w) => w.id === id) ?? WORLDS[0];
+}
+
+/**
  * Level-Nummer INNERHALB der eigenen Welt (1-basiert) – für die ANZEIGE. Klaus: "wenn
  * man den Boss schafft, soll man nicht direkt zum nächsten Level kommen, sondern
  * Gratulation, und ab dann Level eins, aber mit dem neuen Hintergrund" – nach einem
@@ -193,9 +208,12 @@ export function displayLevelFor(levelIndex: number): number {
   return levelIndex - worldForLevel(levelIndex).startLevelIndex + 1;
 }
 
-/** Die Welt-Farben als Inline-Style-Objekt (CSS-Variablen) für die Bühne. */
-export function worldStyleVars(levelIndex: number): Record<string, string> {
-  const w = worldForLevel(levelIndex).colors;
+/** Die Welt-Farben als Inline-Style-Objekt (CSS-Variablen) für die Bühne. Nimmt die
+ *  `World` direkt entgegen statt eines Level-Index – der Aufrufer entscheidet, ob das
+ *  die aktuelle Level-Position (`worldForLevel`) oder der dauerhaft gespeicherte
+ *  aktive Welt-Skin (`worldById`, siehe dort) ist. */
+export function worldStyleVars(world: World): Record<string, string> {
+  const w = world.colors;
   return {
     '--color-bg-top': w.bgTop,
     '--color-bg-bottom': w.bgBottom,

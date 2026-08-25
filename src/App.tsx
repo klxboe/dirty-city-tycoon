@@ -16,7 +16,7 @@ import { WorldHorizon } from './components/WorldHorizon';
 import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
-import { displayLevelFor, worldForLevel, worldStyleVars } from './game/worlds';
+import { displayLevelFor, worldById, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
 import { AXE_IMAGES } from './game/axeShapes';
 import { BOARD_IMAGES } from './game/boardImages';
@@ -427,7 +427,12 @@ function App() {
   const flightTravelPx = flightEndTopPx - flightStartTopPx;
 
   const overlayOpen = shopOpen || settingsOpen || worldMapOpen || adRewardOpen;
-  const world = worldForLevel(game.levelIndex);
+  // Dauerhaft gespeicherter Welt-Skin (siehe worldById in worlds.ts) statt der
+  // aktuellen Level-POSITION (`worldForLevel`) – Klaus: "wenn man auf Wüste klickt,
+  // soll es dann immer Wüste-Hintergrund bleiben, auch nach einem Game Over, bis man
+  // wieder absichtlich eine andere Welt anklickt". `activeWorldId` wird nur bei einem
+  // bewussten Weltkarten-Sprung aktualisiert (siehe goToLevel() in useAxeGame.ts).
+  const world = worldById(game.save.activeWorldId);
 
   if (screen === 'start') {
     return (
@@ -442,6 +447,7 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
           defeatedWorldBosses={game.save.defeatedWorldBosses}
+          activeWorldId={game.save.activeWorldId}
           onWatchAd={() => setAdRewardOpen(true)}
           onPlay={startPlaying}
           onOpenShop={() => setShopOpen(true)}
@@ -517,7 +523,7 @@ function App() {
       <div
         ref={stageRef}
         className={`stage ${game.bossFruit ? 'stage--boss' : ''}`}
-        style={worldStyleVars(game.levelIndex) as React.CSSProperties}
+        style={worldStyleVars(world) as React.CSSProperties}
         onPointerDown={handlePointerDown}
       >
         <WorldHorizon decor={world.decor} />

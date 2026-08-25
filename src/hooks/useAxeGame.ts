@@ -32,7 +32,7 @@ import {
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
-import { WORLD_BOSSES } from '../game/worlds';
+import { WORLD_BOSSES, worldForLevel } from '../game/worlds';
 import { setMuted } from '../game/sound';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
 
@@ -316,6 +316,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    * siehe `bossFruitForLevel`/`generateLevel` in constants.ts) sowie setzt die einmalige
    * Video-Rettung (`rescueUsedThisRun`) zurück – ein Sprung zu einer bereits
    * freigeschalteten Welt mitten in einem laufenden Highscore-Versuch ist kein Neustart.
+   *
+   * `goToLevel()` wird AUSSCHLIESSLICH von der Weltkarte aus aufgerufen (siehe
+   * `onSelectLevel` in App.tsx/WorldMap.tsx), IMMER mit `world.startLevelIndex` als
+   * Ziel – jeder Aufruf ist also eine BEWUSSTE Welt-Wahl. `activeWorldId` (SaveData)
+   * wird deshalb hier aktualisiert (Klaus: "wenn man auf Wüste klickt, soll es dann
+   * immer Wüste-Hintergrund bleiben... erst wenn man wieder ABSICHTLICH auf Wald
+   * klickt, soll es geändert werden") – bleibt bei jedem ANDEREN Levelwechsel
+   * (`nextLevel()`/`restartRun()`/Game Over) unangetastet, die bestimmen nur die
+   * tatsächliche Schwierigkeits-Position (`currentLevel`), nicht den Skin.
    */
   const goToLevel = useCallback((levelIndex: number) => {
     pendingThrowRef.current = false;
@@ -325,6 +334,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const nextSave: SaveData = {
         ...prev.save,
         currentLevel: target,
+        activeWorldId: worldForLevel(target).id,
         runSeed: isNewRun ? prev.save.runSeed + 1 : prev.save.runSeed,
         levelVariantSeed: rollLevelVariantSeed(true, prev.save.levelVariantSeed),
       };

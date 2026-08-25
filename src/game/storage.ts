@@ -6,6 +6,7 @@
 // Spiel läuft dann trotzdem, der Fortschritt ist eben nur nicht dauerhaft.
 import { COINS_PER_LEGACY_APPLE, CURRENCY_SAVE_KEY, SAVE_KEY } from './constants';
 import { DEFAULT_AXE_SKIN, DEFAULT_BOARD_SKIN } from './shop';
+import { WORLDS } from './worlds';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -72,6 +73,18 @@ export interface SaveData {
    * thematisch passender Level.
    */
   defeatedWorldBosses: string[];
+  /**
+   * Welt-ID (siehe `World.id`/`worldById()` in worlds.ts), deren Skin/Hintergrund
+   * gerade überall gilt (Stage, "Aktuelle Welt"-Anzeige auf dem Startbildschirm) –
+   * dauerhaft, übersteht Game Over. Klaus: "wenn man auf Wüste klickt, soll es dann
+   * immer Wüste-Hintergrund bleiben, auch wenn man im Hauptmenü auf Spielen drückt,
+   * erst wenn man dann wieder ABSICHTLICH auf Wald klickt, soll es geändert werden" –
+   * wird deshalb NUR bei einem bewussten Weltkarten-Sprung aktualisiert (`goToLevel()`
+   * in useAxeGame.ts), nicht bei jedem normalen Levelwechsel/Game Over, die weiterhin
+   * unabhängig davon `currentLevel` (die tatsächliche Schwierigkeits-Position)
+   * bestimmen.
+   */
+  activeWorldId: string;
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -92,6 +105,7 @@ const EMPTY_SAVE: SaveData = {
   runSeed: 0,
   levelVariantSeed: 0,
   defeatedWorldBosses: [],
+  activeWorldId: WORLDS[0].id,
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -132,6 +146,10 @@ export function loadSave(): SaveData {
         defeatedWorldBosses: Array.isArray(parsed.defeatedWorldBosses)
           ? [...new Set(parsed.defeatedWorldBosses.filter((id) => typeof id === 'string'))]
           : [],
+        activeWorldId:
+          typeof parsed.activeWorldId === 'string' && WORLDS.some((w) => w.id === parsed.activeWorldId)
+            ? parsed.activeWorldId
+            : WORLDS[0].id,
       };
     }
 
