@@ -3311,6 +3311,69 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       erzwungen, siehe Kollisions-Test-Muster weiter oben) zeigt das Game-Over-Fenster
       korrekt mit "📺 Fortschritt" + separat schwebendem "+350"-Abzeichen. `tsc -b`/
       `npm run build` sauber, keine Konsolenfehler.
+- [x] **Große Klarstellungs-Runde nach echtem Testen auf TestFlight (2026-08-25):**
+      fünf zusammenhängende Punkte, alle in einem Rutsch:
+      - **"Statt Fortschritt+350 nur Fortschritt, 350 soll im Menü irgendwo so
+        schweben" – neu interpretiert:** Klaus stellte klar, dass die Game-Over-
+        Rettung ("Punkt aus Ende") unangetastet bleibt und stattdessen ein
+        komplett SEPARATER, jederzeit nutzbarer Werbevideo-Button ins Hauptmenü
+        soll, bei Highscore/Münzen/XP. Neue `watchAdReward()` (useAxeGame.ts,
+        unabhängig von `rescueRun()`), `VideoRescueModal.tsx` bekam einen
+        `variant`-Prop ('rescue'/'reward') für die unterschiedlichen Texte.
+        Button kollidierte zunächst sichtbar mit dem Logo (Klaus schickte einen
+        Screenshot vom echten Gerät mit eingekreister Stelle) – aus
+        `position:absolute` oben rechts in einen normalen Flex-Fluss zwischen
+        Axt-Bild und Button-Stapel verschoben.
+      - **Genereller Klick-Sound:** neue `playClickSound()`, EIN globaler
+        Klick-Listener in App.tsx (capture-Phase) statt in jedem Menü einzeln.
+      - **Zwei Treffer-Sounds überarbeitet:** `playHitSound()` (Brett-Treffer)
+        jetzt hölzerner (tieferer Rauschanteil, zweiter Oberton),
+        `playGameOverSound()` (Axt-Kollision) jetzt ein echtes Zerscherben
+        (heller Knall + mehrere hohe Splitter-Töne) statt des alten Holz-Krachs.
+      - **Brett nochmal kleiner, Hitbox etwas kleiner:** `BOARD_SIZE`/
+        `BOARD_RADIUS` 190/88 -> 165/76, `COLLISION_ANGLE_TOLERANCE_DEG` 12° ->
+        10° – Axt-Bildgröße (`STUCK_AXE_SIZE`/`FLIGHT_AXE_SIZE`, 33) bewusst
+        unangetastet.
+      - **ECHTER Bug gefunden: Weltboss-Sieg-Weiterleitung griff nie.** Der
+        `onNext`-Handler in App.tsx prüfte `game.worldBossName`, um "zurück zum
+        Hauptmenü statt weiterspielen" auszulösen – dieser Wert wird aber aus
+        `defeatedWorldBosses` abgeleitet, das der Belohnungs-Effekt schon beim
+        Wechsel zu `phase==='levelComplete'` aktualisiert, LANGE bevor das Modal
+        (nach `LEVEL_COMPLETE_DELAY_MS`) überhaupt erscheint und den
+        `onNext`-Closure erzeugt – der sah dadurch fälschlich schon `null`.
+        Ergebnis: der Spieler wurde nahtlos in den (jetzt als normal
+        generierten) Weltboss-Level-Index weitergeschickt, angezeigt als
+        "Level 1", aber mit der vollen Schwierigkeit des ehemaligen
+        Boss-Levels – genau das meldete Klaus als "extrem schwierig". Fix:
+        `game.reward?.worldBossId` (ein stabiler, beim Levelabschluss
+        eingefrorener Schnappschuss) statt `game.worldBossName`.
+      Verifiziert per echtem Klick-/Kollisions-Test im Browser (Sound-Aufrufe
+      exakt gezählt, Brettgröße gemessen, Button-Kollision per
+      `getBoundingClientRect` ausgeschlossen). Der komplette Weltboss-SIEG-Pfad
+      ließ sich in der Sandbox nicht bis zum Ende durchspielen (statischer
+      Board-Winkel lässt jeden zweiten Wurf kollidieren) – Bestätigung durch
+      echtes Spielen auf einem NEUEN TestFlight-Build (der bisherige Build
+      enthält keinen der Fixes aus dieser gesamten Session) steht noch aus.
+- [x] **Fruchtwelten teilen jetzt EINE Level-Kurve, Highscore ignoriert Boss-
+      Siege (2026-08-25).** Klaus, direkt danach, deutlich schärfer formuliert:
+      "bei Vulkan Level 1 ist genau das Selbe wie Wald Level 1, es ist alles
+      gleich, nur der Hintergrund ändert sich" + "wenn ich den Boss besiege,
+      steigt nicht mein Highscore, der hat mit dem Highscore absolut nichts zu
+      tun". Das war ein echter Kurswechsel gegenüber der bisherigen, über viele
+      Runden fein austarierten "jede Welt baut auf der vorherigen auf"-Kurve –
+      ab jetzt gilt: Wald, Wüste, Eis, Vulkan und Kosmos spielen sich für
+      dieselbe LOKALE Levelnummer (1-20) absolut identisch, nur das Aussehen
+      (Skin/Hintergrund/Weltboss-Name) unterscheidet sich. Details siehe
+      Commit-Nachricht/Kommentare in `generateLevel()` (constants.ts) – neue
+      `curveLevelIndex = levelIndex % WORLDS_LEVEL_COUNT` ersetzt den rohen
+      Level-Index überall dort, wo es um Schwierigkeit/Layout geht. Heldenstadt
+      behält ihre eigene Sonderrolle (Hero-Bosse, Sammelfiguren) unangetastet.
+      `bestLevel`/Highscore wird bei einem Weltboss-Sieg jetzt bewusst
+      übersprungen. Per echtem Spielstand verifiziert (Wald Level 8 = Vulkan
+      Level 8 bei fixiertem `levelVariantSeed`/`runSeed`: identisch 8 Äxte/5
+      Hindernisse, nur `--world-accent` unterscheidet sich; Wald Level 5 und
+      Vulkan Level 5 zeigen beide "Wassermelone"). `tsc -b`/`npm run build`
+      sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
