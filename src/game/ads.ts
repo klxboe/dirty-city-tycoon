@@ -13,8 +13,8 @@
 //    und Präsentation der nächsten Anzeige) – deshalb eine kurze Pause nach jedem
 //    Dismiss-Event UND ein Timeout-Watchdog, damit der Aufruf garantiert irgendwann
 //    auflöst statt für immer zu hängen.
-import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
-import type { AdMobRewardItem, RewardAdOptions } from '@capacitor-community/admob';
+import { AdMob, InterstitialAdPluginEvents, RewardAdPluginEvents } from '@capacitor-community/admob';
+import type { AdMobRewardItem, AdOptions, RewardAdOptions } from '@capacitor-community/admob';
 
 /**
  * MUSS auf `false` stehen für echten Betrieb/Einreichung. `true` zeigt Googles
@@ -38,15 +38,27 @@ export const USE_TEST_AD = true;
  */
 export const REAL_APP_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX';
 const REAL_REWARDED_AD_UNIT_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
+/** Ebenfalls noch Platzhalter – eigene Interstitial-Ad-Unit in derselben neuen AdMob-App anlegen. */
+const REAL_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
 
 const TEST_REWARDED_AD_UNIT_ID = 'ca-app-pub-3940256099942544/1712485313';
+/** Googles offizielle Test-ID fürs Interstitial (iOS) – wie oben, garantiert lauffähig. */
+const TEST_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-3940256099942544/4411468910';
 
 const REWARDED_AD_UNIT_ID = USE_TEST_AD ? TEST_REWARDED_AD_UNIT_ID : REAL_REWARDED_AD_UNIT_ID;
+const INTERSTITIAL_AD_UNIT_ID = USE_TEST_AD ? TEST_INTERSTITIAL_AD_UNIT_ID : REAL_INTERSTITIAL_AD_UNIT_ID;
 
 /** Nach einem `Dismissed`-Event kurz warten, bevor die nächste Anzeige startet (siehe Kommentar oben). */
 const MIN_GAP_AFTER_DISMISS_MS = 1000;
 /** Watchdog: `showRewardedAd()` löst spätestens nach dieser Zeit auf, egal was das SDK tut. */
 const SHOW_TIMEOUT_MS = 45000;
+/**
+ * Watchdog fürs Interstitial – deutlich kürzer als beim Rewarded Video (Klaus: "aber
+ * nicht zu lange"). Die tatsächliche Anzeigedauer der Werbung selbst bestimmt Google
+ * (kein App-seitiger Hebel dafür), aber das WARTEN aufs Laden soll wenigstens nicht
+ * lange blockieren, falls kein Fill da ist – dann läuft der Spieler ohne Anzeige weiter.
+ */
+const INTERSTITIAL_SHOW_TIMEOUT_MS = 12000;
 
 let initialized = false;
 let lastDismissAt = 0;
@@ -141,6 +153,65 @@ export async function showRewardedAd(): Promise<{ success: boolean; error?: stri
 
     AdMob.prepareRewardVideoAd(options)
       .then(() => AdMob.showRewardVideoAd())
+      .catch((error) => finish({ success: false, error: String(error) }))
+      .finally(() => clearTimeout(timeout));
+  });
+}
+
+/**
+ * Zeigt ein Interstitial (Vollbild-Werbung ohne Belohnung) – Klaus: "nach 2 Mal
+ * gestorben soll Werbung kommen, aber nicht zu lange". Der Aufrufer entscheidet, WANN
+ * das ist (siehe `deathCountRef`/`pendingInterstitialAdRef` in App.tsx – jeder zweite
+ * Game Over), diese Funktion kümmert sich nur ums tatsächliche Laden/Zeigen. Läuft
+ * nach demselben Muster wie `showRewardedAd()` oben (derselbe `lastDismissAt`-
+ * Mindestabstand gegen das dokumentierte iOS-Vollbild-Hänger-Race, siehe Kommentar am
+ * Dateianfang – gilt für JEDE Art von Vollbild-Anzeige, nicht nur Rewarded), aber mit
+ * kürzerem Timeout und ohne Rewarded-Event, da es hier keine Belohnung gibt. Löst
+ * IMMER auf (nie hängend), egal ob die Anzeige tatsächlich lief oder nicht – der
+ * Aufrufer macht so oder so mit dem eigentlichen Spielablauf weiter.
+ */
+export async function showInterstitialAd(): Promise<{ success: boolean; error?: string }> {
+  const gap = performance.now() - lastDismissAt;
+  if (gap < MIN_GAP_AFTER_DISMISS_MS) {
+    await new Promise((resolve) => setTimeout(resolve, MIN_GAP_AFTER_DISMISS_MS - gap));
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result: { success: boolean; error?: string }) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(result);
+    };
+
+    const dismissedListener = AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+      lastDismissAt = performance.now();
+      finish({ success: true });
+    });
+    const failedListener = AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (error: unknown) => {
+      finish({ success: false, error: String(error) });
+    });
+    const failedToShowListener = AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, (error: unknown) => {
+      finish({ success: false, error: String(error) });
+    });
+
+    const cleanup = () => {
+      dismissedListener.then((l) => l.remove());
+      failedListener.then((l) => l.remove());
+      failedToShowListener.then((l) => l.remove());
+    };
+
+    const timeout = setTimeout(() => finish({ success: false, error: 'timeout' }), INTERSTITIAL_SHOW_TIMEOUT_MS);
+
+    const options: AdOptions = {
+      adId: INTERSTITIAL_AD_UNIT_ID,
+      isTesting: USE_TEST_AD,
+      npa: true,
+    };
+
+    AdMob.prepareInterstitial(options)
+      .then(() => AdMob.showInterstitial())
       .catch((error) => finish({ success: false, error: String(error) }))
       .finally(() => clearTimeout(timeout));
   });

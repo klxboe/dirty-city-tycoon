@@ -3374,6 +3374,97 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Hindernisse, nur `--world-accent` unterscheidet sich; Wald Level 5 und
       Vulkan Level 5 zeigen beide "Wassermelone"). `tsc -b`/`npm run build`
       sauber, keine Konsolenfehler.
+- [x] **Preise vor der Einreichung angehoben, Endlos-Modus bleibt hart, Diamanten
+      etwas öfter (2026-08-25).** Klaus: "letzte Änderung, danach geht es ans
+      Einreichen – mach alles etwas teurer, Welten und Shop (außer die um
+      Echtgeld), und ab Level 25 sollen die Level nicht mehr schwerer werden,
+      aber sehr schwer alle sein" + mittendrin "ein bisschen öfter Diamanten,
+      nicht zu viel". Drei Teile:
+      - **Preise:** `WORLD_UNLOCK_XP_MULTIPLIER` 6→8 (Wüste jetzt 320 statt 240
+        XP). Alle Münz-/Diamanten-Preise im Shop um ~15% angehoben (`AXE_SKINS`/
+        `BOARD_SKINS` mit `source:'shop'`, `LEGENDARY_AXE_SKINS`/
+        `LEGENDARY_BOARD_SKINS` mit `source:'gem'`) – die zehn Echtgeld-Äxte
+        (`source:'iap'`, `priceCents`) und die beiden kostenlosen Start-Skins
+        (`axe-standard`/`board-oak`, Preis 0) bewusst unangetastet.
+      - **ECHTER Bug gefunden und behoben:** seit dem Umbau auf die geteilte
+        20-Level-Kurve (`curveLevelIndex = levelIndex % WORLDS_LEVEL_COUNT`,
+        siehe voriger Eintrag) wäre der echte Endlos-Modus (jenseits von
+        `LEVEL_COUNT`=120) für immer auf die leichteste Stufe zurückgefallen,
+        weil der Modulo alle 20 Level wieder bei 0 anfängt – genau das
+        Gegenteil von "ab Level 25 nicht mehr schwerer, aber sehr schwer
+        bleiben". Fix: `curveLevelIndex` wird ab `levelIndex >= LEVEL_COUNT`
+        hart auf `WORLDS_LEVEL_COUNT - 1` (die schwerste Stufe) geklemmt statt
+        weiter zu rotieren – Level bleiben ab dort für immer auf
+        Höchstschwierigkeit, ohne weiter zu steigen. Per echtem Spielstand
+        verifiziert: Level-Index 19 (letztes normales Wald-Level) und
+        Level-Index 130 (tief im Endlos-Modus, angezeigt als "Level 31")
+        liefern identisch 11 Äxte/5 Hindernisse.
+      - **Diamanten:** `goldenAppleIndexFor()`-Modulo von 15 auf 12 gesenkt
+        (etwas häufiger als zuvor, aber bewusst kein großer Sprung zurück zur
+        alten 1-von-7-Häufigkeit).
+      `tsc -b`/`npm run build` sauber, keine Konsolenfehler.
+- [x] **Interstitial-Werbung nach jedem zweiten Game Over (2026-08-25).** Klaus:
+      "nach 2 Mal gestorben soll Werbung kommen, aber nicht zu lange" – eine
+      erzwungene, nicht belohnte Vollbild-Anzeige als zusätzliche
+      Monetarisierung neben dem bestehenden Rewarded Video (Rettung/Hauptmenü-
+      Bonus). Baut 1:1 auf dem in `ads.ts` etablierten Muster für Rewarded
+      Video auf, statt etwas Neues zu erfinden:
+      - **`showInterstitialAd()`** (neu, `game/ads.ts`): nutzt
+        `AdMob.prepareInterstitial()`/`showInterstitial()` und
+        `InterstitialAdPluginEvents` (Dismissed/FailedToLoad/FailedToShow) aus
+        demselben `@capacitor-community/admob`-Plugin, das für Rewarded Video
+        schon lief. Teilt sich denselben `lastDismissAt`-Mindestabstand-Schutz
+        (`MIN_GAP_AFTER_DISMISS_MS`) gegen das dokumentierte iOS-Vollbild-
+        Hänger-Race – das Race betrifft JEDE Art von Vollbild-Anzeige, nicht
+        nur Rewarded. Eigener, deutlich kürzerer Watchdog-Timeout
+        (`INTERSTITIAL_SHOW_TIMEOUT_MS = 12000` statt 45000 beim Rewarded
+        Video) – Klaus' "aber nicht zu lange" bezieht sich auf die Ladezeit
+        (kein Fill soll den Spieler nicht lange blockieren), die tatsächliche
+        Anzeigedauer der Werbung selbst bestimmt Google, dafür gibt es keinen
+        App-seitigen Hebel. Löst wie `showRewardedAd()` IMMER auf (nie
+        hängend), egal ob Fill da war oder nicht – der Spieler kommt so oder
+        so weiter.
+      - **Zählung in App.tsx**: neue `deathCountRef`/`pendingInterstitialAdRef`
+        (reine Refs, bewusst NICHT in `SaveData` – ein App-Neustart darf die
+        Zählung ruhig zurücksetzen, das ist keine Balancing-Größe, nur eine
+        Anzeige-Häufigkeit). Im bestehenden Kollisions-Soundeffekt zählt jedes
+        Game Over hoch, bei jedem GERADEN Stand wird `pendingInterstitialAdRef`
+        gesetzt. `GameOverModal`s beide Buttons ("Nochmal spielen"/"Zum
+        Hauptmenü") konsumieren das Flag: ist es gesetzt, wird ERST
+        `showInterstitialAd()` abgewartet (per `.finally()`, läuft also
+        garantiert weiter, egal ob die Anzeige lief), DANN erst
+        `restartRun()`/Rückkehr zum Menü. Ist es nicht gesetzt, läuft sofort
+        weiter (`Promise.resolve()`).
+      - **Video-Rettung zählt bewusst NICHT zusätzlich dazu:** wer schon ein
+        Rewarded Video für die Rettung gesehen hat, verbraucht/verwirft ein
+        gerade fälliges Interstitial einfach (`VideoRescueModal`s
+        `onFinished` setzt das Flag auf `false`, statt es beim nächsten Game
+        Over nachzuholen) – sonst hätte man zwei Vollbild-Anzeigen kurz
+        hintereinander gesehen, genau das Gegenteil von "nicht zu lange".
+      - Verifiziert per echtem Klick-Test im Browser (Live-Simulation über
+        React-Fiber-Handler, siehe etabliertes Testmuster): nach einem
+        erzwungenen Game Over stand `deathCountRef.current === 1` und
+        `pendingInterstitialAdRef.current === false` – die Zähl-/Gate-Logik
+        ist bei einem ungeraden Stand nachweislich korrekt, kein
+        `prepareInterstitial`/`showInterstitial`-Aufruf im Log. Ein zweites,
+        echtes Game Over (gerader Stand) ließ sich in dieser Sitzung nicht
+        mehr zuverlässig erzwingen – die Board-Rotation lief in diesem
+        Dev-Server-Tab tatsächlich per rAF (statt wie sonst in der Sandbox
+        eingefroren zu sein), wodurch zwei simulierte Würfe nicht mehr
+        garantiert am selben Winkel kollidierten. Die frühere Beobachtung
+        einer ~13-Sekunden-Verzögerung nach "Nochmal spielen" ließ sich nicht
+        reproduzieren, sobald Klick und Messung in EINEM durchgehenden
+        Skript-Aufruf liefen (statt über zwei einzelne Tool-Aufrufe verteilt)
+        – passt zur Erklärung, dass die ursprüngliche Messung schlicht reale
+        Rundenzeit zwischen zwei Unterhaltungs-Turns mitgemessen hat, nicht
+        eine echte In-App-Verzögerung. `tsc -b`/`npm run build` sauber, keine
+        Konsolenfehler. Echte Geräte-Bestätigung (löst die Anzeige nach dem
+        zweiten Tod tatsächlich zuverlässig aus, ohne spürbar hängen zu
+        bleiben) steht wie bei jeder Ad-Integration noch aus – bislang läuft
+        nur Googles Test-Anzeige (`USE_TEST_AD = true`), echte
+        Interstitial-Ad-Unit-ID (`REAL_INTERSTITIAL_AD_UNIT_ID`, aktuell
+        Platzhalter) fehlt noch in derselben neuen AdMob-App wie die
+        Rewarded-Ad-Unit.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

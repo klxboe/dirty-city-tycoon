@@ -20,7 +20,7 @@ import { displayLevelFor, worldById, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
 import { AXE_IMAGES } from './game/axeShapes';
 import { BOARD_IMAGES } from './game/boardImages';
-import { initAds } from './game/ads';
+import { initAds, showInterstitialAd } from './game/ads';
 import { initPurchases } from './game/purchases';
 import {
   playClickSound,
@@ -150,6 +150,18 @@ function App() {
   const prevCoinsRef = useRef(game.save.coins);
   const prevGemsRef = useRef(game.save.gems);
   const prevFlightStartRef = useRef<number | null>(null);
+  /**
+   * Interstitial-Werbung nach jedem ZWEITEN Game Over (Klaus: "nach 2 Mal gestorben
+   * soll Werbung kommen, aber nicht zu lange"). Bewusst NUR im React-State/Ref, nicht
+   * in SaveData – ein Neustart der App darf die Zählung ruhig zurücksetzen, das ist
+   * hier kein Balancing-Wert, nur eine Anzeige-Häufigkeit. `pendingInterstitialAdRef`
+   * wird beim Verlassen des Game-Over-Fensters konsumiert (siehe GameOverModal/
+   * VideoRescueModal weiter unten) – die Video-RETTUNG zählt bewusst NICHT zusätzlich
+   * dazu (wer schon ein Rewarded-Video gesehen hat, muss nicht auch noch ein
+   * Interstitial über sich ergehen lassen, siehe "nicht zu lange").
+   */
+  const deathCountRef = useRef(0);
+  const pendingInterstitialAdRef = useRef(false);
   const [coinsFlash, setCoinsFlash] = useState(false);
   const [gemsFlash, setGemsFlash] = useState(false);
   /**
@@ -322,6 +334,12 @@ function App() {
       } else {
         playGameOverSound();
         vibrate([40, 60, 90]); // Game Over darf sich anders anfühlen als ein Treffer
+        // Jedes ZWEITE Game Over merkt sich ein ausstehendes Interstitial (siehe
+        // deathCountRef oben) – konsumiert beim Verlassen des Game-Over-Fensters.
+        deathCountRef.current += 1;
+        if (deathCountRef.current % 2 === 0) {
+          pendingInterstitialAdRef.current = true;
+        }
       }
     }
     prevOutcomeRef.current = game.lastOutcome;
@@ -764,15 +782,26 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           rescueAvailable={!game.rescueUsedThisRun}
           onWatchVideo={() => setVideoRescueOpen(true)}
-          onPlayAgain={game.restartRun}
+          onPlayAgain={() => {
+            // Interstitial VOR dem eigentlichen Neustart zeigen (falls fällig, siehe
+            // deathCountRef oben) – `showInterstitialAd()` löst so oder so auf (auch
+            // ohne Fill/bei Fehler), der Neustart passiert also garantiert danach.
+            const showAd = pendingInterstitialAdRef.current;
+            pendingInterstitialAdRef.current = false;
+            (showAd ? showInterstitialAd() : Promise.resolve()).finally(() => game.restartRun());
+          }}
           onBackToMenu={() => {
             // `restartRun()` zuerst: `game.phase` steht sonst weiter auf 'gameOver'
             // (nur der SAVE-Stand wird beim Game Over selbst schon zurückgesetzt,
             // siehe useAxeGame.ts) – ohne diesen Reset würde das Game-Over-Fenster
             // sofort wieder erscheinen, sobald man vom Startbildschirm aus erneut
             // "Los geht's" tippt.
-            game.restartRun();
-            setScreen('start');
+            const showAd = pendingInterstitialAdRef.current;
+            pendingInterstitialAdRef.current = false;
+            (showAd ? showInterstitialAd() : Promise.resolve()).finally(() => {
+              game.restartRun();
+              setScreen('start');
+            });
           }}
         />
       )}
@@ -780,6 +809,12 @@ function App() {
       {videoRescueOpen && (
         <VideoRescueModal
           onFinished={() => {
+            // Wer schon ein Rewarded-Video für die Rettung gesehen hat, bekommt KEIN
+            // zusätzliches Interstitial obendrauf (Klaus: "nicht zu lange") – ein
+            // gerade fälliges Interstitial verfällt hier einfach, statt es beim
+            // nächsten Game Over nachzuholen (sonst hätte man irgendwann zwei
+            // Anzeigen kurz hintereinander).
+            pendingInterstitialAdRef.current = false;
             game.rescueRun();
             setVideoRescueOpen(false);
           }}
