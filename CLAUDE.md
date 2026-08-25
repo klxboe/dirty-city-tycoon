@@ -3568,6 +3568,70 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       nutzen aber exakt dasselbe `getStrings(lang)`-Muster wie die fünf bereits
       bestätigten Komponenten. `tsc -b`/`npm run build`/`npx cap sync ios` sauber,
       keine Konsolenfehler in frischen Tabs.
+- [x] **Wiederholbare Weltboss-Herausforderung nach dem ersten Sieg (2026-08-25).**
+      Klaus: "nachdem man ihn einmal besiegt hat, hat man den Hintergrund
+      freigeschaltet, man aber soll ihn immer noch spielen können auf einem Button
+      darunter, und achte auf seine Schwierigkeit" – bis dahin verschwand der
+      Kampf-Button auf der Weltkarte nach dem ersten Sieg vollständig (der
+      Level-Index wird ja dauerhaft zu einem normalen Level dieser Welt, siehe
+      `generateLevel()`/`defeatedWorldBosses` weiter oben), es gab also keinen Weg
+      zurück zum Boss.
+      - **Neues, komplett ISOLIERTES `challengeWorldId`-Feld in `GameState`**
+        (`types.ts`, NICHT in `SaveData` – rein transient, übersteht bewusst keinen
+        Reload). Zwei neue Aktionen in `useAxeGame.ts`:
+        - `startBossChallenge(worldId)`: erzeugt den Level-Zustand exakt am
+          Welt-Start-Index, aber mit einer für die GENERIERUNG lokal gefilterten
+          `defeatedWorldBosses`-Liste (`effectiveDefeatedWorldBosses()`, filtert
+          NUR die herausgeforderte Welt heraus) – dadurch entsteht wieder der
+          Weltboss, `save.currentLevel` bleibt dabei UNVERÄNDERT (der echte
+          Highscore-Lauf "pausiert" einfach an seiner bisherigen Stelle).
+        - `exitBossChallenge()`: stellt den echten Lauf exakt an `save.currentLevel`
+          wieder her (das wurde ja nie verändert) und löscht `challengeWorldId`.
+      - **"Achte auf seine Schwierigkeit" ist automatisch erfüllt, ohne eigenen
+        Code:** `generateLevel()` hängt bei Tempo/Achsen-/Hindernis-Zahl nur an der
+        Levelnummer (`curveLevelIndex`), NICHT an `defeatedWorldBosses` – dieses
+        Feld entscheidet nur, OB überhaupt ein Weltboss entsteht. Eine
+        Herausforderung ist dadurch GARANTIERT exakt so schwer wie der ursprüngliche
+        Kampf, jedes Mal – keine separate Kalibrierung nötig oder riskiert.
+      - **Zwei potenzielle Fallstricke bewusst vermieden:** der Level-Abschluss-
+        UND der Game-Over-`useEffect` in `useAxeGame.ts` schreiben normalerweise
+        `streak`/`currentLevel`/`runSeed` in den Spielstand – beide bekamen eine
+        `isChallenge`-Prüfung (`Boolean(prev.challengeWorldId)`), die diese Felder
+        während einer Herausforderung unangetastet lässt (Münzen/XP/Diamanten gibt
+        es trotzdem, harmloser Nebeneffekt). Und `restartRun()`/`rescueRun()`
+        dürfen während einer Herausforderung NIE aufgerufen werden – die rechnen
+        mit der ECHTEN `save.defeatedWorldBosses`-Liste und würden bei einem Tod
+        während einer Herausforderung fälschlich den ganzen Highscore-Lauf auf
+        Level 1 zurückwerfen. App.tsx prüft deshalb überall (`GameOverModal`s
+        "Nochmal spielen"/"Zum Hauptmenü", `LevelCompleteModal`s "Weiter",
+        `PauseModal`s "Zurück zum Menü") zuerst `game.challengeWorldId` und ruft
+        dann `startBossChallenge()`/`exitBossChallenge()` statt der normalen
+        Lauf-Aktionen auf. Die Video-Rettung wird während einer Herausforderung
+        ausgeblendet (`rescueAvailable`) – es gibt dort keinen echten Lauf zu retten.
+      - **`WorldMap.tsx`**: neues `challengeBossName`-Feld pro Knoten (bleibt AUCH
+        nach einem Sieg gesetzt, anders als `bossName` für die Zeilen-Anzeige unter
+        dem Weltnamen, das dann auf die normale XP-Anzeige zurückfällt) plus
+        `bossDefeated`. Der Kampf-Button bleibt dadurch dauerhaft sichtbar, sein
+        Klick verzweigt: vor dem ersten Sieg dieselbe echte Reise wie bisher
+        (`startTravel`, der Weltboss entsteht dort automatisch), danach
+        `onChallengeBoss()` (neue Prop, App.tsx verdrahtet sie auf
+        `game.startBossChallenge`).
+      Verifiziert per echtem Spielablauf im Browser (Save-Stand: `currentLevel: 46`,
+      `streak: 8`, `defeatedWorldBosses: ['desert']`, andere Welt aktiv): Weltkarte
+      zeigt bei der besiegten Wüste weiterhin "⚔ Gegen Sandkolossos kämpfen" (aber
+      keinen Bossnamen mehr in der Zeile darüber), Klick startet echten
+      Weltboss-Kampf OHNE `currentLevel` zu verändern (blieb bei 46), ein echtes
+      Game Over währenddessen ließ `currentLevel`/`streak`/`runSeed` unangetastet
+      (per `localStorage`-Inspektion bestätigt), "Nochmal spielen" startete
+      dieselbe Herausforderung neu (wieder ohne den echten Lauf zu berühren), "Zum
+      Hauptmenü" stellte den echten Lauf exakt bei "Weiter – Level 7" (Eis) wieder
+      her. `tsc -b`/`npm run build`/`npx cap sync ios` sauber, keine
+      Konsolenfehler. Der Sieg-Pfad (`LevelCompleteModal`s "Weiter" →
+      `exitBossChallenge()`) ließ sich nicht bis zum Ende durchspielen (echter
+      Sieg gegen einen Weltboss lässt sich in der Sandbox wegen des
+      rAF-/Timing-Verhaltens nicht zuverlässig erzwingen, siehe rAF-Freeze-
+      Abschnitt weiter oben) – nutzt aber exakt dasselbe, bereits am
+      Niederlage-Pfad bewährte `challengeWorldId`-Prüfmuster.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

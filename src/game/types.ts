@@ -86,6 +86,16 @@ export interface GameState {
    * wird nur bei einem echten Neustart (Level 0) wieder auf `false` gesetzt.
    */
   rescueUsedThisRun: boolean;
+  /**
+   * Gesetzt, während eine WIEDERHOLBARE Weltboss-Herausforderung läuft (Klaus:
+   * "nachdem man ihn einmal besiegt hat, hat man den Hintergrund freigeschaltet,
+   * man soll ihn aber immer noch spielen können auf einem Button darunter") –
+   * komplett ISOLIERT vom eigentlichen Highscore-Lauf: `save.currentLevel`/
+   * `streak`/`runSeed`/`bestLevel` bleiben während einer Herausforderung
+   * unangetastet (siehe `startBossChallenge()`/`exitBossChallenge()` in
+   * useAxeGame.ts). `null` = ganz normaler Lauf.
+   */
+  challengeWorldId: string | null;
   /** Dauerhafter Spielstand: Münzen, Skins, bestes Level. */
   save: SaveData;
 }

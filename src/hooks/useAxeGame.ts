@@ -32,7 +32,7 @@ import {
 import { loadSave, saveSave, type SaveData } from '../game/storage';
 import { pendingDailyReward, todayDateString } from '../game/daily';
 import { getSkin, isFreeSkin } from '../game/shop';
-import { WORLD_BOSSES, worldForLevel } from '../game/worlds';
+import { WORLD_BOSSES, WORLDS, worldForLevel } from '../game/worlds';
 import { setMuted } from '../game/sound';
 import type { Language } from '../game/i18n';
 import type { GameState, LevelReward, StuckAxe } from '../game/types';
@@ -60,12 +60,25 @@ function rollLevelVariantSeed(shouldReroll: boolean, previousVariantSeed: number
   return Math.floor(Math.random() * LEVEL_VARIANT_COUNT);
 }
 
+/**
+ * Die für die Level-GENERIERUNG "wirksame" Liste besiegter Weltbosse – während einer
+ * Herausforderung (siehe `challengeWorldId`) wird GENAU die gerade herausgeforderte
+ * Welt aus der echten, dauerhaften Liste herausgefiltert (nur für diesen einen
+ * Generierungs-Aufruf, `save.defeatedWorldBosses` selbst bleibt unverändert) – dadurch
+ * erzeugt `generateLevel()` wieder den Weltboss statt eines normalen Levels, mit exakt
+ * derselben, bereits fein austarierten Schwierigkeit wie beim ersten echten Kampf
+ * (Tempo/Achsen-/Hindernis-Zahl hängen nur an der Levelnummer, nicht an dieser Liste).
+ */
+function effectiveDefeatedWorldBosses(save: SaveData, challengeWorldId: string | null): string[] {
+  return challengeWorldId ? save.defeatedWorldBosses.filter((id) => id !== challengeWorldId) : save.defeatedWorldBosses;
+}
+
 function createLevelState(
   levelIndex: number,
   runSeed: number,
   variantSeed: number,
   defeatedWorldBosses: string[],
-): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun'> {
+): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun' | 'challengeWorldId'> {
   const level = levelConfigAt(levelIndex, runSeed, variantSeed, defeatedWorldBosses);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
@@ -103,6 +116,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       ...createLevelState(Math.max(0, save.currentLevel), save.runSeed, save.levelVariantSeed, save.defeatedWorldBosses),
       streak: save.streak,
       rescueUsedThisRun: false,
+      challengeWorldId: null,
       save,
     };
   });
@@ -173,7 +187,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const resolveThrow = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed, prev.save.defeatedWorldBosses);
+      const level = levelConfigAt(
+        prev.levelIndex,
+        prev.save.runSeed,
+        prev.save.levelVariantSeed,
+        effectiveDefeatedWorldBosses(prev.save, prev.challengeWorldId),
+      );
 
       // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
       // des Flugs weiter, genau darin liegt das Timing-Spiel.
@@ -232,6 +251,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
               figurinesCollectedThisRun,
               prev.streak,
               prev.save,
+              prev.challengeWorldId,
             )
           : null,
       };
@@ -253,7 +273,14 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     if (state.phase !== 'levelComplete') return;
     setState((prev) => {
       if (prev.phase !== 'levelComplete' || !prev.reward) return prev;
-      const streak = prev.streak + 1;
+      // Während einer Weltboss-HERAUSFORDERUNG (siehe challengeWorldId) ist das KEIN
+      // echter Lauf – die Serie darf sich dadurch weder verlängern noch (bei einem
+      // späteren Game Over dieser Herausforderung) reißen. Münzen/XP/Diamanten/
+      // Sammelfiguren gibt's trotzdem (netter Nebeneffekt, kein Missbrauchsrisiko),
+      // `defeatedWorldBosses` wird bei einer bereits besiegten Welt ohnehin nur
+      // no-op erneut gesetzt (Prüfung unten greift schon).
+      const isChallenge = Boolean(prev.challengeWorldId);
+      const streak = isChallenge ? prev.streak : prev.streak + 1;
       const nextSave: SaveData = {
         ...prev.save,
         coins: prev.save.coins + prev.reward.total,
@@ -264,7 +291,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         // dem Highscore absolut nichts zu tun" – ein Weltboss-Sieg lässt `bestLevel`
         // deshalb bewusst unangetastet, nur normale Level zählen dafür.
         bestLevel: prev.reward.worldBossId ? prev.save.bestLevel : Math.max(prev.save.bestLevel, prev.levelIndex + 2),
-        streak,
+        streak: isChallenge ? prev.save.streak : streak,
         ownedSkins: prev.reward.unlockedAxeSkinId
           ? [...prev.save.ownedSkins, prev.reward.unlockedAxeSkinId]
           : prev.save.ownedSkins,
@@ -272,14 +299,16 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         // müssen, dann ist der Hintergrund beim normalen Spiel die Wüste zum
         // Beispiel") – dieser Level-Index erzeugt ab sofort (auch nach einem
         // späteren Game Over) nie wieder einen Weltboss, siehe generateLevel() in
-        // constants.ts.
+        // constants.ts. Bei einer Herausforderung ist die Welt meist schon drin
+        // (das ist ja gerade der Sinn der Herausforderung) – die Prüfung verhindert
+        // hier einfach ein doppeltes Eintragen.
         defeatedWorldBosses:
           prev.reward.worldBossId && !prev.save.defeatedWorldBosses.includes(prev.reward.worldBossId)
             ? [...prev.save.defeatedWorldBosses, prev.reward.worldBossId]
             : prev.save.defeatedWorldBosses,
       };
       saveSave(nextSave);
-      return { ...prev, save: nextSave, streak };
+      return { ...prev, save: nextSave, streak: isChallenge ? prev.streak : streak };
     });
     // Absichtlich nur an der Phase hängen: der Effekt soll genau einmal pro Level-Abschluss
     // laufen, nicht erneut, wenn sich der Spielstand danach durch einen Shop-Kauf ändert.
@@ -303,6 +332,11 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     if (state.phase !== 'gameOver') return;
     setState((prev) => {
       if (prev.phase !== 'gameOver') return prev;
+      // Ein Game Over WÄHREND einer Weltboss-Herausforderung (siehe challengeWorldId)
+      // ist kein echter Lauf-Fehler – der Highscore-Lauf (currentLevel/streak/runSeed)
+      // bleibt komplett unangetastet, nur die Herausforderung selbst endet (per
+      // GameOverModal-Buttons in App.tsx, die dann `exitBossChallenge()` aufrufen).
+      if (prev.challengeWorldId) return prev;
       const nextSave: SaveData = { ...prev.save, streak: 0, currentLevel: 0, runSeed: prev.save.runSeed + 1 };
       saveSave(nextSave);
       return { ...prev, save: nextSave, streak: 0 };
@@ -344,9 +378,63 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: isNewRun ? false : prev.rescueUsedThisRun,
+        challengeWorldId: null,
         save: nextSave,
       };
     });
+  }, []);
+
+  /**
+   * Startet eine WIEDERHOLBARE Weltboss-Herausforderung (Klaus: "nachdem man ihn
+   * einmal besiegt hat, hat man den Hintergrund freigeschaltet, man soll ihn aber
+   * immer noch spielen können auf einem Button darunter, achte auf seine
+   * Schwierigkeit") – von der Weltkarte aus für JEDE Welt mit Weltboss nutzbar,
+   * unabhängig davon, ob sie schon besiegt ist.
+   *
+   * Komplett ISOLIERT vom eigentlichen Highscore-Lauf: `save.currentLevel` wird
+   * bewusst NICHT verändert (anders als bei `goToLevel()`) – der reale Lauf steht
+   * währenddessen einfach "pausiert" da und wird beim Verlassen (`exitBossChallenge()`)
+   * unverändert fortgesetzt. Die Schwierigkeit ist garantiert IDENTISCH zum ersten
+   * echten Kampf: `generateLevel()` (constants.ts) hängt bei Tempo/Achsen-/
+   * Hindernis-Zahl nur an der Levelnummer, NICHT an `defeatedWorldBosses` – dieses
+   * Feld entscheidet nur, OB überhaupt ein Weltboss entsteht (siehe
+   * `effectiveDefeatedWorldBosses()` oben, die genau DIESE eine Welt für die
+   * Generierung wieder aus der Liste herausfiltert, ohne den echten Spielstand
+   * anzufassen).
+   */
+  const startBossChallenge = useCallback((worldId: string) => {
+    pendingThrowRef.current = false;
+    setState((prev) => {
+      const world = WORLDS.find((w) => w.id === worldId);
+      if (!world || !WORLD_BOSSES[worldId]) return prev;
+      const effectiveDefeated = prev.save.defeatedWorldBosses.filter((id) => id !== worldId);
+      return {
+        ...createLevelState(world.startLevelIndex, prev.save.runSeed, prev.save.levelVariantSeed, effectiveDefeated),
+        streak: prev.streak,
+        rescueUsedThisRun: prev.rescueUsedThisRun,
+        challengeWorldId: worldId,
+        save: prev.save,
+      };
+    });
+  }, []);
+
+  /**
+   * Verlässt eine laufende Weltboss-Herausforderung (Sieg ODER Niederlage, siehe
+   * GameOverModal/LevelCompleteModal-Verdrahtung in App.tsx) und setzt den
+   * eigentlichen Highscore-Lauf GENAU dort fort, wo er vor der Herausforderung
+   * stand – `save.currentLevel` wurde ja nie verändert (siehe `startBossChallenge()`
+   * oben), ein erneutes `createLevelState()` mit diesem Wert stellt daher exakt den
+   * ursprünglichen Zustand wieder her.
+   */
+  const exitBossChallenge = useCallback(() => {
+    pendingThrowRef.current = false;
+    setState((prev) => ({
+      ...createLevelState(prev.save.currentLevel, prev.save.runSeed, prev.save.levelVariantSeed, prev.save.defeatedWorldBosses),
+      streak: prev.streak,
+      rescueUsedThisRun: prev.rescueUsedThisRun,
+      challengeWorldId: null,
+      save: prev.save,
+    }));
   }, []);
 
   /**
@@ -380,6 +468,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: 0,
         rescueUsedThisRun: false,
+        challengeWorldId: null,
         save: nextSave,
       };
     });
@@ -415,6 +504,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: true,
+        challengeWorldId: null,
         save: nextSave,
       };
     });
@@ -473,6 +563,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: prev.rescueUsedThisRun,
+        challengeWorldId: null,
         save: nextSave,
       };
     });
@@ -612,7 +703,12 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  const level = levelConfigAt(state.levelIndex, state.save.runSeed, state.save.levelVariantSeed, state.save.defeatedWorldBosses);
+  const level = levelConfigAt(
+    state.levelIndex,
+    state.save.runSeed,
+    state.save.levelVariantSeed,
+    effectiveDefeatedWorldBosses(state.save, state.challengeWorldId),
+  );
   // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
   // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
   // keins, danach läuft es als Endlos-Modus weiter (siehe nextLevel oben). Der
@@ -663,6 +759,8 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     restartRun,
     nextLevel,
     goToLevel,
+    startBossChallenge,
+    exitBossChallenge,
     buySkin,
     equipSkin,
     unlockEasterEgg,
@@ -693,8 +791,9 @@ function computeReward(
   figurinesCollected: number,
   streak: number,
   save: SaveData,
+  challengeWorldId: string | null,
 ): LevelReward {
-  const level = levelConfigAt(levelIndex, save.runSeed, save.levelVariantSeed, save.defeatedWorldBosses);
+  const level = levelConfigAt(levelIndex, save.runSeed, save.levelVariantSeed, effectiveDefeatedWorldBosses(save, challengeWorldId));
   const boss = bossFruitForLevel(levelIndex, save.runSeed);
 
   const apples = (applesCollected - gemsCollected - figurinesCollected) * COINS_PER_APPLE;

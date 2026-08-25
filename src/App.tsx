@@ -500,6 +500,10 @@ function App() {
               game.goToLevel(levelIndex);
               startPlaying();
             }}
+            onChallengeBoss={(worldId) => {
+              game.startBossChallenge(worldId);
+              startPlaying();
+            }}
             onClose={() => setWorldMapOpen(false)}
           />
         )}
@@ -751,6 +755,18 @@ function App() {
           isCampaignComplete={game.isCampaignComplete}
           lang={lang}
           onNext={() => {
+            // Sieg WÄHREND einer isolierten Weltboss-Herausforderung (siehe
+            // challengeWorldId/startBossChallenge() in useAxeGame.ts) – niemals
+            // `nextLevel()` aufrufen, das würde `save.currentLevel` auf den
+            // Boss-Index setzen und den eigentlichen Highscore-Lauf überschreiben.
+            // `exitBossChallenge()` stellt stattdessen exakt den Lauf-Stand von vor
+            // der Herausforderung wieder her.
+            if (game.challengeWorldId) {
+              game.exitBossChallenge();
+              setScreen('start');
+              return;
+            }
+
             // Weltboss-Sieg: NICHT nahtlos weiterspielen ("nach dem Boss soll man nur
             // die Welt geschafft haben, nicht zu Level 22 oder so kommen – der Boss
             // ist separat und hat kein Level"). `game.nextLevel()` lässt den
@@ -791,7 +807,10 @@ function App() {
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}
           axeSkin={game.save.equippedAxeSkin}
-          rescueAvailable={!game.rescueUsedThisRun}
+          // Keine Video-Rettung WÄHREND einer isolierten Weltboss-Herausforderung – es
+          // gibt dort keinen echten Lauf zu retten, nur "Nochmal spielen"/"Zum Hauptmenü"
+          // sind sinnvoll (siehe challengeWorldId in useAxeGame.ts).
+          rescueAvailable={!game.challengeWorldId && !game.rescueUsedThisRun}
           lang={lang}
           onWatchVideo={() => setVideoRescueOpen(true)}
           onPlayAgain={() => {
@@ -800,7 +819,15 @@ function App() {
             // ohne Fill/bei Fehler), der Neustart passiert also garantiert danach.
             const showAd = pendingInterstitialAdRef.current;
             pendingInterstitialAdRef.current = false;
-            (showAd ? showInterstitialAd() : Promise.resolve()).finally(() => game.restartRun());
+            const challengeWorldId = game.challengeWorldId;
+            (showAd ? showInterstitialAd() : Promise.resolve()).finally(() => {
+              // Verloren WÄHREND einer Herausforderung: `restartRun()` würde den echten
+              // Lauf betreffen und dabei fälschlich mit der REALEN (nicht der für die
+              // Herausforderung überschriebenen) `defeatedWorldBosses`-Liste rechnen –
+              // stattdessen einfach dieselbe Herausforderung neu starten.
+              if (challengeWorldId) game.startBossChallenge(challengeWorldId);
+              else game.restartRun();
+            });
           }}
           onBackToMenu={() => {
             // `restartRun()` zuerst: `game.phase` steht sonst weiter auf 'gameOver'
@@ -810,8 +837,13 @@ function App() {
             // "Los geht's" tippt.
             const showAd = pendingInterstitialAdRef.current;
             pendingInterstitialAdRef.current = false;
+            const challengeWorldId = game.challengeWorldId;
             (showAd ? showInterstitialAd() : Promise.resolve()).finally(() => {
-              game.restartRun();
+              // Verloren WÄHREND einer Herausforderung: der echte Lauf ist nie angefasst
+              // worden (siehe startBossChallenge()), `exitBossChallenge()` stellt ihn
+              // einfach wieder her statt ihn (via restartRun) auf Level 1 zu werfen.
+              if (challengeWorldId) game.exitBossChallenge();
+              else game.restartRun();
               setScreen('start');
             });
           }}
@@ -835,7 +867,20 @@ function App() {
         />
       )}
 
-      {paused && <PauseModal lang={lang} onResume={() => setPaused(false)} onBackToMenu={() => setScreen('start')} />}
+      {paused && (
+        <PauseModal
+          lang={lang}
+          onResume={() => setPaused(false)}
+          onBackToMenu={() => {
+            // Während einer Weltboss-Herausforderung (siehe challengeWorldId in
+            // useAxeGame.ts) muss sie hier explizit verlassen werden – sonst würde
+            // `game.levelIndex` beim Zurückkehren zum Startbildschirm weiter auf den
+            // Boss-Index zeigen statt auf die echte Lauf-Position.
+            if (game.challengeWorldId) game.exitBossChallenge();
+            setScreen('start');
+          }}
+        />
+      )}
     </div>
   );
 }

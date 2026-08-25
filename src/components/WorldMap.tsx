@@ -114,9 +114,19 @@ interface MapNode {
   unlocked: boolean;
   isCurrent: boolean;
   progress: number;
-  /** Name des Weltbosses am Eingang dieser Welt, `null` bei Wald (Tutorial-Einstieg
-   *  ohne Weltboss, siehe isWorldBossLevel() in worlds.ts). */
+  /** Name des Weltbosses am Eingang dieser Welt für die ZEILE unter dem Weltnamen,
+   *  `null` sobald besiegt ODER bei Wald (Tutorial-Einstieg ohne Weltboss, siehe
+   *  isWorldBossLevel() in worlds.ts) – zeigt dann stattdessen `sublabel`. */
   bossName: string | null;
+  /** Name für den Kampf-BUTTON – anders als `bossName` bleibt der auch nach einem
+   *  Sieg gesetzt (Klaus: "nachdem man ihn einmal besiegt hat, hat man den
+   *  Hintergrund freigeschaltet, man soll ihn aber immer noch spielen können auf
+   *  einem Button darunter"), `null` nur bei Welten ganz ohne Weltboss (Wald). */
+  challengeBossName: string | null;
+  /** Ob der Weltboss dieser Welt schon (mindestens einmal) besiegt wurde – entscheidet,
+   *  ob der Kampf-Button eine normale Reise (`startTravel`) oder eine isolierte
+   *  Herausforderung (`onChallengeBoss`) auslöst. */
+  bossDefeated: boolean;
 }
 
 interface WorldMapProps {
@@ -131,6 +141,10 @@ interface WorldMapProps {
   defeatedWorldBosses: string[];
   lang: Language;
   onSelectLevel: (levelIndex: number) => void;
+  /** Startet eine wiederholbare Herausforderung gegen einen SCHON besiegten Weltboss
+   *  (siehe `startBossChallenge()` in useAxeGame.ts) – komplett getrennt vom
+   *  normalen Reise-Sprung, der eigentliche Highscore-Lauf bleibt dabei unangetastet. */
+  onChallengeBoss: (worldId: string) => void;
   onClose: () => void;
 }
 
@@ -241,11 +255,12 @@ const DECOR_OFFSETS: [number, number][] = [
   [-0.5, 0.15],
 ];
 
-export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses, lang, onSelectLevel, onClose }: WorldMapProps) {
+export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses, lang, onSelectLevel, onChallengeBoss, onClose }: WorldMapProps) {
   const t = getStrings(lang);
   const nodes: MapNode[] = WORLDS.map((world) => {
     const threshold = xpThresholdFor(world.startLevelIndex);
     const worldBoss = WORLD_BOSSES[world.id];
+    const bossDefeated = defeatedWorldBosses.includes(world.id);
     return {
       key: world.id,
       name: localizedWorldName(world, lang),
@@ -262,11 +277,14 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
       progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL * WORLD_UNLOCK_XP_MULTIPLIER))),
-      // Nach dem Sieg ist der Weltboss dauerhaft weg (siehe `defeatedWorldBosses` in
-      // storage.ts) – die Karte soll dann nicht mehr mit einem Bosskampf werben, der
-      // an diesem Level-Index gar nicht mehr stattfindet (siehe generateLevel() in
-      // constants.ts).
-      bossName: defeatedWorldBosses.includes(world.id) || !worldBoss ? null : localizedWorldBossName(worldBoss, lang),
+      // Nach dem Sieg ist der Weltboss an diesem Level-Index dauerhaft weg (siehe
+      // `defeatedWorldBosses` in storage.ts) – die ZEILE unter dem Weltnamen soll
+      // dann nicht mehr mit einem Bosskampf werben, der dort gar nicht mehr
+      // stattfindet (siehe generateLevel() in constants.ts). Der Kampf-BUTTON
+      // (`challengeBossName` unten) bleibt davon unabhängig weiter sichtbar.
+      bossName: bossDefeated || !worldBoss ? null : localizedWorldBossName(worldBoss, lang),
+      challengeBossName: worldBoss ? localizedWorldBossName(worldBoss, lang) : null,
+      bossDefeated,
     };
   });
 
@@ -283,6 +301,8 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
       isCurrent: currentLevelIndex >= LEVEL_COUNT,
       progress: 1,
       bossName: null,
+      challengeBossName: null,
+      bossDefeated: false,
     });
   }
 
@@ -555,22 +575,30 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                     )}
                     {/* Eigener, klar beschrifteter Button NUR für den Weltboss ("den starken
                         mit Gesicht", zur Abgrenzung von den schwächeren Boss-FRÜCHTEN alle 5
-                        Level) – zusätzlich zum normalen Antippen des Knotens, das ohnehin
-                        schon zuerst auf den Weltboss trifft (der sitzt immer am Welt-Start,
-                        siehe isWorldBossLevel in worlds.ts). Nur sichtbar, solange der
-                        Weltboss dieser Welt noch nicht besiegt ist – danach ist der
-                        Level-Index für immer ein normaler Level, es gibt nichts mehr zu
-                        bekämpfen (siehe generateLevel() in constants.ts). */}
-                    {node.unlocked && node.bossName && (
+                        Level) – zusätzlich zum normalen Antippen des Knotens. VOR dem ersten
+                        Sieg macht er GENAU dasselbe wie das Antippen des Knotens (die echte
+                        Reise, `startTravel` triggert den Weltboss ohnehin automatisch, da er
+                        immer am Welt-Start sitzt, siehe isWorldBossLevel in worlds.ts).
+                        NACH dem Sieg bleibt der Button bewusst stehen (Klaus: "man soll ihn
+                        immer noch spielen können auf einem Button darunter") und startet
+                        stattdessen eine isolierte Herausforderung (`onChallengeBoss`,
+                        siehe startBossChallenge() in useAxeGame.ts) – der eigentliche
+                        Highscore-Lauf bleibt davon komplett unberührt. */}
+                    {node.unlocked && node.challengeBossName && (
                       <button
                         className="world-node__fight-boss"
                         disabled={!!travel}
                         onClick={(e) => {
                           e.stopPropagation();
-                          startTravel(i);
+                          if (node.bossDefeated) {
+                            onChallengeBoss(node.key);
+                            onClose();
+                          } else {
+                            startTravel(i);
+                          }
                         }}
                       >
-                        {t.worldMap.fightBoss(node.bossName)}
+                        {t.worldMap.fightBoss(node.challengeBossName)}
                       </button>
                     )}
                   </div>
