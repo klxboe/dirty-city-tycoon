@@ -9,7 +9,6 @@ import {
   BOSS_AXE_SKINS,
   BOSS_FRUITS,
   EASTER_EGG_SKINS,
-  formatIapPrice,
   HERO_AXE_SKINS,
   HERO_BOSSES,
   LEGENDARY_SKINS,
@@ -20,7 +19,6 @@ import {
 import { getBoardImage } from '../game/boardImages';
 import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
 import { HERO_WORLD_START } from '../game/worlds';
-import { purchaseSkin } from '../game/purchases';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
 
@@ -30,8 +28,6 @@ interface ShopProps {
   save: SaveData;
   onBuy: (skinId: string) => void;
   onEquip: (skinId: string) => void;
-  /** Schaltet eine Axt nach einem ECHTEN, vom Store bestätigten Kauf frei (siehe `purchaseSkin` unten). */
-  onGrantPurchase: (skinId: string) => void;
   onTradeFigurines: () => void;
   onClose: () => void;
 }
@@ -68,44 +64,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'extras', label: 'Extras' },
 ];
 
-export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, onClose }: ShopProps) {
+export function Shop({ save, onBuy, onEquip, onTradeFigurines, onClose }: ShopProps) {
   const [tab, setTab] = useState<Tab>('axe');
-  /** Fehlermeldung nach einem gescheiterten Echtgeld-Kauf (siehe `handlePurchase` unten). */
-  const [iapNotice, setIapNotice] = useState<string | null>(null);
-  /** Welche Karte gerade einen Kauf-Vorgang laufen hat – zeigt "Wird gekauft…" statt des Preis-Buttons. */
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
-
-  /**
-   * Echter Kauf-Flow über RevenueCat/StoreKit (siehe game/purchases.ts). Schaltet
-   * die Axt NUR über `onGrantPurchase` frei, wenn der Store den Kauf tatsächlich
-   * bestätigt hat – ein Abbruch durch den Nutzer selbst zeigt bewusst KEINE
-   * Fehlermeldung (kein Fehler, nur eine Entscheidung), alles andere schon.
-   */
-  const handlePurchase = async (skin: SkinDef) => {
-    if (!skin.productId || purchasingId) return;
-    setPurchasingId(skin.id);
-    const result = await purchaseSkin(skin.productId);
-    setPurchasingId(null);
-    if (result.success) {
-      onGrantPurchase(skin.id);
-      return;
-    }
-    if (result.error === 'cancelled') return;
-    setIapNotice(
-      result.error === 'not-configured' || result.error === 'product-not-found'
-        ? `${skin.name} ist im Store noch nicht verfügbar – versuch es später nochmal.`
-        : `Kauf von ${skin.name} hat nicht geklappt – versuch es nochmal.`,
-    );
-  };
 
   const items =
     tab === 'axe'
-      ? // Echtgeld-Äxte (source: 'iap') stehen bewusst am ENDE von AXE_SKINS (siehe
-        // shop.ts) – dadurch erscheinen sie hier automatisch unterhalb der Münz-Äxte,
-        // in derselben Liste/Spalte, ohne dass es hier einer eigenen Sortierung
-        // bedarf. Kauf-Button zeigt bei fehlenden Store-Produkten (siehe
-        // game/purchases.ts) kontrolliert "nicht verfügbar" statt zu crashen.
-        AXE_SKINS
+      ? AXE_SKINS
       : tab === 'board'
         ? BOARD_SKINS
         : tab === 'legendary'
@@ -177,9 +141,7 @@ export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, 
             const equipped =
               skin.kind === 'board' ? save.equippedBoardSkin === skin.id : save.equippedAxeSkin === skin.id;
             const currency = skin.source === 'gem' ? save.gems : save.coins;
-            // Echtgeld-Items sind nie "erschwinglich/nicht erschwinglich" im Münz-Sinne
-            // – der Button ist immer aktiv, zeigt aber (noch) nur den Platzhalter-Hinweis.
-            const affordable = skin.source === 'iap' || currency >= skin.price;
+            const affordable = currency >= skin.price;
 
             // Bei Boss-Beute zeigen wir statt eines Preises, welches Level sie freischaltet.
             // Zwei getrennte Rotationen (Boss-Früchte vs. Heldenstadt-Bosse, siehe
@@ -200,9 +162,8 @@ export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, 
                 key={skin.id}
                 className={`shop-card ${equipped ? 'shop-card--equipped' : ''} ${
                   !owned && (skin.source === 'boss' || skin.source === 'egg') ? 'shop-card--locked' : ''
-                } ${skin.source === 'iap' ? 'shop-card--premium' : ''}`}
+                }`}
               >
-                {skin.source === 'iap' && !owned && <span className="shop-card__premium-tag">Premium</span>}
                 {isMystery && !owned ? <div className="shop-card__preview shop-card__preview--mystery">?</div> : <SkinPreview skin={skin} />}
 
                 <div className="shop-card__info">
@@ -220,14 +181,6 @@ export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, 
                   <span className="shop-card__locked">Level {bossLevel}</span>
                 ) : skin.source === 'egg' ? (
                   <span className="shop-card__locked">???</span>
-                ) : skin.source === 'iap' ? (
-                  <button
-                    className="shop-card__action shop-card__action--iap"
-                    disabled={purchasingId === skin.id}
-                    onClick={() => handlePurchase(skin)}
-                  >
-                    {purchasingId === skin.id ? 'Wird gekauft…' : `💎 ${formatIapPrice(skin.priceCents ?? 0)}`}
-                  </button>
                 ) : (
                   <button
                     className="shop-card__action shop-card__action--buy"
@@ -242,12 +195,6 @@ export function Shop({ save, onBuy, onEquip, onGrantPurchase, onTradeFigurines, 
             );
           })}
         </div>
-
-        {iapNotice && (
-          <div className="shop__iap-notice" onClick={() => setIapNotice(null)}>
-            {iapNotice}
-          </div>
-        )}
 
         <button className="shop__close" onClick={onClose}>
           Weiter werfen

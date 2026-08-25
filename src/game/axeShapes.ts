@@ -279,7 +279,8 @@ export const AXE_IMAGES: Record<string, string> = {
   'axe-antenna': '/axes/axe-antenna.png',
   'axe-egg-duck': '/axes/axe-egg-duck.png',
 
-  // --- Echtgeld-Äxte (source: 'iap' in shop.ts) - Gemini-Bilder von Klaus geliefert ---
+  // --- Zehnerset aus dem "20 neue Shop-Items"-Ausbau (source: 'shop' in shop.ts) -
+  // Gemini-Bilder von Klaus geliefert ---
   'axe-oldwood': '/axes/axe-oldwood.png',
   'axe-black': '/axes/axe-black.png',
   'axe-gold': '/axes/axe-gold.png',

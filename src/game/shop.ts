@@ -10,9 +10,13 @@ export type SkinKind = 'axe' | 'board';
  * `shop` = für Münzen kaufbar, `boss` = Belohnung aus einem Boss-Level,
  * `gem`  = für Diamanten kaufbar ("Legendär"-Reiter im Shop),
  * `egg`  = Oster-Ei – nur über ein verstecktes Geheimnis freischaltbar, nie kaufbar.
- * `iap`  = für ECHTGELD kaufbar (siehe `priceCents`), kein Münzen-/Diamanten-Preis.
+ *
+ * Es gab kurzzeitig eine fünfte Quelle `iap` (Echtgeld-Käufe über RevenueCat/
+ * App Store Connect) – auf Klaus' Entscheidung wieder entfernt ("wir machen
+ * nur Geld durch Werbung"), die zehn betroffenen Äxte sind jetzt normale
+ * `shop`-Äxte (siehe AXE_SKINS unten).
  */
-export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg' | 'iap';
+export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg';
 
 export interface SkinDef {
   id: string;
@@ -22,30 +26,10 @@ export interface SkinDef {
   blurb: string;
   /**
    * Preis in Münzen (source 'shop') oder Diamanten (source 'gem'). 0 = von Anfang an
-   * dabei. Bei 'boss'/'egg'/'iap' ohne Bedeutung.
+   * dabei. Bei 'boss'/'egg' ohne Bedeutung.
    */
   price: number;
   source: SkinSource;
-  /**
-   * NUR bei `source: 'iap'` gesetzt: Preis in Cent (z.B. 299 = 2,99 €), nur für die
-   * Anzeige (`formatIapPrice`) – der ECHTE Preis kommt zur Laufzeit von StoreKit
-   * selbst (`PurchasesStoreProduct.priceString`, siehe game/purchases.ts), dieser
-   * Wert ist nur die geplante Preisstufe fürs App-Store-Connect-Produkt.
-   */
-  priceCents?: number;
-  /**
-   * NUR bei `source: 'iap'` gesetzt: die Produkt-ID für RevenueCat/App Store Connect
-   * (siehe game/purchases.ts, `purchaseSkin()`). MUSS als eigenständiges Non-
-   * Consumable-Produkt in App Store Connect angelegt und in RevenueCat gespiegelt
-   * werden, BEVOR ein Kauf hierüber funktionieren kann – bis dahin schlägt
-   * `purchaseSkin()` mit `'product-not-found'` fehl (kein Crash, siehe Shop.tsx).
-   */
-  productId?: string;
-}
-
-/** "2,99 €" aus 299 Cent – einzige Stelle, die Cent in eine Anzeige umrechnet. */
-export function formatIapPrice(cents: number): string {
-  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
 }
 
 /** Farbwerte einer Zielscheibe. Landen 1:1 als CSS-Variablen auf dem Board-Element. */
@@ -104,27 +88,25 @@ export const AXE_SKINS: SkinDef[] = [
   { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 9700, source: 'shop' },
   { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 11000, source: 'shop' },
 
-  // --- Die zehn teureren/"coolsten" Äxte aus dem Zwölfer-Set – das sind die
-  // Echtgeld-Äxte (`source: 'iap'`, violett markierte Karten im Shop). Auf Klaus'
-  // Wunsch ganz ans ENDE der Liste gestellt ("die lilanen ... geb die ganz nach
-  // unten"), damit die normalen Münz-Äxte zuerst kommen und die Echtgeld-Käufe klar
-  // als eigener Abschnitt danach folgen. `priceCents` grob proportional zu den alten
-  // Münz-Preisen gestaffelt (nur Anzeige, siehe Kommentar bei SkinDef.priceCents).
-  // `productId` folgt der Konvention `axethrow_axe_<name>` – MUSS 1:1 so (oder mit
-  // final abweichendem Namen, dann hier UND in App Store Connect/RevenueCat
-  // synchron ändern) als Non-Consumable-Produkt angelegt werden, siehe
-  // game/purchases.ts. Vor der echten Anlage schlägt ein Kauf-Versuch kontrolliert
-  // mit "Produkt nicht gefunden" fehl (siehe Shop.tsx), kein Crash. ---
-  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 0, source: 'iap', priceCents: 199, productId: 'axethrow_axe_steampunk' },
-  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 0, source: 'iap', priceCents: 249, productId: 'axethrow_axe_rune' },
-  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 0, source: 'iap', priceCents: 299, productId: 'axethrow_axe_tide' },
-  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 0, source: 'iap', priceCents: 349, productId: 'axethrow_axe_cosmic' },
-  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 0, source: 'iap', priceCents: 399, productId: 'axethrow_axe_thorn' },
-  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 0, source: 'iap', priceCents: 449, productId: 'axethrow_axe_magma' },
-  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 0, source: 'iap', priceCents: 499, productId: 'axethrow_axe_plague' },
-  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 0, source: 'iap', priceCents: 599, productId: 'axethrow_axe_royal' },
-  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 0, source: 'iap', priceCents: 699, productId: 'axethrow_axe_cyber' },
-  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 0, source: 'iap', priceCents: 799, productId: 'axethrow_axe_holy' },
+  // --- Die zehn teuersten/"coolsten" Äxte aus dem Zwölfer-Set. Waren kurzzeitig
+  // als Echtgeld-Käufe geplant (`source: 'iap'`), Klaus hat sich dagegen entschieden
+  // ("wir machen nur Geld durch Werbung") – die IAP-Infrastruktur (RevenueCat,
+  // App-Store-Connect-Produkte) wurde deshalb wieder komplett entfernt (siehe
+  // Commit-Nachricht/CLAUDE.md). Die Grafiken waren aber schon fertig, deshalb
+  // NICHT gelöscht, sondern zu normalen Münz-Äxten gemacht – oberhalb von
+  // `axe-demon` (11000) als neue Preis-Spitze der Liste, in derselben relativen
+  // Reihenfolge wie zuvor bei den priceCents-Werten (199 Cent -> günstigste hier,
+  // 799 Cent -> teuerste). ---
+  { id: 'axe-steampunk', kind: 'axe', name: 'Dampfschmiede', blurb: 'Tickt, zischt und trifft trotzdem präzise.', price: 12500, source: 'shop' },
+  { id: 'axe-rune', kind: 'axe', name: 'Runenbeil', blurb: 'Uralte Runen glimmen schwach im dunklen Stahl.', price: 14000, source: 'shop' },
+  { id: 'axe-tide', kind: 'axe', name: 'Gezeitenklinge', blurb: 'Formt sich wie eine Welle, die nie ganz bricht.', price: 15500, source: 'shop' },
+  { id: 'axe-cosmic', kind: 'axe', name: 'Sternenschneide', blurb: 'Ein Splitter Nachthimmel, eingefasst in Silber.', price: 17000, source: 'shop' },
+  { id: 'axe-thorn', kind: 'axe', name: 'Dornengift', blurb: 'Giftgrüne Adern pulsieren unter der Klinge.', price: 19000, source: 'shop' },
+  { id: 'axe-magma', kind: 'axe', name: 'Lavabruch', blurb: 'Frisch erkaltete Kruste, glühend heiß im Kern.', price: 21000, source: 'shop' },
+  { id: 'axe-plague', kind: 'axe', name: 'Pestbeil', blurb: 'Riecht nach Moor und schlechten Entscheidungen.', price: 23500, source: 'shop' },
+  { id: 'axe-royal', kind: 'axe', name: 'Königsbeil', blurb: 'Zeremoniell geschmiedet, kampferprobt trotzdem.', price: 26000, source: 'shop' },
+  { id: 'axe-cyber', kind: 'axe', name: 'Datenbeil', blurb: 'Firmware-Update inklusive, Klinge bleibt scharf.', price: 29000, source: 'shop' },
+  { id: 'axe-holy', kind: 'axe', name: 'Lichtschwinge', blurb: 'Strahlt, als hätte sie nie Blut gesehen.', price: 32000, source: 'shop' },
 ];
 
 // ---------------------------------------------------------------------------

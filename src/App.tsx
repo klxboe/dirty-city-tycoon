@@ -21,7 +21,6 @@ import { EASTER_EGG_SKINS } from './game/shop';
 import { AXE_IMAGES } from './game/axeShapes';
 import { BOARD_IMAGES } from './game/boardImages';
 import { initAds, showInterstitialAd } from './game/ads';
-import { initPurchases } from './game/purchases';
 import {
   playClickSound,
   playCoinSound,
@@ -97,7 +96,6 @@ function App() {
   // beim tatsächlichen Zeigen sauber mit einer Fehlermeldung statt zu crashen.
   useEffect(() => {
     initAds();
-    initPurchases();
   }, []);
 
   /**
@@ -475,7 +473,7 @@ function App() {
         />
 
         {shopOpen && (
-          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onGrantPurchase={game.grantPurchasedSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+          <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
         )}
         {settingsOpen && (
           <SettingsModal
@@ -716,7 +714,7 @@ function App() {
       </div>
 
       {shopOpen && (
-        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onGrantPurchase={game.grantPurchasedSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
+        <Shop save={game.save} onBuy={game.buySkin} onEquip={game.equipSkin} onTradeFigurines={game.tradeFigurines} onClose={() => setShopOpen(false)} />
       )}
 
       {settingsOpen && (

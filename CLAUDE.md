@@ -3465,6 +3465,50 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
         Interstitial-Ad-Unit-ID (`REAL_INTERSTITIAL_AD_UNIT_ID`, aktuell
         Platzhalter) fehlt noch in derselben neuen AdMob-App wie die
         Rewarded-Ad-Unit.
+- [x] **Neues App-Icon: echtes Gemini-Artwork statt handgezeichnetem Platzhalter
+      (2026-08-25).** Klaus hat ein selbst erzeugtes 1024×1024-Bild (Zielscheibe
+      mit zwei gekreuzten Äxten, Cel-Shading, warmes Holz) in den Projektordner
+      hochgeladen. Per Pillow-Skript auf alle benötigten Größen/Formate verteilt:
+      iOS-App-Icon (`AppIcon-512@2x.png`, 1024×1024 RGB ohne Alpha), PWA-Icons
+      (`icon-512`/`icon-192`/`icon-180`, reiner Vollbild-Resize), `icon-maskable-512`
+      MIT 80%-Sicherheitszone (Kunstwerk verkleinert, Rand mit dem eigenen Holzton
+      der Bildecken aufgefüllt, damit OS-Masken die Axtköpfe nicht abschneiden),
+      `icon.svg` (Favicon-Referenz) auf einen SVG-Wrapper mit eingebettetem
+      Base64-PNG umgestellt, da die Vorlage jetzt Rasterkunst statt handgezeichneter
+      Vektorpfade ist. `npm run build`/`npx cap sync ios` sauber.
+- [x] **Echte AdMob-App-ID + Ad-Unit-IDs eingetragen, volle SKAdNetwork-Liste
+      (2026-08-25).** Klaus hat in apps.admob.com die App "Axe Throw Master"
+      sowie einen Rewarded- und einen Interstitial-Anzeigenblock angelegt. Echte
+      IDs jetzt in `ads.ts` (`REAL_APP_ID`/`REAL_REWARDED_AD_UNIT_ID`/
+      `REAL_INTERSTITIAL_AD_UNIT_ID`) und `Info.plist`
+      (`GADApplicationIdentifier`) hinterlegt – `USE_TEST_AD` bleibt bewusst auf
+      `true`, bis die Ad Units live gegengeprüft sind (AdMob braucht laut eigener
+      Aussage bis zu einer Stunde nach dem Anlegen). `SKAdNetworkItems` von nur
+      Googles eigener ID auf die vollständige, von
+      developers.google.com/ad-manager/mobile-ads-sdk/ios/3p-skadnetworks
+      abgerufene Liste (50 Einträge) erweitert.
+- [x] **In-App-Käufe komplett wieder entfernt – nur noch Werbung als Monetarisierung
+      (2026-08-25).** Mitten im Anlegen der ersten IAP-Produkte in App Store
+      Connect ("Dampfschmiede") hat Klaus umentschieden: "mach diese Äxte die was
+      kosten weg, wir machen nur Geld durch Werbung". Statt die zehn betroffenen
+      Äxte (fertige Grafiken vorhanden) ersatzlos zu streichen, auf Nachfrage
+      entschieden: Grafiken bleiben, sie werden zu normalen Münz-Äxten – neue
+      Preis-Spitze OBERHALB von `axe-demon` (11000), von 12500 (Dampfschmiede) bis
+      32000 (Lichtschwinge), in derselben relativen Reihenfolge wie die vorherigen
+      `priceCents`-Werte. Komplette IAP-Infrastruktur dabei sauber ausgebaut statt
+      nur deaktiviert: `SkinSource` verliert `'iap'`, `SkinDef.priceCents`/
+      `productId`/`formatIapPrice()` entfernt (shop.ts), `game/purchases.ts`
+      (RevenueCat-Anbindung) komplett gelöscht, `grantPurchasedSkin()`
+      (useAxeGame.ts) entfernt, `Shop.tsx`/`Shop.css` von allen Kauf-Button-/
+      Premium-Badge-Pfaden befreit, `initPurchases()`-Aufruf aus `App.tsx` raus,
+      `@revenuecat/purchases-capacitor` per `npm uninstall` entfernt (Package.swift
+      zeigt danach nur noch `@capacitor-community/admob` als natives Plugin). Das
+      in App Store Connect bereits angelegte "Dampfschmiede"-IAP-Produkt bleibt
+      dort ungenutzt liegen (kein API-Zugriff von hier aus, um es zu löschen) –
+      stört nicht, wird im Code nirgends mehr referenziert. Verifiziert per echtem
+      Werkstatt-Aufruf im Browser: alle 10 Äxte erscheinen als normale Münz-Karten
+      (12500-32000) ohne Premium-Badge, `tsc -b`/`npm run build`/`npx cap sync ios`
+      sauber, frischer Tab ohne Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
