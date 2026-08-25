@@ -19,6 +19,8 @@ interface StartScreenProps {
   axeSkin: string;
   /** Beim allerersten Start zeigen wir zusätzlich die Regeln. */
   showTutorial: boolean;
+  /** Welt-IDs, deren Weltboss schon (mindestens einmal, dauerhaft) besiegt wurde. */
+  defeatedWorldBosses: string[];
   onPlay: () => void;
   onOpenShop: () => void;
   onOpenSettings: () => void;
@@ -41,6 +43,7 @@ export function StartScreen({
   figurines,
   axeSkin,
   showTutorial,
+  defeatedWorldBosses,
   onPlay,
   onOpenShop,
   onOpenSettings,
@@ -75,14 +78,22 @@ export function StartScreen({
   // schon vorher zeigt, wo man landet, statt das erst nach dem Start-Tap zu erfahren.
   const world = worldForLevel(Math.max(0, continueLevel - 1));
   /**
-   * Steht der Spielstand GENAU am Weltboss-Tor (siehe isWorldBossLevel), darf der
-   * Haupt-Button nicht direkt in den Bosskampf springen (Klaus: "man soll nur gegen
-   * ihn spielen können, wenn man zuerst auf Weltkarte geht") – und schon gar nicht
-   * "Weiter – Level 21" anzeigen, ein Weltboss hat laut HUD/LevelCompleteModal
-   * bewusst KEINE Levelnummer. Der Button führt in diesem Fall stattdessen zur
-   * Weltkarte, wo der Bosskampf über den passenden Welt-Knoten gestartet wird.
+   * Steht der Spielstand GENAU am Weltboss-Tor (siehe isWorldBossLevel) UND ist dessen
+   * Weltboss noch NICHT besiegt, darf der Haupt-Button nicht direkt in den Bosskampf
+   * springen (Klaus: "man soll nur gegen ihn spielen können, wenn man zuerst auf
+   * Weltkarte geht") – und schon gar nicht "Weiter – Level 21" anzeigen, ein Weltboss
+   * hat laut HUD/LevelCompleteModal bewusst KEINE Levelnummer. Der Button führt in
+   * diesem Fall stattdessen zur Weltkarte, wo der Bosskampf über den passenden
+   * Welt-Knoten gestartet wird.
+   *
+   * Einmal besiegt (siehe `defeatedWorldBosses`, dauerhaft in SaveData) ist dieser
+   * Level-Index für immer ein normaler Level derselben Welt (siehe generateLevel() in
+   * constants.ts) – die Sperre gilt dann nicht mehr, "Weiter" führt direkt ins normale
+   * Spiel statt nochmal über die Weltkarte zu zwingen (Klaus: "wenn man den Boss
+   * einmal spielt und dann zurück zum Hauptmenü geht, soll man ins normale Spiel
+   * zurückkommen, nicht wieder zur Weltkarte").
    */
-  const isBossGate = isWorldBossLevel(Math.max(0, continueLevel - 1));
+  const isBossGate = isWorldBossLevel(Math.max(0, continueLevel - 1)) && !defeatedWorldBosses.includes(world.id);
 
   return (
     <div className="start">

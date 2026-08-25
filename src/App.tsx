@@ -417,6 +417,7 @@ function App() {
           figurines={game.save.figurines}
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
+          defeatedWorldBosses={game.save.defeatedWorldBosses}
           onPlay={startPlaying}
           onOpenShop={() => setShopOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
@@ -440,6 +441,7 @@ function App() {
             bestLevel={game.save.bestLevel}
             xp={game.save.xp}
             currentLevelIndex={game.levelIndex}
+            defeatedWorldBosses={game.save.defeatedWorldBosses}
             onSelectLevel={(levelIndex) => {
               game.goToLevel(levelIndex);
               startPlaying();
@@ -678,8 +680,19 @@ function App() {
           streak={game.streak}
           isCampaignComplete={game.isCampaignComplete}
           onNext={() => {
-            expectLevelIntroRef.current = true;
+            // Weltboss-Sieg: NICHT nahtlos weiterspielen ("nach dem Boss soll man nur
+            // die Welt geschafft haben, nicht zu Level 22 oder so kommen – der Boss
+            // ist separat und hat kein Level"). `game.nextLevel()` lässt den
+            // Level-Index dafür unverändert stehen (siehe dortiger Kommentar) und
+            // markiert die Welt als besiegt – zurück zum Hauptmenü statt einer
+            // automatischen Weiterfahrt in eine neue Begegnung.
+            const wasWorldBoss = Boolean(game.worldBossName);
             game.nextLevel();
+            if (wasWorldBoss) {
+              setScreen('start');
+            } else {
+              expectLevelIntroRef.current = true;
+            }
           }}
           onOpenShop={() => setShopOpen(true)}
         />

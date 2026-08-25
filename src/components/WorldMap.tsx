@@ -125,6 +125,9 @@ interface WorldMapProps {
   /** Dauerhafte XP – bestimmt, welche Welten schon frei sind (siehe xpThresholdFor oben). */
   xp: number;
   currentLevelIndex: number;
+  /** Welt-IDs, deren Weltboss schon (mindestens einmal, dauerhaft) besiegt wurde – zeigt
+   *  dann keinen Bossnamen mehr am Knoten, siehe `bossName` unten. */
+  defeatedWorldBosses: string[];
   onSelectLevel: (levelIndex: number) => void;
   onClose: () => void;
 }
@@ -236,7 +239,7 @@ const DECOR_OFFSETS: [number, number][] = [
   [-0.5, 0.15],
 ];
 
-export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onClose }: WorldMapProps) {
+export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses, onSelectLevel, onClose }: WorldMapProps) {
   const nodes: MapNode[] = WORLDS.map((world) => {
     const threshold = xpThresholdFor(world.startLevelIndex);
     return {
@@ -250,7 +253,11 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, onSelectLevel, onCl
       unlocked: xp >= threshold,
       isCurrent: currentLevelIndex >= world.startLevelIndex && currentLevelIndex < world.startLevelIndex + WORLDS_LEVEL_COUNT,
       progress: Math.max(0, Math.min(1, (xp - threshold) / (WORLDS_LEVEL_COUNT * XP_PER_LEVEL * WORLD_UNLOCK_XP_MULTIPLIER))),
-      bossName: WORLD_BOSSES[world.id]?.name ?? null,
+      // Nach dem Sieg ist der Weltboss dauerhaft weg (siehe `defeatedWorldBosses` in
+      // storage.ts) – die Karte soll dann nicht mehr mit einem Bosskampf werben, der
+      // an diesem Level-Index gar nicht mehr stattfindet (siehe generateLevel() in
+      // constants.ts).
+      bossName: defeatedWorldBosses.includes(world.id) ? null : (WORLD_BOSSES[world.id]?.name ?? null),
     };
   });
 

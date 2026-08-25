@@ -323,14 +323,23 @@ function resolveAppleAngles(appleAngles: number[], obstacleAngles: number[] | un
  * stirbt man garantiert) der gewünschte Effekt, kein Bug.
  *
  * Siebter Härte-Durchgang (Klaus: "es soll wirklich schwer sein, über Level 20-25 zu
- * kommen, sehr schwer"): bewusste WALL genau in diesem Fenster statt nur weiterer
- * gleichmäßiger Ramp – Level 20 UND Level 25 sind ohnehin schon Boss-Level
- * (`isBoss()`, `BOSS_EVERY=5`), die Lücke dazwischen war aber bisher nur eine normale
- * Zwischenstufe (9-11 Äxte). Jetzt springt der Wert dort auf 16 (sonst erst ab Level
- * ~43 erreicht), direkt gefolgt von einer kurzen Erholung auf die alte Stufe (11) für
- * Level 26-30, bevor die ursprüngliche Kurve unverändert weiterläuft – ein klar
- * spürbares Nadelöhr statt einer weiteren unauffälligen Zahl in einer langen Rampe.
- * Siehe `obstacleBaseFor` unten für dieselbe Behandlung der Hindernis-Kurve.
+ * kommen, sehr schwer"): eine bewusste WALL genau in diesem Fenster (Sprung auf 17,
+ * direkt gefolgt von einem Einbruch auf 12 für Level 26-30) hatte sich in der Praxis
+ * als Fehlgriff erwiesen – siehe Elfter Härte-Durchgang unten.
+ *
+ * Elfter Härte-Durchgang (Klaus: "ab Level 25 wird es unmöglich gefühlt, aber ab
+ * Level 20 steigert sich die Schwierigkeit nicht mehr"): beide Beobachtungen hatten
+ * dieselbe Ursache – die Wall war kein Anstieg, sondern ein Spitze-dann-Einbruch:
+ * 17 Äxte auf einen Schlag bei Level 20-25 (kombiniert mit den ohnehin schon vollen
+ * Hindernissen, siehe `obstacleBaseFor`, UND bei Level 20/25 zusätzlich einem
+ * Fruchtboss-Tempo-Bonus) fühlte sich unfair/unmöglich an, und der anschließende
+ * Rückfall auf 12 für Level 26-30 bedeutete: bis Level 42 war NIRGENDS mehr etwas
+ * schwerer als die Wall selbst – kein Fortschrittsgefühl, nur ein einzelner Stachel.
+ * Die Wall ist deshalb komplett raus, die Kurve steigt jetzt wieder LÜCKENLOS: 7→8→
+ * 10→11→12→14→16→18→20, jede Stufe mindestens so hoch wie die vorherige, nie ein
+ * Einbruch. Level 20-25 sind dadurch spürbar leichter als vorher, aber die Kurve
+ * hört dafür nie auf zu steigen – "mach zwar alles schwerer" bleibt so erhalten,
+ * nur ohne den ungerechten Einzel-Spike.
  *
  * Zehnter Härte-Durchgang (Klaus: "pro Level etwas mehr Äxte, dafür Bretter minimal
  * kleiner") – jede Stufe um genau 1 angehoben, im selben Zug wie die Brett-
@@ -340,8 +349,8 @@ function axeCountFor(levelIndex: number): number {
   if (levelIndex < 5) return 7; // Level 1-5
   if (levelIndex < 12) return 8; // Level 6-12
   if (levelIndex < 19) return 10; // Level 13-19
-  if (levelIndex < 25) return 17; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
-  if (levelIndex < 30) return 12; // Level 26-30 (kurze Erholung nach der Wall)
+  if (levelIndex < 25) return 11; // Level 20-25
+  if (levelIndex < 30) return 12; // Level 26-30
   if (levelIndex < 42) return 14; // Level 31-42
   if (levelIndex < 55) return 16; // Level 43-55
   if (levelIndex < 70) return 18; // Level 56-70
@@ -366,11 +375,16 @@ function obstacleBaseFor(levelIndex: number): number {
   if (levelIndex < 6) return 2; // Level 5-6
   if (levelIndex < 10) return 3; // Level 7-10
   if (levelIndex < 19) return 4; // Level 11-19
-  if (levelIndex < 25) return 8; // Level 20-25 — WALL, direkt an Boss-Level 20 & 25
-  if (levelIndex < 34) return 5; // Level 26-34 (kurze Erholung nach der Wall)
-  if (levelIndex < 46) return 6; // ab Level 35
-  if (levelIndex < 60) return 7; // ab Level 47
-  return 8; // ab Level 61
+  // Elfter Härte-Durchgang (siehe ausführliche Begründung bei axeCountFor oben): die
+  // frühere WALL (Sprung auf 8, dann Einbruch auf 5 für Level 26-34) fühlte sich in
+  // Kombination mit der ehemaligen Axt-Wall bei genau denselben Leveln "unmöglich" an
+  // UND ließ die Kurve danach bis Level 46 nicht mehr weiter steigen. Jetzt lückenlos
+  // steigend: 4→5→6→7→8→9, nie ein Rückschritt.
+  if (levelIndex < 25) return 5; // Level 20-25
+  if (levelIndex < 34) return 6; // Level 26-34
+  if (levelIndex < 46) return 7; // ab Level 35
+  if (levelIndex < 60) return 8; // ab Level 47
+  return 9; // ab Level 61
 }
 
 /**
@@ -607,14 +621,22 @@ function levelVariantProfile(variantSeed: number): LevelVariantProfile {
  */
 const WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX = 20;
 
-function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0): LevelConfig {
+function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, defeatedWorldBosses: string[] = []): LevelConfig {
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
   // siehe isWorldBossLevel()) – eine deutlich größere Prüfung als ein normaler
   // 5-Level-Boss. Die beiden schließen sich gegenseitig aus (kein Level-Index ist
   // gleichzeitig Vielfaches von BOSS_EVERY UND ein Welt-Start, außer Level 0 selbst,
   // das per isWorldBossLevel() ohnehin ausgeschlossen ist).
-  const worldBoss = isWorldBossLevel(levelIndex) ? worldForLevel(levelIndex) : null;
+  //
+  // Klaus: "Boss nur einmal besiegen müssen, dann ist der Hintergrund beim normalen
+  // Spiel die Wüste zum Beispiel" – ist die Welt an dieser Stelle schon in
+  // `defeatedWorldBosses` (siehe SaveData in storage.ts, dauerhaft, übersteht Game
+  // Over) vermerkt, entsteht hier KEIN Weltboss mehr, sondern ein ganz normaler,
+  // thematisch passender Level. Genau dieser Level-Index bleibt danach für immer ein
+  // normaler Level dieser Welt – kein zweiter Kampf nötig.
+  const worldBossCandidate = isWorldBossLevel(levelIndex) ? worldForLevel(levelIndex) : null;
+  const worldBoss = worldBossCandidate && !defeatedWorldBosses.includes(worldBossCandidate.id) ? worldBossCandidate : null;
 
   /*
    * Boss-Level sollen sich wie eine echte Prüfung anfühlen, nicht wie ein normales
@@ -830,8 +852,8 @@ export const LEVEL_COUNT = DIFFICULTY_TIERS * VARIATIONS_PER_TIER;
  * wenige Zahlen (kein Array-Scan, keine Rekursion), das direkte Neuberechnen bei jedem
  * Aufruf ist spürbar günstiger als die dafür nötige Cache-Verwaltung.
  */
-export function levelConfigAt(levelIndex: number, runSeed = 0, variantSeed = 0): LevelConfig {
-  return generateLevel(levelIndex, runSeed, variantSeed);
+export function levelConfigAt(levelIndex: number, runSeed = 0, variantSeed = 0, defeatedWorldBosses: string[] = []): LevelConfig {
+  return generateLevel(levelIndex, runSeed, variantSeed, defeatedWorldBosses);
 }
 
 /** Alter Speicherstand (nur eine Apfel-Zahl). Wird beim ersten Start in Münzen migriert. */

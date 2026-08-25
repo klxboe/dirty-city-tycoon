@@ -63,8 +63,9 @@ function createLevelState(
   levelIndex: number,
   runSeed: number,
   variantSeed: number,
+  defeatedWorldBosses: string[],
 ): Omit<GameState, 'save' | 'streak' | 'rescueUsedThisRun'> {
-  const level = levelConfigAt(levelIndex, runSeed, variantSeed);
+  const level = levelConfigAt(levelIndex, runSeed, variantSeed, defeatedWorldBosses);
   const preplacedAxes: StuckAxe[] = (level.preplacedAxeAngles ?? []).map((angle, i) => ({
     // Negative IDs, damit sie nie mit den später per Wurf hinzugefügten (ab 0) kollidieren.
     id: -1 - i,
@@ -98,7 +99,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     const save = loadSave();
     setMuted(!save.soundOn);
     return {
-      ...createLevelState(Math.max(0, save.currentLevel), save.runSeed, save.levelVariantSeed),
+      ...createLevelState(Math.max(0, save.currentLevel), save.runSeed, save.levelVariantSeed, save.defeatedWorldBosses),
       streak: save.streak,
       rescueUsedThisRun: false,
       save,
@@ -171,7 +172,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   const resolveThrow = useCallback(() => {
     setState((prev) => {
       if (prev.phase !== 'flying' || !prev.flyingAxe) return prev;
-      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed);
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed, prev.save.defeatedWorldBosses);
 
       // Aufprall-Winkel anhand der AKTUELLEN Scheiben-Drehung – sie dreht sich während
       // des Flugs weiter, genau darin liegt das Timing-Spiel.
@@ -263,6 +264,15 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         ownedSkins: prev.reward.unlockedAxeSkinId
           ? [...prev.save.ownedSkins, prev.reward.unlockedAxeSkinId]
           : prev.save.ownedSkins,
+        // Weltboss dauerhaft als besiegt vermerken (Klaus: "Boss nur einmal besiegen
+        // müssen, dann ist der Hintergrund beim normalen Spiel die Wüste zum
+        // Beispiel") – dieser Level-Index erzeugt ab sofort (auch nach einem
+        // späteren Game Over) nie wieder einen Weltboss, siehe generateLevel() in
+        // constants.ts.
+        defeatedWorldBosses:
+          prev.reward.worldBossId && !prev.save.defeatedWorldBosses.includes(prev.reward.worldBossId)
+            ? [...prev.save.defeatedWorldBosses, prev.reward.worldBossId]
+            : prev.save.defeatedWorldBosses,
       };
       saveSave(nextSave);
       return { ...prev, save: nextSave, streak };
@@ -317,7 +327,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: isNewRun ? false : prev.rescueUsedThisRun,
         save: nextSave,
@@ -341,7 +351,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    */
   const restartRun = useCallback(() => {
     setState((prev) => {
-      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed);
+      const level = levelConfigAt(prev.levelIndex, prev.save.runSeed, prev.save.levelVariantSeed, prev.save.defeatedWorldBosses);
       const diedOnWorldBoss = Boolean(level.worldBossId);
       const target = diedOnWorldBoss ? prev.levelIndex : 0;
       pendingThrowRef.current = false;
@@ -353,7 +363,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: 0,
         rescueUsedThisRun: false,
         save: nextSave,
@@ -383,7 +393,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       const nextSave: SaveData = { ...prev.save, currentLevel: target, coins: prev.save.coins + VIDEO_RESCUE_COINS };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: true,
         save: nextSave,
@@ -395,10 +405,25 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
    * Nächstes Level. Bewusst OHNE Obergrenze: nach Level 100 (LEVEL_COUNT) läuft es
    * einfach als Endlos-Modus weiter – `levelConfigAt()` berechnet jede weitere
    * Levelnummer live, siehe constants.ts.
+   *
+   * AUSNAHME für einen gerade besiegten Weltboss (Klaus: "nach dem Boss soll man nur
+   * die Welt geschafft haben, nicht zu Level 22 oder so kommen – der Boss ist separat
+   * und hat kein Level"): `target` bleibt in diesem Fall auf demselben Level-Index
+   * stehen statt weiterzuzählen. Das ist kein Bug, sondern Absicht – die Welt ist
+   * jetzt in `SaveData.defeatedWorldBosses` vermerkt (siehe Belohnungs-Effekt oben),
+   * `levelConfigAt()` erzeugt an GENAU diesem Index deshalb ab sofort einen ganz
+   * normalen, thematisch passenden Level statt wieder den Weltboss – der nächste
+   * Sprung dorthin (App.tsx schickt nach einem Weltboss-Sieg zurück zum
+   * Hauptmenü statt direkt weiterzuspielen) landet also automatisch im "normalen
+   * Spiel" dieser Welt, ohne dass hier ein zweiter Index nötig wäre. Erkannt über
+   * `prev.reward?.worldBossId` statt eines erneuten `levelConfigAt()`-Aufrufs, weil
+   * die Welt zu diesem Zeitpunkt schon als besiegt vermerkt ist – ein erneuter Aufruf
+   * mit dem AKTUELLEN Spielstand würde fälschlich schon `undefined` liefern.
    */
   const nextLevel = useCallback(() => {
     setState((prev) => {
-      const target = prev.levelIndex + 1;
+      const wasWorldBossVictory = Boolean(prev.reward?.worldBossId);
+      const target = wasWorldBossVictory ? prev.levelIndex : prev.levelIndex + 1;
       pendingThrowRef.current = false;
       const nextSave: SaveData = {
         ...prev.save,
@@ -407,7 +432,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
       };
       saveSave(nextSave);
       return {
-        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed),
+        ...createLevelState(target, nextSave.runSeed, nextSave.levelVariantSeed, nextSave.defeatedWorldBosses),
         streak: prev.streak,
         rescueUsedThisRun: prev.rescueUsedThisRun,
         save: nextSave,
@@ -564,7 +589,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     });
   }, []);
 
-  const level = levelConfigAt(state.levelIndex, state.save.runSeed, state.save.levelVariantSeed);
+  const level = levelConfigAt(state.levelIndex, state.save.runSeed, state.save.levelVariantSeed, state.save.defeatedWorldBosses);
   // Genau EINMAL wahr: wenn gerade Level 100 (der letzte feste Kampagnen-Level)
   // abgeschlossen wurde. Nicht "letztes Level" im eigentlichen Sinn mehr – es gibt
   // keins, danach läuft es als Endlos-Modus weiter (siehe nextLevel oben). Der
@@ -643,7 +668,7 @@ function computeReward(
   streak: number,
   save: SaveData,
 ): LevelReward {
-  const level = levelConfigAt(levelIndex, save.runSeed, save.levelVariantSeed);
+  const level = levelConfigAt(levelIndex, save.runSeed, save.levelVariantSeed, save.defeatedWorldBosses);
   const boss = bossFruitForLevel(levelIndex, save.runSeed);
 
   const apples = (applesCollected - gemsCollected - figurinesCollected) * COINS_PER_APPLE;

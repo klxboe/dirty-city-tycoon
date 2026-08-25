@@ -62,6 +62,16 @@ export interface SaveData {
    * zeigt wie der Fehlversuch davor.
    */
   levelVariantSeed: number;
+  /**
+   * IDs der Welten (siehe `World.id` in worlds.ts), deren Weltboss schon MINDESTENS
+   * EINMAL besiegt wurde – dauerhaft, übersteht Game Over/Neustart genau wie XP/Münzen.
+   * Klaus: "Boss nur einmal besiegen müssen, dann ist der Hintergrund beim normalen
+   * Spiel die Wüste zum Beispiel" – `generateLevel()` (constants.ts) erzeugt am
+   * Welt-Start-Level nur dann eine Weltboss-Begegnung, wenn die jeweilige Welt-ID hier
+   * NICHT drinsteht; danach ist genau dieser Level-Index für immer ein normaler,
+   * thematisch passender Level.
+   */
+  defeatedWorldBosses: string[];
 }
 
 const EMPTY_SAVE: SaveData = {
@@ -81,6 +91,7 @@ const EMPTY_SAVE: SaveData = {
   lastDailyClaim: '',
   runSeed: 0,
   levelVariantSeed: 0,
+  defeatedWorldBosses: [],
 };
 
 function toFiniteNumber(value: unknown, fallback: number): number {
@@ -118,6 +129,9 @@ export function loadSave(): SaveData {
         lastDailyClaim: typeof parsed.lastDailyClaim === 'string' && ISO_DATE_PATTERN.test(parsed.lastDailyClaim) ? parsed.lastDailyClaim : '',
         runSeed: Math.max(0, Math.floor(toFiniteNumber(parsed.runSeed, 0))),
         levelVariantSeed: Math.max(0, Math.floor(toFiniteNumber(parsed.levelVariantSeed, 0))),
+        defeatedWorldBosses: Array.isArray(parsed.defeatedWorldBosses)
+          ? [...new Set(parsed.defeatedWorldBosses.filter((id) => typeof id === 'string'))]
+          : [],
       };
     }
 
