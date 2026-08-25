@@ -91,18 +91,18 @@ export const AXE_SKINS: SkinDef[] = [
   // Äxte teurer machen, also weiter nach unten") – waren bisher die zwei günstigsten
   // Einstiegs-Äxte direkt nach der kostenlosen Start-Axt, jetzt mit deutlich höherem
   // Preis mitten in der Liste einsortiert statt am Anfang.
-  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 2200, source: 'shop' },
-  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 2900, source: 'shop' },
-  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 3400, source: 'shop' },
-  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 3600, source: 'shop' },
-  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 4000, source: 'shop' },
-  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 4100, source: 'shop' },
-  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 4600, source: 'shop' },
-  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 5300, source: 'shop' },
-  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 6300, source: 'shop' },
-  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 7300, source: 'shop' },
-  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 8400, source: 'shop' },
-  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 9600, source: 'shop' },
+  { id: 'axe-oldwood', kind: 'axe', name: 'Kiefernhieb', blurb: 'Schlicht, robust, riecht nach frischem Schnitt.', price: 2500, source: 'shop' },
+  { id: 'axe-black', kind: 'axe', name: 'Schwarzstahl', blurb: 'Mattschwarz geschmiedet, verschluckt jedes Licht.', price: 3300, source: 'shop' },
+  { id: 'axe-nature', kind: 'axe', name: 'Wurzelhieb', blurb: 'Lebendiges Holz, das nie ganz aufgehört hat zu wachsen.', price: 3900, source: 'shop' },
+  { id: 'axe-viking', kind: 'axe', name: 'Wikingerbeil', blurb: 'Uraltes Muster, seit Generationen unverändert scharf.', price: 4100, source: 'shop' },
+  { id: 'axe-coral', kind: 'axe', name: 'Korallenschneide', blurb: 'Direkt vom Riff, noch feucht vom Meer.', price: 4600, source: 'shop' },
+  { id: 'axe-fire', kind: 'axe', name: 'Feuerbeil', blurb: 'Die Glut erlischt nie ganz, egal wie kalt der Wind.', price: 4700, source: 'shop' },
+  { id: 'axe-frostaxe', kind: 'axe', name: 'Frostbeil', blurb: 'Klirrend kalt, die Klinge beschlägt nie.', price: 5300, source: 'shop' },
+  { id: 'axe-neonaxe', kind: 'axe', name: 'Neonbeil', blurb: 'Grellbunt und laut, genau wie das Viertel, aus dem sie kommt.', price: 6100, source: 'shop' },
+  { id: 'axe-crystalaxe', kind: 'axe', name: 'Kristallbeil', blurb: 'Gewachsen statt geschmiedet, bricht das Licht in Splitter.', price: 7200, source: 'shop' },
+  { id: 'axe-lightning', kind: 'axe', name: 'Blitzbeil', blurb: 'Riecht nach Ozon kurz vor dem Einschlag.', price: 8400, source: 'shop' },
+  { id: 'axe-gold', kind: 'axe', name: 'Goldbeil', blurb: 'Zu schade zum Werfen – wirft trotzdem gut.', price: 9700, source: 'shop' },
+  { id: 'axe-demon', kind: 'axe', name: 'Dämonenbeil', blurb: 'Flüstert leise, wenn niemand sonst in der Nähe ist.', price: 11000, source: 'shop' },
 
   // --- Die zehn teureren/"coolsten" Äxte aus dem Zwölfer-Set – das sind die
   // Echtgeld-Äxte (`source: 'iap'`, violett markierte Karten im Shop). Auf Klaus'
@@ -133,31 +133,31 @@ export const AXE_SKINS: SkinDef[] = [
 
 export const BOARD_SKINS: SkinDef[] = [
   { id: 'board-oak', kind: 'board', name: 'Eiche', blurb: 'Klassisches helles Zielholz.', price: 0, source: 'shop' },
-  { id: 'board-walnut', kind: 'board', name: 'Nussbaum', blurb: 'Dunkles Holz, messingfarbener Ring.', price: 200, source: 'shop' },
-  { id: 'board-ice', kind: 'board', name: 'Gletscher', blurb: 'Gefrorene Scheibe mit blauem Schimmer.', price: 600, source: 'shop' },
-  { id: 'board-volcano', kind: 'board', name: 'Vulkan', blurb: 'Erkaltete Lava mit glühenden Rissen.', price: 1400, source: 'shop' },
-  { id: 'board-ebony', kind: 'board', name: 'Ebenholz', blurb: 'Tiefschwarzes Holz mit Silberadern.', price: 2600, source: 'shop' },
+  { id: 'board-walnut', kind: 'board', name: 'Nussbaum', blurb: 'Dunkles Holz, messingfarbener Ring.', price: 230, source: 'shop' },
+  { id: 'board-ice', kind: 'board', name: 'Gletscher', blurb: 'Gefrorene Scheibe mit blauem Schimmer.', price: 700, source: 'shop' },
+  { id: 'board-volcano', kind: 'board', name: 'Vulkan', blurb: 'Erkaltete Lava mit glühenden Rissen.', price: 1600, source: 'shop' },
+  { id: 'board-ebony', kind: 'board', name: 'Ebenholz', blurb: 'Tiefschwarzes Holz mit Silberadern.', price: 3000, source: 'shop' },
   {
     id: 'board-webslinger',
     kind: 'board',
     name: 'Spinnennetz',
     blurb: 'Die Speichen sehen verdächtig nach einem Netz aus der Nachbarschaft aus.',
-    price: 1000,
+    price: 1150,
     source: 'shop',
   },
 
   // --- Zweites Zehner-Set (siehe Kommentar bei AXE_SKINS oben – dieselbe Logik:
   // Farb-Skin auf der bestehenden Scheiben-Darstellung, bis die Gemini-Bilder da sind) ---
-  { id: 'board-oldwood', kind: 'board', name: 'Kiefernscheibe', blurb: 'Hell, einfach, riecht nach Werkstatt.', price: 350, source: 'shop' },
-  { id: 'board-dark', kind: 'board', name: 'Dunkelscheibe', blurb: 'Fast schwarz, nur der Kern glimmt schwach.', price: 900, source: 'shop' },
-  { id: 'board-frost', kind: 'board', name: 'Frostscheibe', blurb: 'Reif statt Rinde, knirscht bei jedem Treffer.', price: 800, source: 'shop' },
-  { id: 'board-crystalboard', kind: 'board', name: 'Quarzscheibe', blurb: 'Gewachsener Quarz statt Holz, klar bis auf den Grund.', price: 2200, source: 'shop' },
-  { id: 'board-magic', kind: 'board', name: 'Magische Scheibe', blurb: 'Die Maserung verändert sich, wenn niemand hinsieht.', price: 2900, source: 'shop' },
-  { id: 'board-ash', kind: 'board', name: 'Aschescheibe', blurb: 'Erkaltete Asche, innen noch spürbar warm.', price: 1200, source: 'shop' },
-  { id: 'board-cursed', kind: 'board', name: 'Verfluchte Scheibe', blurb: 'Die Risse heilen von selbst nach – jedes Mal ein bisschen anders.', price: 2500, source: 'shop' },
-  { id: 'board-golden', kind: 'board', name: 'Goldscheibe', blurb: 'Schwer, glänzend, unverschämt teuer aussehend.', price: 3500, source: 'shop' },
-  { id: 'board-tech', kind: 'board', name: 'Technikscheibe', blurb: 'Leise Lüftergeräusche bei jedem Treffer.', price: 1800, source: 'shop' },
-  { id: 'board-fantasyboss', kind: 'board', name: 'Fantasy-Scheibe', blurb: 'Sieht aus, als käme sie direkt aus einem Bosskampf.', price: 3100, source: 'shop' },
+  { id: 'board-oldwood', kind: 'board', name: 'Kiefernscheibe', blurb: 'Hell, einfach, riecht nach Werkstatt.', price: 400, source: 'shop' },
+  { id: 'board-dark', kind: 'board', name: 'Dunkelscheibe', blurb: 'Fast schwarz, nur der Kern glimmt schwach.', price: 1050, source: 'shop' },
+  { id: 'board-frost', kind: 'board', name: 'Frostscheibe', blurb: 'Reif statt Rinde, knirscht bei jedem Treffer.', price: 950, source: 'shop' },
+  { id: 'board-crystalboard', kind: 'board', name: 'Quarzscheibe', blurb: 'Gewachsener Quarz statt Holz, klar bis auf den Grund.', price: 2500, source: 'shop' },
+  { id: 'board-magic', kind: 'board', name: 'Magische Scheibe', blurb: 'Die Maserung verändert sich, wenn niemand hinsieht.', price: 3300, source: 'shop' },
+  { id: 'board-ash', kind: 'board', name: 'Aschescheibe', blurb: 'Erkaltete Asche, innen noch spürbar warm.', price: 1400, source: 'shop' },
+  { id: 'board-cursed', kind: 'board', name: 'Verfluchte Scheibe', blurb: 'Die Risse heilen von selbst nach – jedes Mal ein bisschen anders.', price: 2900, source: 'shop' },
+  { id: 'board-golden', kind: 'board', name: 'Goldscheibe', blurb: 'Schwer, glänzend, unverschämt teuer aussehend.', price: 4000, source: 'shop' },
+  { id: 'board-tech', kind: 'board', name: 'Technikscheibe', blurb: 'Leise Lüftergeräusche bei jedem Treffer.', price: 2100, source: 'shop' },
+  { id: 'board-fantasyboss', kind: 'board', name: 'Fantasy-Scheibe', blurb: 'Sieht aus, als käme sie direkt aus einem Bosskampf.', price: 3600, source: 'shop' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -236,7 +236,7 @@ export const LEGENDARY_AXE_SKINS: SkinDef[] = [
     kind: 'axe',
     name: 'Sternenhagel',
     blurb: 'Aus einem Meteoriten geschmiedet, glüht noch immer nach.',
-    price: 45,
+    price: 52,
     source: 'gem',
   },
   {
@@ -244,7 +244,7 @@ export const LEGENDARY_AXE_SKINS: SkinDef[] = [
     kind: 'axe',
     name: 'Phönixfeder',
     blurb: 'Verbrennt nie ganz – die Glut erlischt nur, um neu zu entfachen.',
-    price: 60,
+    price: 70,
     source: 'gem',
   },
 ];
@@ -255,7 +255,7 @@ export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
     kind: 'board',
     name: 'Galaxie',
     blurb: 'Ein Ausschnitt Sternennebel, eingefangen in Holz.',
-    price: 50,
+    price: 58,
     source: 'gem',
   },
   {
@@ -263,7 +263,7 @@ export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
     kind: 'board',
     name: 'Kristallkern',
     blurb: 'Gewachsener Kristall statt Holz – hart, klar, kalt.',
-    price: 70,
+    price: 80,
     source: 'gem',
   },
 ];

@@ -438,12 +438,13 @@ function appleCountFor(levelIndex: number): number {
  * berechnet statt mit `Math.random()`, damit ein Level bei jedem Versuch (auch nach
  * einem Game Over) denselben goldenen Apfel an derselben Stelle hat – passend zum Rest
  * der Level-Generierung, die komplett reine Funktionen der Levelnummer sind.
- * Trifft auf ungefähr jedes 15. Level zu (~7%, war jedes 7. Level/~14% – Klaus:
- * "Diamanten sollen noch viel seltener sein").
+ * Trifft auf ungefähr jedes 12. Level zu (~8%, war jedes 15./~7% – Klaus: "ein
+ * bisschen öfter Diamanten, nicht zu viel", also nur ein kleiner Schritt nach oben,
+ * keine Rückkehr zum alten 7./~14%-Takt).
  */
 function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
   if (appleCount <= 0) return undefined;
-  const hasGolden = (levelIndex * 131 + 41) % 15 === 0;
+  const hasGolden = (levelIndex * 131 + 41) % 12 === 0;
   if (!hasGolden) return undefined;
   return (levelIndex * 3) % appleCount;
 }
@@ -632,7 +633,19 @@ function levelVariantProfile(variantSeed: number): LevelVariantProfile {
  * Referenz-Konstante dafür wird dadurch überflüssig.
  */
 function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, defeatedWorldBosses: string[] = []): LevelConfig {
-  const curveLevelIndex = levelIndex % WORLDS_LEVEL_COUNT;
+  /*
+   * Echtes Endlos (jenseits von LEVEL_COUNT = einmal komplett durch alle 6 Welten):
+   * `levelIndex % WORLDS_LEVEL_COUNT` würde hier zurück auf 0 springen – die Anzeige
+   * (`displayLevelFor`) zählt in Heldenstadt (die letzte Welt, kein "Reset" mehr
+   * danach) aber unbegrenzt weiter hoch (Level 21, 22, 23, ...), weil es keine
+   * nächste Welt mehr gibt. Ohne diese Sonderbehandlung würde ein beeindruckend hoch
+   * aussehendes "Level 25" mechanisch wieder auf die LEICHTESTE Stufe zurückfallen.
+   * Klaus dazu: "ab Level 25 sollen die Level nicht mehr schwerer werden, aber sehr
+   * schwer alle sein" – deshalb ab hier fest auf die HÄRTESTE lokale Stufe geklemmt
+   * (WORLDS_LEVEL_COUNT - 1) statt weiter zu zyklieren: kein weiteres Steigern nötig
+   * (die härteste Stufe ist bereits das Maximum), aber auch kein Zurückfallen mehr.
+   */
+  const curveLevelIndex = levelIndex < LEVEL_COUNT ? levelIndex % WORLDS_LEVEL_COUNT : WORLDS_LEVEL_COUNT - 1;
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
   // siehe isWorldBossLevel()) – eine deutlich größere Prüfung als ein normaler
@@ -905,8 +918,11 @@ export const XP_PER_LEVEL = 2;
  * Nochmal etwas angehoben (Klaus: "die setz alle etwas rauf", im selben Zug wie die
  * Weltkarte auf reine XP-Zahlen statt Level-Bereichen umgestellt wurde, siehe
  * WorldMap.tsx): 4->6. Wüste braucht dadurch jetzt 240 statt 160 XP.
+ *
+ * Letzte Anhebung vor der Store-Einreichung (Klaus: "mache alles etwas teurer,
+ * Welten und Shop"): 6->8. Wüste braucht dadurch jetzt 320 statt 240 XP.
  */
-export const WORLD_UNLOCK_XP_MULTIPLIER = 6;
+export const WORLD_UNLOCK_XP_MULTIPLIER = 8;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 
