@@ -3632,6 +3632,26 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       rAF-/Timing-Verhaltens nicht zuverlässig erzwingen, siehe rAF-Freeze-
       Abschnitt weiter oben) – nutzt aber exakt dasselbe, bereits am
       Niederlage-Pfad bewährte `challengeWorldId`-Prüfmuster.
+- [x] **ECHTER Bug behoben: Weltbosse hatten seit der geteilten Level-Kurve keine
+      Hindernis-Äxte mehr (2026-08-25).** Klaus: "die Bosse haben keine Messer in
+      sich stecken, sind also extrem einfach". Ursache in `generateLevel()`
+      (constants.ts): `obstacleCount` für Weltbosse wurde als
+      `Math.min(obstacleCountFor(curveLevelIndex), 5)` berechnet – ein Deckel, der
+      zur Zeit seiner Einführung sinnvoll war, weil `curveLevelIndex` damals noch
+      der ROHE `levelIndex` war und an einem Welt-Start-Index (20/40/...) einen
+      hohen Wert lieferte (die "Wall"-Stufe der normalen Kurve), der Deckel bei 5
+      also die bindende Grenze war. Seit der "geteilten Level-Kurve"
+      (`curveLevelIndex = levelIndex % WORLDS_LEVEL_COUNT`, siehe eigener Eintrag
+      weiter oben) landet JEDER Weltboss auf `curveLevelIndex = 0` – und
+      `obstacleCountFor(0)` ist ABSICHTLICH 0 (Level 1 bleibt der einzige ruhige
+      Eintritts-Wurf). `Math.min(0, 5)` ergibt seitdem immer 0 statt der
+      gewünschten 5 – eine stille Regression, keine Balancing-Entscheidung. Fix:
+      Weltbosse bekommen die historisch fein austarierten 5 Hindernisse jetzt als
+      fixen Wert (`WORLD_BOSS_OBSTACLE_COUNT`), unabhängig von der für sie nicht
+      mehr aussagekräftigen normalen Kurve. Verifiziert per echtem Spielstand:
+      Level 21 (Sandkolossos) zeigt jetzt wieder 5 vorplatzierte Hindernis-Äxte
+      (`.target-board__axe-slot`-Elemente gezählt) statt 0, `tsc -b`/`npm run
+      build`/`npx cap sync ios` sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

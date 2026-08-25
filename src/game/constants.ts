@@ -760,27 +760,28 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
   const obstacleSeed = normalizeDeg(curveLevelIndex * 79 + 113 + runSeed * 97 + effectiveVariantSeed * 181);
 
   /*
-   * Weltboss-Level liegen IMMER auf einem Welt-Start-Index (20/40/60/80/100) – bei
-   * genau diesen Level-Indizes liefert `obstacleCountFor()` fast durchgehend einen
-   * hohen Wert (8-10, siehe deren Kommentar zur "Wall"-Stufe bei 20-25 bzw. dem
-   * Kurven-Ende ab Level 61), weil das rein zufällig mit der normalen
-   * Schwierigkeits-Kurve zusammenfällt – NICHT, weil ein Weltboss das bräuchte.
-   * Klaus nach erneutem Testen: "weniger Messer beim Weltboss, es ist zu schwer".
-   * Deshalb ein fester, niedriger Deckel NUR für Weltboss-Level, unabhängig davon,
-   * was die normale Kurve an dieser Stelle sonst liefern würde – die Schwierigkeit
-   * eines Weltboss-Kampfes kommt jetzt (siehe oben) ohnehin fast komplett aus Tempo
-   * und Dreh-Muster, nicht aus einem vollgestellten Brett.
-   *
-   * Deckel nochmal von 4 auf 2 gesenkt (Klaus: "noch etwas leichter, weniger Äxte
-   * vor allem"), dann auf 5 zurückgerudert (Klaus direkt danach: "jetzt ist es
-   * viel zu einfach" – siehe auch Axt-/Tempo-Korrektur oben, alle drei Hebel
-   * standen zusammen zu weit unten).
+   * Weltboss-Level liegen IMMER auf einem Welt-Start-Index (20/40/60/80/100) – das
+   * ist GENAU der Index, an dem `curveLevelIndex` auf 0 zurückspringt (siehe die
+   * geteilte 20-Level-Kurve oben, "Fruchtwelten teilen jetzt EINE Level-Kurve"),
+   * und `obstacleCountFor(0)` ist ABSICHTLICH 0 (Level 1 bleibt der einzige ruhige
+   * Eintritts-Wurf, siehe obstacleBaseFor()). Ein `Math.min(obstacleCountFor(0), 5)`
+   * ergibt dadurch immer 0 statt der gewünschten 5 – ECHTER BUG (Klaus: "die Bosse
+   * haben keine Messer in sich stecken, sind also extrem einfach"), keine
+   * Balancing-Entscheidung: der ursprüngliche Kommentar hier (siehe Git-Historie)
+   * ging noch von der Zeit VOR der geteilten Kurve aus, als `curveLevelIndex` noch
+   * der rohe `levelIndex` war und an einem Welt-Start-Index (20/40/...) tatsächlich
+   * einen hohen Wert lieferte – der `Math.min(..., 5)`-Deckel war damals die
+   * bindende Grenze, seit dem Umbau greift er nie mehr, weil die Basis selbst schon
+   * 0 ist. Fix: Weltbosse bekommen die historisch fein austarierten 5 Hindernisse
+   * jetzt direkt als fixen Wert, unabhängig von der (für sie gar nicht mehr
+   * aussagekräftigen) normalen Kurve.
    */
+  const WORLD_BOSS_OBSTACLE_COUNT = 5;
   const obstacleCount = Math.max(
     0,
     Math.min(
       OBSTACLE_COUNT_CAP,
-      (worldBoss ? Math.min(obstacleCountFor(curveLevelIndex), 5) : obstacleCountFor(curveLevelIndex)) + variantProfile.obstacleDelta,
+      (worldBoss ? WORLD_BOSS_OBSTACLE_COUNT : obstacleCountFor(curveLevelIndex)) + variantProfile.obstacleDelta,
     ),
   );
   const appleCount = appleCountFor(curveLevelIndex);
