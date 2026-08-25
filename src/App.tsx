@@ -157,6 +157,9 @@ function App() {
   const [shopOpen, setShopOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [worldMapOpen, setWorldMapOpen] = useState(false);
+  /** Rewarded-Video-Fenster für den Hauptmenü-Münzbutton (siehe StartScreen.tsx,
+   *  `game.watchAdReward()`) – komplett getrennt vom Game-Over-Rettungsvideo. */
+  const [adRewardOpen, setAdRewardOpen] = useState(false);
   const [screen, setScreen] = useState<Screen>('start');
   /**
    * Pause-Menü während eines laufenden Levels. Der Pause-BUTTON selbst ist nur
@@ -402,7 +405,7 @@ function App() {
   const flightStartTopPx = (boardGeom?.height ?? 0) * 0.92;
   const flightTravelPx = flightEndTopPx - flightStartTopPx;
 
-  const overlayOpen = shopOpen || settingsOpen || worldMapOpen;
+  const overlayOpen = shopOpen || settingsOpen || worldMapOpen || adRewardOpen;
   const world = worldForLevel(game.levelIndex);
 
   if (screen === 'start') {
@@ -418,6 +421,7 @@ function App() {
           axeSkin={game.save.equippedAxeSkin}
           showTutorial={!game.save.tutorialSeen}
           defeatedWorldBosses={game.save.defeatedWorldBosses}
+          onWatchAd={() => setAdRewardOpen(true)}
           onPlay={startPlaying}
           onOpenShop={() => setShopOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
@@ -457,6 +461,17 @@ function App() {
             streak={game.dailyReward.streak}
             reward={game.dailyReward.reward}
             onClaim={game.claimDailyReward}
+          />
+        )}
+
+        {adRewardOpen && (
+          <VideoRescueModal
+            variant="reward"
+            onFinished={() => {
+              game.watchAdReward();
+              setAdRewardOpen(false);
+            }}
+            onCancel={() => setAdRewardOpen(false)}
           />
         )}
       </div>

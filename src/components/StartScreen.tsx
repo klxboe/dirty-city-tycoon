@@ -21,6 +21,10 @@ interface StartScreenProps {
   showTutorial: boolean;
   /** Welt-IDs, deren Weltboss schon (mindestens einmal, dauerhaft) besiegt wurde. */
   defeatedWorldBosses: string[];
+  /** Öffnet den Rewarded-Video-Flow für die Hauptmenü-Münzbelohnung (App.tsx) – gibt
+   *  dieselbe Summe wie die Game-Over-Rettung (VIDEO_RESCUE_COINS), ist aber jederzeit
+   *  vom Hauptmenü aus nutzbar, unabhängig von einem laufenden Versuch. */
+  onWatchAd: () => void;
   onPlay: () => void;
   onOpenShop: () => void;
   onOpenSettings: () => void;
@@ -44,6 +48,7 @@ export function StartScreen({
   axeSkin,
   showTutorial,
   defeatedWorldBosses,
+  onWatchAd,
   onPlay,
   onOpenShop,
   onOpenSettings,
@@ -107,6 +112,19 @@ export function StartScreen({
       </div>
 
       <div className="start__top">
+        {/* Eigener, jederzeit nutzbarer Rewarded-Video-Button GENAU hier bei Highscore/
+            Münzen/XP (Klaus: "im Hauptmenü, einfach da, wo man den Highscore sieht, wo
+            man die Coins sieht, XP sieht und so, da soll's irgendwo so ein Schwebe-
+            Button geben") – komplett unabhängig von der Game-Over-Rettung (`rescueRun`),
+            die unverändert bleibt. Schwebt sanft (siehe `start-ad-button-float`), lädt
+            über denselben Rewarded-Video-Flow wie die Rettung (`VideoRescueModal`,
+            `variant="reward"`), gibt aber nur eine Münz-Belohnung ohne jede Auswirkung
+            auf einen laufenden Versuch. */}
+        <button className="start__ad-button" onClick={onWatchAd} aria-label="Werbevideo für 350 Münzen ansehen">
+          <span className="start__ad-button-icon">📺</span>
+          <span className="start__ad-button-text">+350</span>
+        </button>
+
         <h1 className="start__title" onClick={handleLogoTap}>
           Axe<span className="start__title-accent">Throw</span>
         </h1>

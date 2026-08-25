@@ -9,21 +9,34 @@ interface VideoRescueModalProps {
   /** Wird aufgerufen, sobald die Belohnung wirklich verdient wurde (Nutzer hat das Video zu Ende gesehen). */
   onFinished: () => void;
   onCancel: () => void;
+  /**
+   * 'rescue' (Standard): Game-Over-Rettung, setzt den Lauf im selben Level fort
+   * (`rescueRun()`). 'reward': derselbe Rewarded-Video-Flow, aber vom Hauptmenü aus
+   * angestoßen (`watchAdReward()`) – reine Münz-Belohnung ohne laufenden Versuch,
+   * braucht deshalb andere Texte ("Du machst weiter, wo du aufgehört hast" ergibt
+   * dort keinen Sinn, siehe Klaus: "wenn man verliert, kann man durch ein Video
+   * seinen Fortschritt beibehalten, Punkt aus Ende" – DAS bleibt der 'rescue'-Fall,
+   * unangetastet; 'reward' ist ein komplett separater, zusätzlicher Button im
+   * Hauptmenü bei Highscore/Münzen/XP).
+   */
+  variant?: 'rescue' | 'reward';
 }
 
 type Status = 'loading' | 'success' | 'error';
 
 /**
- * Zeigt ein echtes Rewarded Video (Google AdMob, siehe `game/ads.ts`) für die
- * einmalige Game-Over-Rettung (`rescueRun()` in useAxeGame.ts). Ersetzt die frühere
- * simulierte Zähler-Anzeige – siehe CLAUDE.md für die Historie dieses Umbaus.
+ * Zeigt ein echtes Rewarded Video (Google AdMob, siehe `game/ads.ts`) – entweder für
+ * die einmalige Game-Over-Rettung (`rescueRun()` in useAxeGame.ts, `variant="rescue"`)
+ * oder für die jederzeit nutzbare Münz-Belohnung im Hauptmenü (`watchAdReward()`,
+ * `variant="reward"`). Ersetzt die frühere simulierte Zähler-Anzeige – siehe
+ * CLAUDE.md für die Historie dieses Umbaus.
  *
  * Drei Zustände statt nur "läuft/fertig": `showRewardedAd()` kann auch fehlschlagen
  * (kein Fill, kein Internet, Ladefehler) – dafür ein eigener Fehler-Zustand mit
  * "Erneut versuchen" statt die App in einem endlosen Lade-Zustand hängen zu lassen
  * (siehe App-Store-Audit 2026-08-22, Abschnitt "Offline/Netzwerkverhalten").
  */
-export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps) {
+export function VideoRescueModal({ onFinished, onCancel, variant = 'rescue' }: VideoRescueModalProps) {
   const [status, setStatus] = useState<Status>('loading');
 
   useEffect(() => {
@@ -53,7 +66,9 @@ export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps
         {status === 'loading' && (
           <>
             <div className="modal-card__title">Werbevideo läuft …</div>
-            <div className="modal-card__body">Danke fürs Anschauen – gleich geht’s weiter.</div>
+            <div className="modal-card__body">
+              {variant === 'rescue' ? 'Danke fürs Anschauen – gleich geht’s weiter.' : 'Danke fürs Anschauen!'}
+            </div>
             <button className="modal-card__button modal-card__button--secondary" onClick={onCancel}>
               Abbrechen
             </button>
@@ -64,10 +79,12 @@ export function VideoRescueModal({ onFinished, onCancel }: VideoRescueModalProps
           <>
             <div className="modal-card__title">Belohnung erhalten!</div>
             <div className="modal-card__body">
-              +{VIDEO_RESCUE_COINS} Münzen! Du machst genau da weiter, wo du aufgehört hast.
+              {variant === 'rescue'
+                ? `+${VIDEO_RESCUE_COINS} Münzen! Du machst genau da weiter, wo du aufgehört hast.`
+                : `+${VIDEO_RESCUE_COINS} Münzen gutgeschrieben!`}
             </div>
             <button className="modal-card__button modal-card__button--ocean" onClick={onFinished}>
-              Weiter geht's
+              {variant === 'rescue' ? "Weiter geht's" : 'Super!'}
             </button>
           </>
         )}

@@ -402,6 +402,25 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   }, []);
 
   /**
+   * Werbevideo IM HAUPTMENÜ, unabhängig vom Game-Over-Rettungsvideo (`rescueRun`
+   * oben): Klaus dazu ausdrücklich "wenn man verliert, kann man durch ein Video
+   * seinen Fortschritt beibehalten, Punkt aus Ende" – DAS bleibt unangetastet.
+   * Zusätzlich soll es im Hauptmenü (bei Highscore/Münzen/XP) einen eigenen,
+   * jederzeit nutzbaren Button geben, der GENAU dieselbe Münzsumme
+   * (`VIDEO_RESCUE_COINS`) fürs Anschauen gibt – aber OHNE jede Auswirkung auf
+   * `currentLevel`/`phase`/`rescueUsedThisRun`, weil es hier keinen Lauf zu retten
+   * gibt, nur eine Belohnung. Bewusst ohne Nutzungslimit (keine Vorgabe dazu) –
+   * beliebig oft vom Startbildschirm aus nutzbar.
+   */
+  const watchAdReward = useCallback(() => {
+    setState((prev) => {
+      const nextSave: SaveData = { ...prev.save, coins: prev.save.coins + VIDEO_RESCUE_COINS };
+      saveSave(nextSave);
+      return { ...prev, save: nextSave };
+    });
+  }, []);
+
+  /**
    * Nächstes Level. Bewusst OHNE Obergrenze: nach Level 100 (LEVEL_COUNT) läuft es
    * einfach als Endlos-Modus weiter – `levelConfigAt()` berechnet jede weitere
    * Levelnummer live, siehe constants.ts.
@@ -647,6 +666,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
     claimDailyReward,
     markTutorialSeen,
     rescueRun,
+    watchAdReward,
   };
 }
 
