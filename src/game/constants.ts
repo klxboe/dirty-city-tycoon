@@ -897,8 +897,12 @@ export const XP_PER_LEVEL = 2;
  * 20) jetzt 160 statt 40 XP, also das Vierfache an geschafften Leveln irgendwo im
  * Spiel, bevor sie erreichbar ist. Multipliziert NUR die Schwelle, nicht die pro Level
  * gutgeschriebene XP-Zahl selbst.
+ *
+ * Nochmal etwas angehoben (Klaus: "die setz alle etwas rauf", im selben Zug wie die
+ * Weltkarte auf reine XP-Zahlen statt Level-Bereichen umgestellt wurde, siehe
+ * WorldMap.tsx): 4->6. Wüste braucht dadurch jetzt 240 statt 160 XP.
  */
-export const WORLD_UNLOCK_XP_MULTIPLIER = 4;
+export const WORLD_UNLOCK_XP_MULTIPLIER = 6;
 /** Umrechnung beim Migrieren alter Spielstände (dort waren Äpfel die Währung). */
 export const COINS_PER_LEGACY_APPLE = 5;
 

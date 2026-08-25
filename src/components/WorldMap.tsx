@@ -245,7 +245,12 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
     return {
       key: world.id,
       name: world.name,
-      sublabel: `Level ${world.startLevelIndex + 1}–${world.startLevelIndex + WORLDS_LEVEL_COUNT}`,
+      // Klaus: "bei den Welten (1-20 Level) weg, es soll nur die benötigten XP dort
+      // stehen" – der Level-Bereich ("Level 1-20") ist raus, alle Knoten (gesperrt
+      // UND freigeschaltet) zeigen jetzt einheitlich die XP-Schwelle dieser Welt statt
+      // zweier unterschiedlicher Textformen (siehe frühere Fassung mit "Ab Level X
+      // (durch XP)" nur für gesperrte Welten).
+      sublabel: `${threshold} XP`,
       accent: world.colors.accent,
       bgTop: world.colors.bgTop,
       icon: world.decor,
@@ -534,17 +539,15 @@ export function WorldMap({ bestLevel, xp, currentLevelIndex, defeatedWorldBosses
                   <div className={`world-node__label world-node__label--${labelSide}`}>
                     <span className="world-node__name">{node.name}</span>
                     {/* Bei einem freigeschalteten Weltboss-Tor steht hier NUR der Bossname
-                        statt des Levelbereichs (Klaus: "da soll gar kein Level zu sehen
+                        statt eines Levelbereichs (Klaus: "da soll gar kein Level zu sehen
                         sein, sondern nur 'Wüsten-Boss' oder sowas") – ein Weltboss hat
-                        bewusst keine sichtbare Levelnummer, siehe HUD/StartScreen. Der
-                        Freischalt-Hinweis für noch gesperrte Welten ("Ab Level X") bleibt
-                        unverändert, der ist reine Fortschritts-Info, kein "aktuelles Level". */}
+                        bewusst keine sichtbare Levelnummer, siehe HUD/StartScreen. Sonst
+                        (gesperrt ODER freigeschaltet ohne Boss) zeigt `node.sublabel`
+                        einheitlich die XP-Schwelle dieser Welt, siehe Kommentar oben. */}
                     {node.unlocked && node.bossName ? (
                       <span className="world-node__boss-name">⚔ {node.bossName}</span>
                     ) : (
-                      <span className="world-node__sub">
-                        {node.unlocked ? node.sublabel : `Ab Level ${node.startLevelIndex + 1} (durch XP)`}
-                      </span>
+                      <span className="world-node__sub">{node.sublabel}</span>
                     )}
                   </div>
                 </div>
