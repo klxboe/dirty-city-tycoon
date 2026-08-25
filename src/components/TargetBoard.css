@@ -19,8 +19,8 @@
  */
 .target-board {
   position: relative;
-  width: 190px;
-  height: 190px;
+  width: 165px;
+  height: 165px;
   border-radius: 50%;
   background: var(--board-rim);
   /* Die beiden inset-Schatten geben dem Rand ein leichtes Relief (heller Kamm oben

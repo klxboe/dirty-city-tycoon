@@ -101,8 +101,12 @@ export const GAME_OVER_DELAY_MS = 650;
  * gleich – geworfene UND vorplatzierte Hindernis-Äxte laufen über denselben Aufruf von
  * `collidesWithStuckAxe()` mit demselben Wert (siehe Kommentar oben), es gab dort nie
  * eine Unterscheidung.
+ *
+ * Nochmal auf 10° gesenkt (Klaus: "Hitbox etwas cleaner und kleiner", im selben Zug
+ * wie die erneute Brett-Verkleinerung in TargetBoard.tsx – die Axt-BILDGRÖSSE bleibt
+ * dabei bewusst unverändert, nur die reine Trefferzone wird präziser).
  */
-export const COLLISION_ANGLE_TOLERANCE_DEG = 12;
+export const COLLISION_ANGLE_TOLERANCE_DEG = 10;
 
 /**
  * Wie nah eine Axt an einer Münze landen muss, damit sie abfällt (Grad). War 24°,

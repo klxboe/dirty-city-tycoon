@@ -156,10 +156,18 @@ function currentSpeed(baseSpeed: number, pattern: SpinPattern, elapsed: number):
  * verstärken sich gegenseitig). Skalierungsfaktor (190/208 ≈ 0,91) 1:1 auf alle
  * übrigen Radien unten UND die `.target-board`-CSS-Größen (`TargetBoard.css`)
  * angewendet, damit nichts auseinanderläuft.
+ *
+ * Nochmal verkleinert auf 165/76 (Klaus: "mach das Brett kleiner, die Äxte lass so
+ * groß wie jetzt") – Skalierungsfaktor (165/190 ≈ 0,868) wieder 1:1 auf Apfel-Radien/
+ * -Stiellänge unten UND `.target-board`-CSS-Größe angewendet. `STUCK_AXE_SIZE`/
+ * `FLIGHT_AXE_SIZE` (App.tsx) BEWUSST NICHT mitskaliert – die Äxte sollen dieselbe
+ * Bildgröße behalten wie vorher, nur enger beieinander auf dem kleineren Brett
+ * stecken. Siehe `COLLISION_ANGLE_TOLERANCE_DEG` (constants.ts) für den dazu
+ * passend verkleinerten Kollisions-Winkel.
  */
-export const BOARD_SIZE = 190;
+export const BOARD_SIZE = 165;
 /** Radius, auf dem die Äxte im Holz stecken – etwas INNERHALB des Rands, damit sie im Holz sitzen. */
-export const BOARD_RADIUS = 88;
+export const BOARD_RADIUS = 76;
 /**
  * Steck-Radius als Anteil des Scheiben-Radius (120 von 130).
  *
@@ -206,9 +214,9 @@ const STUCK_AXE_SIZE = 33;
  */
 const STUCK_AXE_RADIUS = BOARD_RADIUS - AXE_EMBED_DEPTH_PX;
 /** Bewusst GRÖSSER als der Board-Radius: die Äpfel hängen außen am Rand, nicht auf dem Holz. */
-const APPLE_RADIUS = 111;
-const APPLE_STEM_LENGTH = 15;
-const APPLE_STEM_RADIUS = 93 + APPLE_STEM_LENGTH / 2;
+const APPLE_RADIUS = 96;
+const APPLE_STEM_LENGTH = 13;
+const APPLE_STEM_RADIUS = 81 + APPLE_STEM_LENGTH / 2;
 
 /**
  * Die Zielscheibe dreht sich per eigenem requestAnimationFrame-Loop, der DIREKT das
