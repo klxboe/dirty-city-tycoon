@@ -443,9 +443,6 @@ function appleCountFor(levelIndex: number): number {
  */
 function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
   if (appleCount <= 0) return undefined;
-  // In der Heldenstadt-Welt gibt es keine goldenen Äpfel – dort übernimmt die
-  // Sammelfigur (figurineIndexFor) dieselbe Rolle als seltenes Extra-Fundstück.
-  if (levelIndex >= HERO_WORLD_START) return undefined;
   const hasGolden = (levelIndex * 131 + 41) % 15 === 0;
   if (!hasGolden) return undefined;
   return (levelIndex * 3) % appleCount;
@@ -532,7 +529,11 @@ export function bossFruitForLevel(levelIndex: number, runSeed = 0): BossFruit | 
     const heroBossNumber = Math.floor((levelIndex - HERO_WORLD_START) / BOSS_EVERY);
     return HERO_BOSSES[(heroBossNumber + runSeed) % HERO_BOSSES.length];
   }
-  const bossNumber = Math.floor(levelIndex / BOSS_EVERY); // 0-basiert
+  // Klaus: "Vulkan Level 1 ist genau dasselbe wie Wald Level 1, es ist alles gleich,
+  // nur der Hintergrund ändert sich" – dieselbe lokale Levelnummer (Modulo
+  // WORLDS_LEVEL_COUNT) zeigt in JEDER Fruchtwelt dieselbe Boss-Frucht, statt über
+  // die ganze Kampagne hinweg immer weiterzuzählen.
+  const bossNumber = Math.floor((levelIndex % WORLDS_LEVEL_COUNT) / BOSS_EVERY); // 0-basiert
   return BOSS_FRUITS[(bossNumber + runSeed) % BOSS_FRUITS.length];
 }
 
@@ -615,17 +616,23 @@ function levelVariantProfile(variantSeed: number): LevelVariantProfile {
 }
 
 /**
- * Level-Index des ERSTEN Weltbosses (Sandkolossos, Wüste) – dient als Tempo-
- * Referenz für ALLE Weltbosse (siehe `speedReferenceLevelIndex` in `generateLevel()`
- * unten), damit sie unabhängig von ihrer tatsächlichen Levelnummer alle gleich
- * schnell sind. Bewusst hier als eigene Konstante statt `WORLDS[1].startLevelIndex`
- * zu importieren – vermeidet eine Abhängigkeit auf die genaue WORLDS-Reihenfolge in
- * worlds.ts, der Wert 20 ist ohnehin an mehreren Stellen in diesem Projekt als
- * "erster Weltboss" dokumentiert (siehe CLAUDE.md).
+ * GROSSER UMBAU (Klaus: "bei Vulkan Level 1 ist genau das Selbe wie Wald Level 1,
+ * es ist alles gleich, nur der Hintergrund ändert sich"): jede Frucht-Welt (Wald,
+ * Wüste, Eis, Vulkan, Kosmos) spielt sich ab jetzt IDENTISCH – dieselbe Achsen-/
+ * Hindernis-/Apfelzahl, dasselbe Tempo, dasselbe Dreh-Muster, dieselbe Boss-Frucht-
+ * Rotation, dieselben Apfel-/Hindernis-Winkel (vor runSeed/variantSeed) für dieselbe
+ * LOKALE Levelnummer. `curveLevelIndex` (levelIndex % WORLDS_LEVEL_COUNT, immer 0-19)
+ * ersetzt deshalb den rohen `levelIndex` überall dort, wo es um die eigentliche
+ * Schwierigkeit/das Layout geht – nur WELT-IDENTITÄT (`worldForLevel`/
+ * `isWorldBossLevel`, Skin/Name/Hintergrund) UND die Heldenstadt-Sonderrolle (eigene
+ * Boss-Rotation, Sammelfiguren statt goldener Äpfel, siehe `HERO_WORLD_START`-Checks)
+ * hängen weiterhin am ROHEN, absoluten `levelIndex`. Praktischer Nebeneffekt: alle
+ * Weltboss-Level (Index 20/40/60/80/100) haben jetzt automatisch dasselbe Tempo-
+ * Fundament, weil sie alle auf `curveLevelIndex = 0` landen – die frühere eigene
+ * Referenz-Konstante dafür wird dadurch überflüssig.
  */
-const WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX = 20;
-
 function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, defeatedWorldBosses: string[] = []): LevelConfig {
+  const curveLevelIndex = levelIndex % WORLDS_LEVEL_COUNT;
   const boss = bossFruitForLevel(levelIndex, runSeed);
   // Weltboss: das "Tor" am ersten Level jeder Welt (außer Wald/Tutorial-Level 1,
   // siehe isWorldBossLevel()) – eine deutlich größere Prüfung als ein normaler
@@ -702,7 +709,7 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
   // fein austariert ("Zurückgerudert"-Kommentare oben), ein zusätzlicher struktureller
   // Ausschlag hätte diese Kalibrierung wieder durcheinandergebracht.
   const variantProfile =
-    levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX && !boss && !worldBoss
+    curveLevelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX && !boss && !worldBoss
       ? levelVariantProfile(variantSeed)
       : levelVariantProfile(0);
   // Weltboss-Axt-Deckel weiter auf 10 gesenkt (Klaus: "Weltbosse leichter machen,
@@ -711,28 +718,17 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
   // bleiben unangetastet, damit klar bleibt, welcher Hebel welchen Effekt hatte.
   const axeCount = Math.max(
     1,
-    (worldBoss ? Math.min(axeCountFor(levelIndex), 10) : axeCountFor(levelIndex)) + variantProfile.axeDelta,
+    (worldBoss ? Math.min(axeCountFor(curveLevelIndex), 10) : axeCountFor(curveLevelIndex)) + variantProfile.axeDelta,
   );
   const speedBonus = worldBoss ? 30 : boss ? 44 : 0; // Fruchtboss-Bonus 38->44 (Klaus: "Fruchtbosse ein Stück schwerer")
-  /*
-   * GEFUNDENER GRUND für "die späteren Weltbosse sind viel härter als der erste"
-   * (Klaus: "alle Weltbosse gleich schwer machen, aber anders"): Axt-/Hindernis-Zahl
-   * sind für JEDEN Weltboss schon lange gedeckelt (10/5, siehe oben) und damit
-   * ohnehin schon für alle identisch – aber das TEMPO skaliert weiterhin mit der
-   * tatsächlichen `levelIndex` (20/40/60/80/100), und bei `SPEED_STEP_PER_LEVEL`
-   * (1,9°/Sek. pro Level) macht der Abstand von Level 20 zu Level 100 satte 152°/Sek.
-   * aus – der letzte Weltboss war dadurch massiv schneller als der erste, obwohl die
-   * "Wall"-Werte für Äxte/Hindernisse längst identisch waren. Fix: für Weltboss-Level
-   * wird beim Tempo NICHT die echte `levelIndex` verwendet, sondern immer der erste
-   * Weltboss-Level-Index (20, Wüste) – alle fünf Weltbosse bekommen dadurch exakt
-   * dasselbe Tempo-Fundament. "Anders" (wie von Klaus gewünscht) kommt weiterhin über
-   * unterschiedliche Bild-Skins, Namen und die pro Kampf laufende Phasen-Eskalation.
-   */
-  const speedReferenceLevelIndex = worldBoss ? WORLD_BOSS_SPEED_REFERENCE_LEVEL_INDEX : levelIndex;
+  // Weltboss-Tempo war früher extra auf den ERSTEN Weltboss-Index (20) fixiert, damit
+  // alle fünf Weltbosse gleich schnell sind (sonst hätte SPEED_STEP_PER_LEVEL die
+  // späteren massiv schneller gemacht). Seit `curveLevelIndex` alles ersetzt, ist das
+  // automatisch der Fall: JEDER Weltboss liegt auf `curveLevelIndex === 0`.
   const boardSpeedDegPerSec = Math.round(
     Math.min(
       MAX_SPEED_DEG_PER_SEC,
-      (BASE_SPEED_DEG_PER_SEC + speedReferenceLevelIndex * SPEED_STEP_PER_LEVEL + speedBonus) * variantProfile.speedFactor,
+      (BASE_SPEED_DEG_PER_SEC + curveLevelIndex * SPEED_STEP_PER_LEVEL + speedBonus) * variantProfile.speedFactor,
     ),
   );
 
@@ -741,12 +737,14 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
   // Faktoren (53, 97) verschoben, damit eine neue Runde eine spürbar andere Anordnung
   // bekommt statt nur alle Winkel um denselben Betrag zu drehen (das sähe bei gleicher
   // Apfel-/Hindernis-ZAHL optisch identisch aus, nur "gedreht"). `variantSeed` schiebt
-  // NUR für Level 1-30 zusätzlich mit EIGENEN, wieder teilerfremden Faktoren (151, 181) –
-  // dieselbe Levelnummer zeigt dadurch eine von 5 Anordnungen, zufällig gewählt bei
-  // jedem Levelstart (siehe Kommentar bei `LEVEL_VARIANT_COUNT` oben).
-  const effectiveVariantSeed = levelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX ? variantSeed : 0;
-  const appleSeed = normalizeDeg(levelIndex * 47 + 31 + runSeed * 53 + effectiveVariantSeed * 151);
-  const obstacleSeed = normalizeDeg(levelIndex * 79 + 113 + runSeed * 97 + effectiveVariantSeed * 181);
+  // zusätzlich mit EIGENEN, wieder teilerfremden Faktoren (151, 181) – dieselbe lokale
+  // Levelnummer zeigt dadurch eine von 5 Anordnungen, zufällig gewählt bei jedem
+  // Levelstart (siehe Kommentar bei `LEVEL_VARIANT_COUNT` oben). Alles basiert jetzt auf
+  // `curveLevelIndex` statt dem rohen `levelIndex`, damit dieselbe lokale Levelnummer in
+  // jeder Fruchtwelt (vor runSeed/variantSeed) exakt dieselbe Anordnung zeigt.
+  const effectiveVariantSeed = curveLevelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX ? variantSeed : 0;
+  const appleSeed = normalizeDeg(curveLevelIndex * 47 + 31 + runSeed * 53 + effectiveVariantSeed * 151);
+  const obstacleSeed = normalizeDeg(curveLevelIndex * 79 + 113 + runSeed * 97 + effectiveVariantSeed * 181);
 
   /*
    * Weltboss-Level liegen IMMER auf einem Welt-Start-Index (20/40/60/80/100) – bei
@@ -769,21 +767,23 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
     0,
     Math.min(
       OBSTACLE_COUNT_CAP,
-      (worldBoss ? Math.min(obstacleCountFor(levelIndex), 5) : obstacleCountFor(levelIndex)) + variantProfile.obstacleDelta,
+      (worldBoss ? Math.min(obstacleCountFor(curveLevelIndex), 5) : obstacleCountFor(curveLevelIndex)) + variantProfile.obstacleDelta,
     ),
   );
-  const appleCount = appleCountFor(levelIndex);
+  const appleCount = appleCountFor(curveLevelIndex);
   const preplacedAxeAngles = obstacleCount > 0 ? spreadAngles(obstacleCount, obstacleSeed) : undefined;
 
   return {
     axeCount,
     boardSpeedDegPerSec,
-    spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : (variantProfile.spinPatternOverride ?? spinPatternFor(levelIndex)),
+    spinPattern: worldBoss ? 'reverse' : boss ? 'pulse' : (variantProfile.spinPatternOverride ?? spinPatternFor(curveLevelIndex)),
     appleAngles: resolveAppleAngles(spreadAngles(appleCount, appleSeed), preplacedAxeAngles),
     preplacedAxeAngles,
     bossFruitId: boss?.id,
     worldBossId: worldBoss?.id,
-    goldenAppleIndex: goldenAppleIndexFor(levelIndex, appleCount),
+    // Heldenstadt-Ausschluss (Sammelfigur statt goldenem Apfel) bleibt bewusst am
+    // ROHEN levelIndex – das ist eine Welt-Identitäts-Frage, keine Kurven-Frage.
+    goldenAppleIndex: levelIndex >= HERO_WORLD_START ? undefined : goldenAppleIndexFor(curveLevelIndex, appleCount),
     figurineIndex: figurineIndexFor(levelIndex, appleCount),
   };
 }

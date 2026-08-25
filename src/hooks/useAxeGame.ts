@@ -259,7 +259,10 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         gems: prev.save.gems + prev.reward.gems,
         xp: prev.save.xp + prev.reward.xp,
         figurines: prev.save.figurines + prev.reward.figurines,
-        bestLevel: Math.max(prev.save.bestLevel, prev.levelIndex + 2),
+        // Klaus: "wenn ich den Boss besiege, steigt nicht mein Highscore, der hat mit
+        // dem Highscore absolut nichts zu tun" – ein Weltboss-Sieg lässt `bestLevel`
+        // deshalb bewusst unangetastet, nur normale Level zählen dafür.
+        bestLevel: prev.reward.worldBossId ? prev.save.bestLevel : Math.max(prev.save.bestLevel, prev.levelIndex + 2),
         streak,
         ownedSkins: prev.reward.unlockedAxeSkinId
           ? [...prev.save.ownedSkins, prev.reward.unlockedAxeSkinId]
