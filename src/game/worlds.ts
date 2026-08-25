@@ -176,6 +176,23 @@ export function worldForLevel(levelIndex: number): World {
   return WORLDS[index];
 }
 
+/**
+ * Level-Nummer INNERHALB der eigenen Welt (1-basiert) – für die ANZEIGE. Klaus: "wenn
+ * man den Boss schafft, soll man nicht direkt zum nächsten Level kommen, sondern
+ * Gratulation, und ab dann Level eins, aber mit dem neuen Hintergrund" – nach einem
+ * Weltboss-Sieg soll sich die neue Welt wie ein frischer Start anfühlen ("Level 1"),
+ * nicht wie eine bloße Fortsetzung eines global weiterlaufenden Zählers ("Level 22").
+ * WICHTIG: nur für die Anzeige (HUD, Level-Intro-Toast, Ergebnis-/Game-Over-Fenster,
+ * Startbildschirm-Button) – die interne Schwierigkeits-Formel (`generateLevel()` in
+ * constants.ts), `bestLevel`/Highscore-Vergleiche und alle sonstige Spiellogik bleiben
+ * bewusst am GLOBALEN, absoluten `levelIndex` hängen. Ein einzelner Highscore über
+ * die ganze Kampagne hinweg ergibt nur mit einer absoluten Zahl Sinn – nur die
+ * "welchen Level spiele ich gerade"-Anzeige soll pro Welt neu bei 1 anfangen.
+ */
+export function displayLevelFor(levelIndex: number): number {
+  return levelIndex - worldForLevel(levelIndex).startLevelIndex + 1;
+}
+
 /** Die Welt-Farben als Inline-Style-Objekt (CSS-Variablen) für die Bühne. */
 export function worldStyleVars(levelIndex: number): Record<string, string> {
   const w = worldForLevel(levelIndex).colors;

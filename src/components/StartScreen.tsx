@@ -4,7 +4,7 @@ import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { BOSS_EVERY } from '../game/constants';
-import { isWorldBossLevel, worldForLevel } from '../game/worlds';
+import { displayLevelFor, isWorldBossLevel, worldForLevel } from '../game/worlds';
 import './StartScreen.css';
 
 interface StartScreenProps {
@@ -199,7 +199,16 @@ export function StartScreen({
 
       <div className="start__buttons">
         <button className="start__button start__button--main" onClick={isBossGate ? onOpenWorldMap : onPlay}>
-          {isBossGate ? 'Weiter zur Weltkarte' : continueLevel > 1 ? `Weiter – Level ${continueLevel}` : 'Los geht’s'}
+          {/* Zeigt die welt-relative Level-Nummer (siehe displayLevelFor in worlds.ts) –
+              "Weiter – Level 1" nach einem Weltboss-Sieg statt eines global weiter-
+              laufenden Zählers wie "Level 22". Der ">1"-Check darunter bleibt bewusst
+              am ABSOLUTEN continueLevel, damit "Los geht's" wirklich nur beim
+              allerersten Level der gesamten Kampagne erscheint. */}
+          {isBossGate
+            ? 'Weiter zur Weltkarte'
+            : continueLevel > 1
+              ? `Weiter – Level ${displayLevelFor(continueLevel - 1)}`
+              : 'Los geht’s'}
         </button>
         <button className="start__button start__button--ghost" onClick={onOpenWorldMap}>
           Weltkarte

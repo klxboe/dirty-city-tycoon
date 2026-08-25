@@ -16,7 +16,7 @@ import { WorldHorizon } from './components/WorldHorizon';
 import { WorldMap } from './components/WorldMap';
 import { useAxeGame } from './hooks/useAxeGame';
 import { AXE_EMBED_DEPTH_PX, FLIGHT_DURATION_MS, GAME_OVER_DELAY_MS, LEVEL_COMPLETE_DELAY_MS } from './game/constants';
-import { worldForLevel, worldStyleVars } from './game/worlds';
+import { displayLevelFor, worldForLevel, worldStyleVars } from './game/worlds';
 import { EASTER_EGG_SKINS } from './game/shop';
 import { AXE_IMAGES } from './game/axeShapes';
 import { BOARD_IMAGES } from './game/boardImages';
@@ -502,7 +502,7 @@ function App() {
   return (
     <div className="app">
       <HUD
-        level={game.levelIndex + 1}
+        level={displayLevelFor(game.levelIndex)}
         levelInBlock={game.levelIndex - game.blockStart}
         coins={game.save.coins}
         coinsFlash={coinsFlash}
@@ -686,7 +686,7 @@ function App() {
             wechseln, ohne dass klar ist, DASS und WOHIN man gerade gesprungen ist. */}
         {levelIntroVisible && (
           <div className="stage__level-intro">
-            <span>Level {game.levelIndex + 1}</span>
+            <span>Level {displayLevelFor(game.levelIndex)}</span>
           </div>
         )}
       </div>
@@ -706,7 +706,7 @@ function App() {
 
       {!overlayOpen && modalVisible && game.phase === 'levelComplete' && game.reward && (
         <LevelCompleteModal
-          level={game.levelIndex + 1}
+          level={displayLevelFor(game.levelIndex)}
           applesCollected={game.applesCollectedThisRun}
           appleCount={game.appleCount}
           reward={game.reward}
@@ -736,7 +736,7 @@ function App() {
 
       {!overlayOpen && modalVisible && game.phase === 'gameOver' && !videoRescueOpen && (
         <GameOverModal
-          level={game.levelIndex + 1}
+          level={displayLevelFor(game.levelIndex)}
           bestLevel={game.save.bestLevel}
           coinsLost={game.applesCollectedThisRun}
           totalCoins={game.save.coins}
