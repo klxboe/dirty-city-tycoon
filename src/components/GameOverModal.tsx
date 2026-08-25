@@ -109,9 +109,15 @@ export function GameOverModal({
         </div>
 
         {rescueAvailable && (
-          <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
-            📺 Fortschritt + {VIDEO_RESCUE_COINS} Münzen
-          </button>
+          <div className="gameover-video-cta">
+            {/* Die Münzzahl steht nicht mehr im Button-Text (Klaus: "statt Fortschritt+350
+                nur Fortschritt"), sondern als eigenes, leicht schwebendes Abzeichen darüber
+                ("350 soll im Menü irgendwo so schweben"). */}
+            <span className="gameover-video-cta__badge">+{VIDEO_RESCUE_COINS}</span>
+            <button className="modal-card__button modal-card__button--ocean" onClick={onWatchVideo}>
+              📺 Fortschritt
+            </button>
+          </div>
         )}
         <button className="modal-card__button modal-card__button--secondary" onClick={onPlayAgain}>
           Nochmal spielen
