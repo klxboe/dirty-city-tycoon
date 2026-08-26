@@ -438,13 +438,13 @@ function appleCountFor(levelIndex: number): number {
  * berechnet statt mit `Math.random()`, damit ein Level bei jedem Versuch (auch nach
  * einem Game Over) denselben goldenen Apfel an derselben Stelle hat – passend zum Rest
  * der Level-Generierung, die komplett reine Funktionen der Levelnummer sind.
- * Trifft auf ungefähr jedes 12. Level zu (~8%, war jedes 15./~7% – Klaus: "ein
- * bisschen öfter Diamanten, nicht zu viel", also nur ein kleiner Schritt nach oben,
- * keine Rückkehr zum alten 7./~14%-Takt).
+ * Trifft auf ungefähr jedes 15. Level zu (~6,7%, war jedes 12./~8% – Klaus: "mach
+ * Diamanten etwas seltener", ein moderater Schritt zurück Richtung des früheren
+ * ~7%-Takts, keine Rückkehr zum alten 7./~14%-Takt).
  */
 function goldenAppleIndexFor(levelIndex: number, appleCount: number): number | undefined {
   if (appleCount <= 0) return undefined;
-  const hasGolden = (levelIndex * 131 + 41) % 12 === 0;
+  const hasGolden = (levelIndex * 131 + 41) % 15 === 0;
   if (!hasGolden) return undefined;
   return (levelIndex * 3) % appleCount;
 }
@@ -778,27 +778,29 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
    */
   const WORLD_BOSS_OBSTACLE_COUNT = 5;
   /*
-   * Klaus: "bei allen Bossen 5 mehr Messer die man treffen muss" – EIN zusätzlicher
-   * Bonus, der für BEIDE Boss-Arten gilt (Fruchtboss UND Weltboss), oben auf die
-   * jeweils schon vorhandene Basis (Weltboss: der feste Wert oben; Fruchtboss: die
-   * normale Kurve, `obstacleCountFor(curveLevelIndex)`, die bei Fruchtboss-Indizes
-   * – 4/9/14/19 innerhalb einer Welt, nie 0 – nicht vom Weltboss-Bug oben betroffen
-   * ist). Der normale `OBSTACLE_COUNT_CAP` (10) ist als GLOBALE Sicherheitsgrenze
-   * für die Kurven-Schwankung gedacht und bliebe sonst der bindende Deckel, sobald
-   * eine Basis + 5 darüber hinausschießt – Boss-Level bekommen deshalb einen
-   * eigenen, höheren Deckel, der NUR für sie gilt (normale Level bleiben
+   * Klaus: "bei allen Bossen 5 mehr Messer die man treffen muss", direkt danach:
+   * "die Fruchtbosse 3 Messer weniger" – der Bonus gilt weiterhin für BEIDE
+   * Boss-Arten, aber nicht mehr in gleicher Höhe: Weltbosse bleiben bei +5,
+   * Fruchtbosse bekommen nur noch +2 (5-3). Oben auf die jeweils schon
+   * vorhandene Basis (Weltboss: der feste Wert oben; Fruchtboss: die normale
+   * Kurve, `obstacleCountFor(curveLevelIndex)`, die bei Fruchtboss-Indizes –
+   * 4/9/14/19 innerhalb einer Welt, nie 0 – nicht vom Weltboss-Bug oben
+   * betroffen ist). Der normale `OBSTACLE_COUNT_CAP` (10) ist als GLOBALE
+   * Sicherheitsgrenze für die Kurven-Schwankung gedacht und bliebe sonst der
+   * bindende Deckel, sobald eine Basis + Bonus darüber hinausschießt –
+   * Boss-Level bekommen deshalb einen eigenen, höheren Deckel (+5, der
+   * größtmögliche Bonus), der NUR für sie gilt (normale Level bleiben
    * unangetastet bei 10).
    */
-  const BOSS_OBSTACLE_BONUS = 5;
-  const isAnyBoss = Boolean(worldBoss) || Boolean(boss);
-  const obstacleCap = isAnyBoss ? OBSTACLE_COUNT_CAP + BOSS_OBSTACLE_BONUS : OBSTACLE_COUNT_CAP;
+  const WORLD_BOSS_OBSTACLE_BONUS = 5;
+  const FRUIT_BOSS_OBSTACLE_BONUS = 2;
+  const obstacleBonus = worldBoss ? WORLD_BOSS_OBSTACLE_BONUS : boss ? FRUIT_BOSS_OBSTACLE_BONUS : 0;
+  const obstacleCap = worldBoss || boss ? OBSTACLE_COUNT_CAP + WORLD_BOSS_OBSTACLE_BONUS : OBSTACLE_COUNT_CAP;
   const obstacleCount = Math.max(
     0,
     Math.min(
       obstacleCap,
-      (worldBoss ? WORLD_BOSS_OBSTACLE_COUNT : obstacleCountFor(curveLevelIndex)) +
-        (isAnyBoss ? BOSS_OBSTACLE_BONUS : 0) +
-        variantProfile.obstacleDelta,
+      (worldBoss ? WORLD_BOSS_OBSTACLE_COUNT : obstacleCountFor(curveLevelIndex)) + obstacleBonus + variantProfile.obstacleDelta,
     ),
   );
   const appleCount = appleCountFor(curveLevelIndex);

@@ -3699,6 +3699,25 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       zieht exakt 15 Diamanten ab (500→485) und rüstet sie aus, Extras-Reiter
       zeigt nur noch das Oster-Ei. `tsc -b`/`npm run build`/`npx cap sync ios`
       sauber, keine Konsolenfehler.
+- [x] **Diamanten etwas seltener, Fruchtbosse 3 Hindernisse weniger (2026-08-25).**
+      Zwei kleine Balancing-Korrekturen direkt nacheinander:
+      - **Diamanten etwas seltener:** Klaus: "mach diamanten etwas seltener" –
+        `goldenAppleIndexFor()`-Modulo von 12 auf 15 angehoben (~8% -> ~6,7%), ein
+        moderater Schritt zurück Richtung des früheren ~7%-Takts (bewusst nicht
+        zurück zum alten 7er-Modulo/~14%).
+      - **Fruchtbosse 3 Hindernis-Äxte weniger:** Klaus, direkt nach dem "5 mehr
+        Messer bei allen Bossen"-Wunsch: "die Fruchtbosse 3 Messer weniger". Der
+        gemeinsame `BOSS_OBSTACLE_BONUS` in `generateLevel()` (constants.ts) ist
+        jetzt zwei getrennte Konstanten: `WORLD_BOSS_OBSTACLE_BONUS` bleibt bei 5,
+        `FRUIT_BOSS_OBSTACLE_BONUS` sinkt auf 2 (5-3) – nur der Fruchtboss-Zweig
+        ist betroffen, Weltbosse unverändert. Der erweiterte Hindernis-Deckel
+        (`OBSTACLE_COUNT_CAP + WORLD_BOSS_OBSTACLE_BONUS` = 15) bleibt für beide
+        Boss-Arten gleich (deckelt weiterhin nach dem höchstmöglichen Bonus, nicht
+        nach dem jeweils tatsächlich verwendeten).
+      Verifiziert per echtem Spielstand: Level 5 (Wassermelone-Fruchtboss) zeigt
+      jetzt 4 Hindernisse statt vorher 7, Level 21 (Sandkolossos-Weltboss) bleibt
+      unverändert bei 10. `tsc -b`/`npm run build`/`npx cap sync ios` sauber,
+      keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
