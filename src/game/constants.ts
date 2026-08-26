@@ -725,13 +725,18 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
     curveLevelIndex < LEVEL_VARIANT_MAX_LEVEL_INDEX && !boss && !worldBoss
       ? levelVariantProfile(variantSeed)
       : levelVariantProfile(0);
-  // Weltboss-Axt-Deckel weiter auf 10 gesenkt (Klaus: "Weltbosse leichter machen,
-  // indem man weniger Äxte zum Werfen hat") – war 13, seit dem letzten Zurückrudern
-  // unverändert. Diesmal bewusst NUR die Achsenzahl angefasst, Tempo/Hindernis-Deckel
-  // bleiben unangetastet, damit klar bleibt, welcher Hebel welchen Effekt hatte.
+  // Zwölfter Härte-Durchgang (Klaus: "weniger Messer drinnen, mehr Messer werfen" –
+  // also weniger vorplatzierte Hindernisse, dafür mehr Würfe insgesamt). Vorher
+  // hing die Weltboss-Achsenzahl an `axeCountFor(curveLevelIndex)` – die liegt für
+  // Weltbosse aber IMMER bei `curveLevelIndex === 0` (jeder Weltboss landet dort,
+  // siehe "geteilte Level-Kurve" oben), also fest bei 7, der `Math.min(..., 10)`-
+  // Deckel griff nie. Jetzt ein eigener, direkter Wert – deutlich mehr Würfe als
+  // die alten 7, unabhängig von der für Weltbosse ohnehin nicht aussagekräftigen
+  // normalen Kurve (derselbe Kniff wie schon bei `WORLD_BOSS_OBSTACLE_COUNT` unten).
+  const WORLD_BOSS_AXE_COUNT = 12;
   const axeCount = Math.max(
     1,
-    (worldBoss ? Math.min(axeCountFor(curveLevelIndex), 10) : axeCountFor(curveLevelIndex)) + variantProfile.axeDelta,
+    (worldBoss ? WORLD_BOSS_AXE_COUNT : axeCountFor(curveLevelIndex)) + variantProfile.axeDelta,
   );
   const speedBonus = worldBoss ? 30 : boss ? 44 : 0; // Fruchtboss-Bonus 38->44 (Klaus: "Fruchtbosse ein Stück schwerer")
   // Weltboss-Tempo war früher extra auf den ERSTEN Weltboss-Index (20) fixiert, damit
@@ -792,7 +797,12 @@ function generateLevel(levelIndex: number, runSeed: number, variantSeed = 0, def
    * größtmögliche Bonus), der NUR für sie gilt (normale Level bleiben
    * unangetastet bei 10).
    */
-  const WORLD_BOSS_OBSTACLE_BONUS = 5;
+  // Zwölfter Härte-Durchgang, direkt im Anschluss (Klaus: "weniger Messer drinnen,
+  // mehr Messer werfen"): der Weltboss-Bonus sinkt von 5 auf 1 (Gesamt-Hindernisse
+  // damit 5+1=6 statt 5+5=10) – im Gegenzug bekommt der Weltboss oben deutlich mehr
+  // Würfe (`WORLD_BOSS_AXE_COUNT`). Der Fruchtboss-Bonus bleibt unangetastet bei 2,
+  // das war eine separate, bereits bestätigte Korrektur ("Fruchtbosse 3 weniger").
+  const WORLD_BOSS_OBSTACLE_BONUS = 1;
   const FRUIT_BOSS_OBSTACLE_BONUS = 2;
   const obstacleBonus = worldBoss ? WORLD_BOSS_OBSTACLE_BONUS : boss ? FRUIT_BOSS_OBSTACLE_BONUS : 0;
   const obstacleCap = worldBoss || boss ? OBSTACLE_COUNT_CAP + WORLD_BOSS_OBSTACLE_BONUS : OBSTACLE_COUNT_CAP;

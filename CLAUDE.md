@@ -3718,6 +3718,36 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       jetzt 4 Hindernisse statt vorher 7, Level 21 (Sandkolossos-Weltboss) bleibt
       unverändert bei 10. `tsc -b`/`npm run build`/`npx cap sync ios` sauber,
       keine Konsolenfehler.
+- [x] **App-Store-Screenshots auf die verlangten Pixelmaße gebracht (2026-08-26).**
+      Klaus schickte 6 echte Geräte-Screenshots (WhatsApp-komprimiert, 738×1600px)
+      + einen Screenshot des App-Store-Connect-Fehlers "screenshot dimensions
+      invalid, needs 1242×2688, 2688×1242, 1284×2778 or 2778×1284" – Anfrage:
+      "bearbeite die Fotos so dass sie da angenommen werden". Da die WhatsApp-
+      Kompression das Seitenverhältnis fast exakt beibehalten hat (738:1600 ≈
+      0,461 gegen 1284:2778 ≈ 0,462 – praktisch identisch), reicht ein direkter
+      Resize (Pillow, `Image.LANCZOS`) auf 1284×2778 ohne Zuschneiden/Balken.
+      Alle 6 (Startbildschirm, Gameplay, Werkstatt, Weltkarte, Weltboss-Kampf,
+      Einstellungen) verarbeitet und an Klaus geliefert – reine Bildbearbeitung,
+      keine Code-Änderung, nicht Teil dieses Commits.
+- [x] **Zwölfter Härte-Durchgang: Weltbosse weniger Hindernisse, mehr Würfe
+      (2026-08-26).** Klaus: "mach die Weltbosse weniger Messer drinnen, mehr
+      Messer werfen" – zwei gegenläufige Stellschrauben in `generateLevel()`
+      (constants.ts), beide NUR für Weltbosse (Fruchtbosse unangetastet):
+      - **Weniger vorplatzierte Hindernis-Äxte:** `WORLD_BOSS_OBSTACLE_BONUS`
+        von 5 auf 1 gesenkt – zusammen mit dem unveränderten `WORLD_BOSS_OBSTACLE_COUNT`
+        (5) sinkt die Gesamtzahl von 10 auf 6.
+      - **Mehr Würfe insgesamt:** die Weltboss-Achsenzahl hing bisher an
+        `Math.min(axeCountFor(curveLevelIndex), 10)` – da jeder Weltboss auf
+        `curveLevelIndex === 0` landet (`axeCountFor(0) === 7`), griff der
+        Deckel nie, es blieb faktisch immer bei 7. Neue, direkte Konstante
+        `WORLD_BOSS_AXE_COUNT = 12` ersetzt das (derselbe Kniff wie schon bei
+        `WORLD_BOSS_OBSTACLE_COUNT` – ein Weltboss braucht einen eigenen festen
+        Wert statt sich an einer für ihn nicht aussagekräftigen Kurve zu
+        orientieren).
+      Verifiziert: `tsc -b` sauber. Rein rechnerische Balancing-Änderung ohne
+      DOM-Auswirkung, ließ sich wie jeder bisherige Boss-Tuning-Schritt nicht
+      per Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
+      echtes Spielen auf dem Gerät steht wie üblich noch aus.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'
