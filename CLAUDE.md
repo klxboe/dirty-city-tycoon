@@ -3748,6 +3748,21 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       DOM-Auswirkung, ließ sich wie jeder bisherige Boss-Tuning-Schritt nicht
       per Browser-Automatisierung nachspielen (rAF-Freeze) – Bestätigung durch
       echtes Spielen auf dem Gerät steht wie üblich noch aus.
+- [x] **Echte AdMob-Anzeigen scharf geschaltet (2026-08-26).** In AdMob geprüft
+      (`apps.admob.com` → Axe Throw Master → Anzeigenblöcke): beide echten
+      Anzeigenblöcke ("Interstitial – After 2 Deaths", "Rewarded – Rescue
+      Reward") existieren mit exakt den IDs, die schon im Code hinterlegt
+      waren, keine Warn-/Deaktiviert-Markierung. `USE_TEST_AD` in `game/ads.ts`
+      von `true` auf `false` gestellt – das Spiel zeigt ab jetzt (sobald neu
+      gebaut) echte Werbung statt Googles Test-Anzeigen. Bewusst VOR der
+      ersten echten App-Store-Einreichung umgestellt statt danach: der
+      `USE_TEST_AD`-Wert ist zur Build-Zeit fest eingebacken, ein Umschalten
+      NACH einer bereits eingereichten/genehmigten Version hätte einen
+      zweiten Build + eine zweite Prüfungsrunde nur für die Werbung gebraucht.
+      `tsc -b`/`npm run build`/`npx cap sync ios` sauber. Kein Browser-Test
+      möglich/nötig – AdMob ist ein natives Plugin, das im Web-Stub ohnehin
+      nur einen simulierten Timeout-Pfad durchläuft, unabhängig vom
+      `USE_TEST_AD`-Wert.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

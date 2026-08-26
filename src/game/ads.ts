@@ -24,7 +24,7 @@ import type { AdMobRewardItem, AdOptions, RewardAdOptions } from '@capacitor-com
  * dokumentierte Test-Werte (https://developers.google.com/admob/ios/test-ads) –
  * KEINE erfundenen Platzhalter, die funktionieren garantiert, sobald das SDK läuft.
  */
-export const USE_TEST_AD = true;
+export const USE_TEST_AD = false;
 
 /**
  * Echte IDs der eigenen "Axe Throw Master"-App in AdMob (apps.admob.com,
