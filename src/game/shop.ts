@@ -8,16 +8,19 @@ import type { Language } from './i18n';
 
 export type SkinKind = 'axe' | 'board';
 /**
- * `shop` = für Münzen kaufbar, `boss` = Belohnung aus einem Boss-Level,
- * `gem`  = für Diamanten kaufbar ("Legendär"-Reiter im Shop),
- * `egg`  = Oster-Ei – nur über ein verstecktes Geheimnis freischaltbar, nie kaufbar.
+ * `shop` = für Münzen kaufbar, `gem` = für Diamanten kaufbar ("Legendär"-Reiter im
+ * Shop, inzwischen auch die Boss-Beute-Äxte, siehe BOSS_AXE_SKINS/HERO_AXE_SKINS
+ * unten), `egg` = Oster-Ei – nur über ein verstecktes Geheimnis freischaltbar, nie
+ * kaufbar.
  *
- * Es gab kurzzeitig eine fünfte Quelle `iap` (Echtgeld-Käufe über RevenueCat/
- * App Store Connect) – auf Klaus' Entscheidung wieder entfernt ("wir machen
- * nur Geld durch Werbung"), die zehn betroffenen Äxte sind jetzt normale
- * `shop`-Äxte (siehe AXE_SKINS unten).
+ * Es gab früher zwei weitere Quellen: `boss` (Boss-Äxte gab es geschenkt fürs
+ * Levelschaffen – Klaus: "mach die Äxte die man ab einem gewissen Level bekommt
+ * weg, einfach für Diamanten stattdessen", die Äxte sind seitdem `gem`-Skins) und
+ * kurzzeitig `iap` (Echtgeld-Käufe über RevenueCat/App Store Connect, auf Klaus'
+ * Entscheidung "wir machen nur Geld durch Werbung" wieder entfernt, siehe
+ * AXE_SKINS unten). Beide Quellen komplett ausgebaut statt nur deaktiviert.
  */
-export type SkinSource = 'shop' | 'boss' | 'gem' | 'egg';
+export type SkinSource = 'shop' | 'gem' | 'egg';
 
 export interface SkinDef {
   id: string;
@@ -30,7 +33,7 @@ export interface SkinDef {
   blurbEn: string;
   /**
    * Preis in Münzen (source 'shop') oder Diamanten (source 'gem'). 0 = von Anfang an
-   * dabei. Bei 'boss'/'egg' ohne Bedeutung.
+   * dabei. Bei 'egg' ohne Bedeutung.
    */
   price: number;
   source: SkinSource;
@@ -160,7 +163,10 @@ export const BOARD_SKINS: SkinDef[] = [
 
 // ---------------------------------------------------------------------------
 // Boss-Früchte: jedes 5. Level ist ein Boss mit einer Frucht als Zielscheibe.
-// Wer ihn schafft, bekommt die passende Axt geschenkt.
+// Die passende Axt gab es früher geschenkt fürs Schaffen – Klaus: "mach die
+// Äxte die man ab einem gewissen Level bekommt weg, einfach für Diamanten
+// stattdessen" (siehe BOSS_AXE_SKINS unten, jetzt `source: 'gem'` statt der
+// früheren freien Belohnung, siehe computeReward() in useAxeGame.ts).
 // ---------------------------------------------------------------------------
 
 export interface BossFruit {
@@ -187,16 +193,21 @@ export const BOSS_FRUITS: BossFruit[] = [
   { id: 'grape', name: 'Traube', nameEn: 'Grape', boardSkinId: 'board-grape', axeSkinId: 'axe-grape' },
 ];
 
-/** Die Frucht-Äxte als Skins – tauchen im Shop unter "Boss-Beute" auf, nicht zum Kauf. */
-export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit) => ({
+/**
+ * Die Frucht-Äxte als Skins – standen früher unter "Boss-Beute" (kostenlos fürs
+ * Levelschaffen), jetzt für Diamanten kaufbar im Legendär-Reiter (siehe Shop.tsx).
+ * Preise steigen leicht mit der Boss-Reihenfolge (Level 5 -> Level 50).
+ */
+const BOSS_AXE_PRICES = [15, 18, 21, 24, 27, 30, 34, 38, 42, 46];
+export const BOSS_AXE_SKINS: SkinDef[] = BOSS_FRUITS.map((fruit, i) => ({
   id: fruit.axeSkinId,
   kind: 'axe',
   name: `${fruit.name}-Axt`,
-  blurb: `Beute aus dem ${fruit.name}-Boss.`,
+  blurb: `Erinnert an den ${fruit.name}-Boss.`,
   nameEn: `${fruit.nameEn} Axe`,
-  blurbEn: `Loot from the ${fruit.nameEn} boss.`,
-  price: 0,
-  source: 'boss',
+  blurbEn: `Themed after the ${fruit.nameEn} boss.`,
+  price: BOSS_AXE_PRICES[i] ?? 20,
+  source: 'gem',
 }));
 
 // ---------------------------------------------------------------------------
@@ -218,16 +229,20 @@ export const HERO_BOSSES: BossFruit[] = [
   { id: 'antenna', name: 'Antennentitan', nameEn: 'Antenna Titan', boardSkinId: 'board-antenna', axeSkinId: 'axe-antenna' },
 ];
 
-/** Die Helden-Bossäxte als Skins – wie BOSS_AXE_SKINS, nur für die Heldenstadt-Bosse. */
-export const HERO_AXE_SKINS: SkinDef[] = HERO_BOSSES.map((boss) => ({
+/**
+ * Die Helden-Bossäxte als Skins – wie BOSS_AXE_SKINS, nur für die
+ * Heldenstadt-Bosse (Level 105-120), entsprechend teurer.
+ */
+const HERO_AXE_PRICES = [55, 60, 65, 70];
+export const HERO_AXE_SKINS: SkinDef[] = HERO_BOSSES.map((boss, i) => ({
   id: boss.axeSkinId,
   kind: 'axe',
   name: `${boss.name}-Axt`,
-  blurb: `Beute aus dem Kampf gegen den ${boss.name}.`,
+  blurb: `Erinnert an den Kampf gegen den ${boss.name}.`,
   nameEn: `${boss.nameEn} Axe`,
-  blurbEn: `Loot from the fight against the ${boss.nameEn}.`,
-  price: 0,
-  source: 'boss',
+  blurbEn: `Themed after the fight against the ${boss.nameEn}.`,
+  price: HERO_AXE_PRICES[i] ?? 60,
+  source: 'gem',
 }));
 
 // ---------------------------------------------------------------------------
@@ -280,7 +295,16 @@ export const LEGENDARY_BOARD_SKINS: SkinDef[] = [
   },
 ];
 
-export const LEGENDARY_SKINS: SkinDef[] = [...LEGENDARY_AXE_SKINS, ...LEGENDARY_BOARD_SKINS];
+// Boss-Beute-Äxte (siehe oben) sind jetzt ebenfalls Diamanten-Käufe – landen deshalb
+// im selben "Legendär"-Reiter wie die klassischen Legendär-Skins, statt einer
+// eigenen Kategorie. Reihenfolge: erst die "echten" Legendär-Designs, dann die
+// (günstigeren) Boss-Beute-Äxte.
+export const LEGENDARY_SKINS: SkinDef[] = [
+  ...LEGENDARY_AXE_SKINS,
+  ...LEGENDARY_BOARD_SKINS,
+  ...BOSS_AXE_SKINS,
+  ...HERO_AXE_SKINS,
+];
 
 // ---------------------------------------------------------------------------
 // Oster-Ei: kein Hinweis im Tutorial, nur über ein verstecktes Geheimnis zu
@@ -300,14 +324,9 @@ export const EASTER_EGG_SKINS: SkinDef[] = [
   },
 ];
 
-export const ALL_SKINS: SkinDef[] = [
-  ...AXE_SKINS,
-  ...BOARD_SKINS,
-  ...BOSS_AXE_SKINS,
-  ...HERO_AXE_SKINS,
-  ...LEGENDARY_SKINS,
-  ...EASTER_EGG_SKINS,
-];
+// BOSS_AXE_SKINS/HERO_AXE_SKINS stecken schon in LEGENDARY_SKINS (siehe oben) –
+// hier nicht nochmal einzeln aufführen, sonst wären sie doppelt drin.
+export const ALL_SKINS: SkinDef[] = [...AXE_SKINS, ...BOARD_SKINS, ...LEGENDARY_SKINS, ...EASTER_EGG_SKINS];
 
 export const DEFAULT_AXE_SKIN = AXE_SKINS[0].id;
 export const DEFAULT_BOARD_SKIN = BOARD_SKINS[0].id;

@@ -3652,6 +3652,53 @@ Phase dabei immer `flying -> ready -> flying` wechselt.
       Level 21 (Sandkolossos) zeigt jetzt wieder 5 vorplatzierte Hindernis-Äxte
       (`.target-board__axe-slot`-Elemente gezählt) statt 0, `tsc -b`/`npm run
       build`/`npx cap sync ios` sauber, keine Konsolenfehler.
+- [x] **Bei allen Bossen 5 mehr Hindernis-Äxte (2026-08-25).** Klaus, direkt nach
+      dem Weltboss-Bugfix oben: "bei allen Bossen 5 mehr Messer die man treffen
+      muss" – gilt für BEIDE Boss-Arten (Fruchtboss und Weltboss). Neuer
+      `BOSS_OBSTACLE_BONUS = 5` in `generateLevel()` (constants.ts), oben auf die
+      jeweils schon vorhandene Basis (Weltboss: der gerade erst fixierte feste
+      Wert; Fruchtboss: die normale Kurve, die an Fruchtboss-Indizes – 4/9/14/19
+      innerhalb einer Welt – nie 0 ist, also vom Weltboss-Bug nicht betroffen war).
+      Der normale `OBSTACLE_COUNT_CAP` (10) ist als globale Sicherheitsgrenze für
+      die normale Kurven-Schwankung gedacht – Boss-Level bekommen deshalb einen
+      eigenen, um den Bonus erhöhten Deckel (15), damit der Bonus nicht sofort
+      wieder weggekappt wird; normale Level bleiben unverändert bei 10.
+      `tsc -b`/`npm run build` sauber.
+- [x] **Boss-Beute-Äxte: kein Geschenk mehr fürs Levelschaffen, jetzt für
+      Diamanten kaufbar (2026-08-25).** Klaus: "mach die Äxte die man ab einem
+      gewissen Level bekommt weg, einfach für Diamanten stattdessen" – betrifft
+      alle 14 Boss-Beute-Äxte (10 Boss-Früchte + 4 Heldenstadt-Bosse), die bisher
+      beim ersten Schaffen des jeweiligen Boss-Levels kostenlos freigeschaltet
+      wurden (`source: 'boss'`, `LevelReward.unlockedAxeSkinId`).
+      - `shop.ts`: `BOSS_AXE_SKINS`/`HERO_AXE_SKINS` laufen jetzt auf
+        `source: 'gem'` mit gestaffelten Preisen (Boss-Früchte 15-46, je nach
+        Boss-Reihenfolge Level 5→50; Heldenstadt-Bosse 55-70, Level 105→120) statt
+        `price: 0`. Landen dadurch automatisch im bestehenden "Legendär"-Reiter
+        (`LEGENDARY_SKINS` erweitert), kein neuer Shop-Mechanismus nötig – der
+        normale Diamanten-Kauf-Code (`buySkin()` in useAxeGame.ts) greift
+        unverändert. `SkinSource` verliert dadurch `'boss'` als Option komplett
+        (ausgebaut statt nur deaktiviert).
+      - `useAxeGame.ts`: `computeReward()`s Boss-Verzweigung ("Axt freischalten
+        ODER, falls schon vorhanden, Münzen") vereinfacht auf "ein Boss-Level
+        gibt IMMER `BOSS_REPEAT_BONUS` Münzen" – die alte Sonderbehandlung für
+        noch nicht besessene Boss-Äxte ist komplett weg, ebenso `ownedSkins`-
+        Erweiterung im Belohnungs-Effekt.
+      - `LevelReward.unlockedAxeSkinId` (types.ts) und die dazugehörige "Neue
+        Axt"-Freischalt-Karte in `LevelCompleteModal.tsx` (inkl. ungenutzt
+        gewordener `t.levelComplete.newAxe`-Übersetzung und
+        `.modal-card__unlock*`-CSS-Klassen, das gemeinsam genutzte
+        `unlock-pop`-Keyframe blieb erhalten) komplett entfernt statt nur
+        deaktiviert.
+      - "Extras"-Reiter zeigt jetzt nur noch das Oster-Ei (die Boss-Beute ist ja
+        umgezogen), Hinweistext entsprechend von "Boss-Beute und Geheimnisse –
+        nicht käuflich" auf "Geheimnisse – nicht käuflich, nur zu finden"
+        angepasst (DE + EN).
+      Verifiziert per echtem Kauf im Browser: Legendär-Reiter zeigt alle 14
+      Boss-Beute-Äxte mit korrekten Diamanten-Preisen neben den beiden
+      klassischen Legendär-Designs, Kauf der Wassermelone-Axt für 15 Diamanten
+      zieht exakt 15 Diamanten ab (500→485) und rüstet sie aus, Extras-Reiter
+      zeigt nur noch das Oster-Ei. `tsc -b`/`npm run build`/`npx cap sync ios`
+      sauber, keine Konsolenfehler.
 - [ ] Weiterer Feinschliff nach Bedarf.
 - [ ] Phase 2: Capacitor + native Plattform.
       **Achtung: iOS-Builds gehen NUR auf einem Mac mit Xcode** – Klaus'

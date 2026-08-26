@@ -130,6 +130,4 @@ export interface LevelReward {
    * soll (Klaus: "Level gibt es nur im normalen [Modus], der Boss hat kein Level").
    */
   worldBossId?: string;
-  /** Bei Boss-Leveln: Axt-Skin, der dadurch neu freigeschaltet wurde (null = hatte man schon). */
-  unlockedAxeSkinId?: string;
 }

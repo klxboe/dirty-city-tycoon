@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { Apple } from './Apple';
-import { Axe } from './Axe';
 import { Coin } from './Coin';
 import { Gem } from './Gem';
 import { useCountUp } from '../hooks/useCountUp';
-import { getBossFruit, getSkin, localizedBossFruitName, localizedSkinName } from '../game/shop';
+import { getBossFruit, localizedBossFruitName } from '../game/shop';
 import { getStrings, type Language } from '../game/i18n';
 import { WORLD_BOSSES, localizedWorldBossName } from '../game/worlds';
 import type { LevelReward } from '../game/types';
@@ -71,7 +70,6 @@ export function LevelCompleteModal({
   // der Boss". `getBossFruit`/`boss` oben bleibt unberührt (Weltboss und Fruchtboss
   // schließen sich laut generateLevel() gegenseitig aus, nie beide gleichzeitig gesetzt).
   const worldBoss = reward.worldBossId ? WORLD_BOSSES[reward.worldBossId] : undefined;
-  const unlockedAxe = reward.unlockedAxeSkinId ? getSkin(reward.unlockedAxeSkinId) : undefined;
 
   return (
     <div className="modal-backdrop">
@@ -91,19 +89,6 @@ export function LevelCompleteModal({
         )}
 
         <div className="modal-card__body">{t.levelComplete.applesBody(applesCollected, appleCount)}</div>
-
-        {/* Frisch freigeschaltete Boss-Axt – der eigentliche Moment des Levels. */}
-        {unlockedAxe && (
-          <div className="modal-card__unlock">
-            <div className="modal-card__unlock-axe">
-              <Axe size={44} skin={unlockedAxe.id} />
-            </div>
-            <div className="modal-card__unlock-text">
-              <span className="modal-card__unlock-label">{t.levelComplete.newAxe}</span>
-              <span className="modal-card__unlock-name">{localizedSkinName(unlockedAxe, lang)}</span>
-            </div>
-          </div>
-        )}
 
         <div className="modal-card__apples">
           <Coin size={34} className="modal-card__coin-spin" />

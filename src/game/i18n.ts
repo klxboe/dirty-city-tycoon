@@ -61,7 +61,6 @@ interface Strings {
     mysteryBlurb: string;
     equipped: string;
     equip: string;
-    lockedLevel: (n: number) => string;
     close: string;
   };
   hud: {
@@ -89,7 +88,6 @@ interface Strings {
     bossTitle: (name: string) => string;
     levelTitle: (n: number) => string;
     applesBody: (collected: number, total: number) => string;
-    newAxe: string;
     breakdownApples: string;
     breakdownLevelDone: string;
     breakdownPerfect: string;
@@ -195,14 +193,13 @@ const de: Strings = {
     tabLegendary: 'Legendär',
     tabExtras: 'Extras',
     legendaryNote: 'Aufwendige Designs für Diamanten – die gibt’s nur durch goldene Äpfel.',
-    extrasNote: 'Boss-Beute und Geheimnisse – nicht käuflich, nur zu erspielen oder zu finden.',
+    extrasNote: 'Geheimnisse – nicht käuflich, nur zu finden.',
     figurinesLabel: (n) => `Sammelfiguren: ${n}`,
     figurinesBlurb: (gemsPerFigurine) => `Eingetauscht bringt jede Figur ${gemsPerFigurine} Diamanten.`,
     mysteryName: '???',
     mysteryBlurb: 'Ein gut gehütetes Geheimnis.',
     equipped: 'Ausgerüstet',
     equip: 'Anlegen',
-    lockedLevel: (n) => `Level ${n}`,
     close: 'Weiter werfen',
   },
   hud: {
@@ -230,7 +227,6 @@ const de: Strings = {
     bossTitle: (name) => `${name} geknackt!`,
     levelTitle: (n) => `Level ${n} geschafft!`,
     applesBody: (collected, total) => `${collected} von ${total} ${total === 1 ? 'Apfel' : 'Äpfeln'} eingesammelt.`,
-    newAxe: 'Neue Axt',
     breakdownApples: 'Äpfel',
     breakdownLevelDone: 'Level geschafft',
     breakdownPerfect: 'Alle Äpfel!',
@@ -336,14 +332,13 @@ const en: Strings = {
     tabLegendary: 'Legendary',
     tabExtras: 'Extras',
     legendaryNote: 'Elaborate designs for gems – only obtainable from golden apples.',
-    extrasNote: 'Boss loot and secrets – not for sale, only earned or discovered.',
+    extrasNote: 'Secrets – not for sale, only discovered.',
     figurinesLabel: (n) => `Figurines: ${n}`,
     figurinesBlurb: (gemsPerFigurine) => `Trading in figurines gives ${gemsPerFigurine} gems each.`,
     mysteryName: '???',
     mysteryBlurb: 'A well-kept secret.',
     equipped: 'Equipped',
     equip: 'Equip',
-    lockedLevel: (n) => `Level ${n}`,
     close: 'Back to throwing',
   },
   hud: {
@@ -371,7 +366,6 @@ const en: Strings = {
     bossTitle: (name) => `${name} cracked!`,
     levelTitle: (n) => `Level ${n} complete!`,
     applesBody: (collected, total) => `Collected ${collected} of ${total} ${total === 1 ? 'apple' : 'apples'}.`,
-    newAxe: 'New axe',
     breakdownApples: 'Apples',
     breakdownLevelDone: 'Level complete',
     breakdownPerfect: 'All apples!',

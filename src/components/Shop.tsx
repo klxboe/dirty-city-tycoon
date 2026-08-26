@@ -6,11 +6,7 @@ import { Gem } from './Gem';
 import {
   AXE_SKINS,
   BOARD_SKINS,
-  BOSS_AXE_SKINS,
-  BOSS_FRUITS,
   EASTER_EGG_SKINS,
-  HERO_AXE_SKINS,
-  HERO_BOSSES,
   LEGENDARY_SKINS,
   boardStyleVars,
   isFreeSkin,
@@ -19,9 +15,8 @@ import {
   type SkinDef,
 } from '../game/shop';
 import { getBoardImage } from '../game/boardImages';
-import { BOSS_EVERY, GEMS_PER_FIGURINE } from '../game/constants';
+import { GEMS_PER_FIGURINE } from '../game/constants';
 import { getStrings, type Language } from '../game/i18n';
-import { HERO_WORLD_START } from '../game/worlds';
 import type { SaveData } from '../game/storage';
 import './Shop.css';
 
@@ -78,7 +73,7 @@ export function Shop({ save, lang, onBuy, onEquip, onTradeFigurines, onClose }: 
         ? BOARD_SKINS
         : tab === 'legendary'
           ? LEGENDARY_SKINS
-          : [...BOSS_AXE_SKINS, ...HERO_AXE_SKINS, ...EASTER_EGG_SKINS];
+          : EASTER_EGG_SKINS;
 
   return (
     <div className="modal-backdrop">
@@ -140,26 +135,13 @@ export function Shop({ save, lang, onBuy, onEquip, onTradeFigurines, onClose }: 
               skin.kind === 'board' ? save.equippedBoardSkin === skin.id : save.equippedAxeSkin === skin.id;
             const currency = skin.source === 'gem' ? save.gems : save.coins;
             const affordable = currency >= skin.price;
-
-            // Bei Boss-Beute zeigen wir statt eines Preises, welches Level sie freischaltet.
-            // Zwei getrennte Rotationen (Boss-Früchte vs. Heldenstadt-Bosse, siehe
-            // bossFruitForLevel in constants.ts) brauchen unterschiedliche Rechnungen:
-            // die Helden-Bosse fangen erst bei HERO_WORLD_START an.
-            const fruitIndex = BOSS_FRUITS.findIndex((f) => f.axeSkinId === skin.id);
-            const heroIndex = HERO_BOSSES.findIndex((b) => b.axeSkinId === skin.id);
-            const bossLevel =
-              fruitIndex >= 0
-                ? (fruitIndex + 1) * BOSS_EVERY
-                : heroIndex >= 0
-                  ? HERO_WORLD_START + (heroIndex + 1) * BOSS_EVERY
-                  : null;
             const isMystery = skin.source === 'egg';
 
             return (
               <div
                 key={skin.id}
                 className={`shop-card ${equipped ? 'shop-card--equipped' : ''} ${
-                  !owned && (skin.source === 'boss' || skin.source === 'egg') ? 'shop-card--locked' : ''
+                  !owned && skin.source === 'egg' ? 'shop-card--locked' : ''
                 }`}
               >
                 {isMystery && !owned ? <div className="shop-card__preview shop-card__preview--mystery">?</div> : <SkinPreview skin={skin} />}
@@ -175,8 +157,6 @@ export function Shop({ save, lang, onBuy, onEquip, onTradeFigurines, onClose }: 
                   <button className="shop-card__action" onClick={() => onEquip(skin.id)}>
                     {t.shop.equip}
                   </button>
-                ) : skin.source === 'boss' ? (
-                  <span className="shop-card__locked">{t.shop.lockedLevel(bossLevel ?? 0)}</span>
                 ) : skin.source === 'egg' ? (
                   <span className="shop-card__locked">{t.shop.mysteryName}</span>
                 ) : (

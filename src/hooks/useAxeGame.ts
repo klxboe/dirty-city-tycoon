@@ -292,9 +292,6 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
         // deshalb bewusst unangetastet, nur normale Level zählen dafür.
         bestLevel: prev.reward.worldBossId ? prev.save.bestLevel : Math.max(prev.save.bestLevel, prev.levelIndex + 2),
         streak: isChallenge ? prev.save.streak : streak,
-        ownedSkins: prev.reward.unlockedAxeSkinId
-          ? [...prev.save.ownedSkins, prev.reward.unlockedAxeSkinId]
-          : prev.save.ownedSkins,
         // Weltboss dauerhaft als besiegt vermerken (Klaus: "Boss nur einmal besiegen
         // müssen, dann ist der Hintergrund beim normalen Spiel die Wüste zum
         // Beispiel") – dieser Level-Index erzeugt ab sofort (auch nach einem
@@ -572,7 +569,7 @@ export function useAxeGame(getBoardAngleDeg: () => number) {
   /** Skin kaufen, falls genug Münzen da sind. Rüstet ihn direkt aus. */
   /**
    * Skin kaufen. Zwei käufliche Quellen: 'shop' zieht Münzen ab, 'gem' Diamanten –
-   * 'boss' und 'egg' sind nie käuflich (return früh). Welche Währung betroffen ist,
+   * 'egg' ist nie käuflich (return früh). Welche Währung betroffen ist,
    * entscheidet allein `skin.source`, nicht irgendein UI-Zustand.
    */
   const buySkin = useCallback((skinId: string) => {
@@ -803,16 +800,12 @@ function computeReward(
   const isBlockEnd = (levelIndex + 1) % LEVELS_PER_BLOCK === 0;
   const block = isBlockEnd ? blockCompletionBonus(levelIndex) : 0;
 
-  // Boss: entweder die Frucht-Axt freischalten oder – falls schon vorhanden – Münzen.
-  let unlockedAxeSkinId: string | undefined;
-  let bossCoins = 0;
-  if (boss) {
-    if (save.ownedSkins.includes(boss.axeSkinId)) {
-      bossCoins = BOSS_REPEAT_BONUS;
-    } else {
-      unlockedAxeSkinId = boss.axeSkinId;
-    }
-  }
+  // Boss-Äxte gibt es nicht mehr geschenkt (Klaus: "die Äxte die man ab einem
+  // gewissen Level bekommt weg, einfach für Diamanten stattdessen") – sie stehen
+  // jetzt käuflich im Legendär-Reiter (siehe BOSS_AXE_SKINS/HERO_AXE_SKINS in
+  // shop.ts, beide `source: 'gem'`). Ein Boss-Level gibt stattdessen immer den
+  // festen Münz-Bonus, den es vorher nur für schon besessene Boss-Äxte gab.
+  const bossCoins = boss ? BOSS_REPEAT_BONUS : 0;
 
   const multiplier = streakMultiplier(streak);
   const raw = apples + base + perfect + block + bossCoins;
@@ -840,6 +833,5 @@ function computeReward(
     xp: XP_PER_LEVEL,
     bossFruitId: boss?.id,
     worldBossId: level.worldBossId,
-    unlockedAxeSkinId,
   };
 }
