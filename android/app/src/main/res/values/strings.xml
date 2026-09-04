@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Axe Throw Master</string>
+    <string name="title_activity_main">Axe Throw Master</string>
+    <string name="package_name">com.klxboe.axethrow</string>
+    <string name="custom_url_scheme">com.klxboe.axethrow</string>
+</resources>
